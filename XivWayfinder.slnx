@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/XivWayfinder.Core/XivWayfinder.Core.csproj" />
+    <Project Path="src/XivWayfinder.Plugin/XivWayfinder.Plugin.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/XivWayfinder.Core.Tests/XivWayfinder.Core.Tests.csproj" />
+  </Folder>
+</Solution>

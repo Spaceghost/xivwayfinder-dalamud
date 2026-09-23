@@ -29,7 +29,7 @@ concurrency:
 jobs:
   release:
     # never from a fork, and only on GitHub's own runners
-    if: github.repository == 'Spaceghost/wayfinder-dalamud'
+    if: github.repository == 'Spaceghost/xivwayfinder-dalamud'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -56,10 +56,10 @@ jobs:
         run: tools/fetch-dalamud.sh
 
       - name: Test
-        run: dotnet test tests/Wayfinder.Core.Tests -c Release
+        run: dotnet test tests/XivWayfinder.Core.Tests -c Release
 
       - name: Build
-        run: dotnet build src/Wayfinder.Plugin/Wayfinder.Plugin.csproj -c Release
+        run: dotnet build src/XivWayfinder.Plugin/XivWayfinder.Plugin.csproj -c Release
 
       - name: Package
         env:
@@ -140,7 +140,7 @@ jobs:
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: wayfinder-plugin-${{ github.ref_name }}
+          name: xivwayfinder-plugin-${{ github.ref_name }}
           path: ${{ github.workspace }}/release
           if-no-files-found: error
           retention-days: 30

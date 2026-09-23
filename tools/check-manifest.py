@@ -10,7 +10,7 @@ It checks that
   * every field Dalamud's installer needs is present and of the right shape,
   * InternalName matches the assembly name (Dalamud loads <InternalName>.dll),
   * DalamudApiLevel is the level the current Dalamud loads (15),
-  * Wayfinder.json's AssemblyVersion and Wayfinder.Plugin.csproj's <Version> agree, so the
+  * XivWayfinder.json's AssemblyVersion and XivWayfinder.Plugin.csproj's <Version> agree, so the
     listing never advertises a version the zip does not contain,
   * and, with --tag, that the release tag names that same version.
 """
@@ -24,12 +24,12 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
-MANIFEST = ROOT / "src" / "Wayfinder.Plugin" / "Wayfinder.json"
-PROPS = ROOT / "src" / "Wayfinder.Plugin" / "Wayfinder.Plugin.csproj"
+MANIFEST = ROOT / "src" / "XivWayfinder.Plugin" / "XivWayfinder.json"
+PROPS = ROOT / "src" / "XivWayfinder.Plugin" / "XivWayfinder.Plugin.csproj"
 # The API level of the Dalamud that loads plugins today (Dalamud 15.x). A plugin built
 # against a different level is refused by the installer, so this is checked, not guessed.
 API_LEVEL = 15
-ASSEMBLY_NAME = "Wayfinder"
+ASSEMBLY_NAME = "XivWayfinder"
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+\.\d+$")
 STRINGS = ("Author", "Name", "InternalName", "Punchline", "Description", "RepoUrl", "ApplicableVersion")
 

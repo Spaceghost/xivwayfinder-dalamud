@@ -56,10 +56,10 @@ jobs:
           global-json-file: global.json
       - name: Fuzz the parsers
         env:
-          WAYFINDER_FUZZ_SECONDS: ${{ inputs.fuzz_seconds || '1200' }}
+          XIVWAYFINDER_FUZZ_SECONDS: ${{ inputs.fuzz_seconds || '1200' }}
         run: |
           set -o pipefail
-          dotnet test tests/Wayfinder.Core.Tests --filter "FullyQualifiedName~FuzzTests" 2>&1 | tee fuzz.log
+          dotnet test tests/XivWayfinder.Core.Tests --filter "FullyQualifiedName~FuzzTests" 2>&1 | tee fuzz.log
       - name: Upload the log
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -74,7 +74,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           # shellcheck disable=SC2016 # the backticks are Markdown
-          body="$(printf 'Fuzz run %s failed:\n\n```\n%s\n```\nReplay with WAYFINDER_FUZZ_SEED set to the seed above.' "$RUN_URL" "$(grep -m5 -i 'seed' fuzz.log || echo 'no seed in the log: the build failed')")"
+          body="$(printf 'Fuzz run %s failed:\n\n```\n%s\n```\nReplay with XIVWAYFINDER_FUZZ_SEED set to the seed above.' "$RUN_URL" "$(grep -m5 -i 'seed' fuzz.log || echo 'no seed in the log: the build failed')")"
           gh label create fuzz-crash --color B60205 --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
           n="$(gh issue list --repo "$GITHUB_REPOSITORY" --label fuzz-crash --state open --json number --jq '.[0].number')"
           if [[ -n "$n" ]]; then gh issue comment "$n" --repo "$GITHUB_REPOSITORY" --body "$body"

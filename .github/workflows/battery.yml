@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PROJECTS: src/Wayfinder.Core/Wayfinder.Core.csproj tests/Wayfinder.Core.Tests/Wayfinder.Core.Tests.csproj
+  PROJECTS: src/XivWayfinder.Core/XivWayfinder.Core.csproj tests/XivWayfinder.Core.Tests/XivWayfinder.Core.Tests.csproj
   DOTNET_CLI_TELEMETRY_OPTOUT: '1'
   DOTNET_NOLOGO: '1'
 
@@ -40,7 +40,7 @@ jobs:
           - kind: format
             run: 'for p in $PROJECTS; do dotnet format whitespace "$p" --verify-no-changes --no-restore && dotnet format style "$p" --verify-no-changes --no-restore --severity warn || exit 1; done'
           - kind: allocations
-            run: 'dotnet test tests/Wayfinder.Core.Tests --filter "FullyQualifiedName~Allocation"'
+            run: 'dotnet test tests/XivWayfinder.Core.Tests --filter "FullyQualifiedName~Allocation"'
           - kind: vulnerable-packages
             run: 'tools/ci/vulnerable.sh $PROJECTS'
           - kind: licences

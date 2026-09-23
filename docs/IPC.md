@@ -1,18 +1,20 @@
-# Wayfinder IPC
+# XivWayfinder IPC
 
-Other plugins can point the player somewhere without referencing Wayfinder's assembly, through Dalamud's IPC.
+Other plugins can point the player somewhere without referencing XivWayfinder's assembly, through Dalamud's IPC.
 The names and types below are the contract; they live in [`src/Shared/IpcContract.cs`](../src/Shared/IpcContract.cs)
 and a host test checks that every one of them is written in this file.
+They follow the family's `<Plugin>.v1.<Verb>` naming (`XivArcade.v1.Search`, `XivDesktop.v1.Launch`,
+`Linkpearl.v1.GetStatus`); a breaking change would come as `v2` names beside these.
 
 > **Status:** the functions are registered and their argument checks and JSON are covered by host tests. No
 > other plugin has called them in the game yet.
 
 | Name | Arguments → result | What it does |
 | --- | --- | --- |
-| `Wayfinder.SetTarget` | `uint territoryId, float x, float z, string label` → `bool` | Point at world position (`x`, `z`) in that territory. |
-| `Wayfinder.SetMapTarget` | `uint territoryId, float mapX, float mapY, string label` → `bool` | The same, in the map coordinates the game prints. |
-| `Wayfinder.Clear` | → `bool` | Forget the target set by IPC or `/wayfinder`. |
-| `Wayfinder.GetState` | → `string` | What Wayfinder is pointing at, as JSON. |
+| `XivWayfinder.v1.SetTarget` | `uint territoryId, float x, float z, string label` → `bool` | Point at world position (`x`, `z`) in that territory. |
+| `XivWayfinder.v1.SetMapTarget` | `uint territoryId, float mapX, float mapY, string label` → `bool` | The same, in the map coordinates the game prints. |
+| `XivWayfinder.v1.Clear` | → `bool` | Forget the target set by IPC or `/wayfinder`. |
+| `XivWayfinder.v1.GetState` | → `string` | What XivWayfinder is pointing at, as JSON. |
 
 ## Rules
 
@@ -32,18 +34,18 @@ and a host test checks that every one of them is written in this file.
 * Once the player has stood within the arrival radius (4 yalms by default) for a moment, the target is cleared,
   unless the player has turned that off.
 * The functions can be called from any thread. The pointer picks the target up on the next frame.
-* Wayfinder never moves the character, whatever is asked of it.
+* XivWayfinder never moves the character, whatever is asked of it.
 
 ## Calling it
 
 ```csharp
 // once, e.g. in your plugin's constructor
-var setTarget = pluginInterface.GetIpcSubscriber<uint, float, float, string, bool>("Wayfinder.SetTarget");
-var setMapTarget = pluginInterface.GetIpcSubscriber<uint, float, float, string, bool>("Wayfinder.SetMapTarget");
-var clear = pluginInterface.GetIpcSubscriber<bool>("Wayfinder.Clear");
-var getState = pluginInterface.GetIpcSubscriber<string>("Wayfinder.GetState");
+var setTarget = pluginInterface.GetIpcSubscriber<uint, float, float, string, bool>("XivWayfinder.v1.SetTarget");
+var setMapTarget = pluginInterface.GetIpcSubscriber<uint, float, float, string, bool>("XivWayfinder.v1.SetMapTarget");
+var clear = pluginInterface.GetIpcSubscriber<bool>("XivWayfinder.v1.Clear");
+var getState = pluginInterface.GetIpcSubscriber<string>("XivWayfinder.v1.GetState");
 
-// later; IpcNotReadyError means Wayfinder is not installed or not loaded
+// later; IpcNotReadyError means XivWayfinder is not installed or not loaded
 try
 {
     setMapTarget.InvokeFunc(0, 11.2f, 14.5f, "the ferry dock");   // in the current zone
@@ -51,23 +53,23 @@ try
 }
 catch (Dalamud.Plugin.Ipc.Exceptions.IpcNotReadyError)
 {
-    // offer to install Wayfinder, or print the coordinates instead
+    // offer to install XivWayfinder, or print the coordinates instead
 }
 ```
 
 ### For Ghostty's `/ask` coordinate links
 
 A link that carries the zone and the map coordinates the answer printed maps directly onto
-`Wayfinder.SetMapTarget(territoryId, mapX, mapY, label)`. When only a zone name is known, resolve it to a
+`XivWayfinder.v1.SetMapTarget(territoryId, mapX, mapY, label)`. When only a zone name is known, resolve it to a
 `TerritoryType` row first; the player can also type `/wayfinder 11.2 14.5 Central Shroud`, which does that
 lookup itself.
 
 ### For XivMcp
 
-`Wayfinder.GetState` answers "where is the player being pointed, and how far is it" without any game reads of
-its own; `Wayfinder.SetTarget` and `Wayfinder.Clear` are the write side.
+`XivWayfinder.v1.GetState` answers "where is the player being pointed, and how far is it" without any game reads of
+its own; `XivWayfinder.v1.SetTarget` and `XivWayfinder.v1.Clear` are the write side.
 
-## `Wayfinder.GetState`
+## `XivWayfinder.v1.GetState`
 
 ```json
 {
@@ -109,10 +111,10 @@ its own; `Wayfinder.SetTarget` and `Wayfinder.Clear` are the write side.
 | `distance` | Ground distance in yalms for `walk` and `arrived`, else `null`. |
 | `aetheryte` | For `teleport`: `{"id", "name", "attuned"}`, the aetheryte nearest the target in its zone, attuned ones first. |
 
-## What Wayfinder calls
+## What XivWayfinder calls
 
 When [vnavmesh](https://github.com/awgil/ffxiv_navmesh) is installed and the player has not switched it off,
-Wayfinder asks it for the walkable path and points at the path's next corner. These names come from vnavmesh's
+XivWayfinder asks it for the walkable path and points at the path's next corner. These names come from vnavmesh's
 own `vnavmesh/IPCProvider.cs` (checked against commit `6fc8072`, 2026-08-31):
 
 | Gate | Use |
@@ -121,4 +123,4 @@ own `vnavmesh/IPCProvider.cs` (checked against commit `6fc8072`, 2026-08-31):
 | `vnavmesh.Nav.PathfindCancelable` | `(Vector3 from, Vector3 to, bool fly, CancellationToken)` → `Task<List<Vector3>>`: the path's corners. At most one request at a time, at most one every two seconds; cancelled when the target changes or the plugin unloads. |
 | `vnavmesh.Query.Mesh.NearestPoint` | `(Vector3, float halfExtentXZ, float halfExtentY)` → `Vector3?`: the floor under a target that has no height (a flag, typed coordinates). |
 
-Wayfinder never calls `vnavmesh.Path.*` or `vnavmesh.SimpleMove.*`, the gates that move the character.
+XivWayfinder never calls `vnavmesh.Path.*` or `vnavmesh.SimpleMove.*`, the gates that move the character.

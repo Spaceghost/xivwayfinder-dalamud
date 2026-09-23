@@ -1,6 +1,6 @@
 # Changelog
 
-Every change to Wayfinder a player can see, newest first.
+Every change to XivWayfinder a player can see, newest first.
 
 Wayfinder has not yet been observed running in the game: host tests cover the direction and screen maths, the glove's placement, the target priority, the animation timing and the command and IPC parsing, and nothing below about in-game behaviour has been seen working. Treat it as the design, not as a result — the README says the same thing.
 
@@ -17,9 +17,9 @@ Statuses mean the same thing in every one of these mods:
 
 Merged, not in a release yet.
 
-* Wayfinder itself: a softly pulsing bead floats a couple of yalms ahead of you (1.5 to 3, your choice) in the direction to go, bobbing and breathing, dim while you face the right way and brighter as you turn away. Beside it, the game's own white pointing glove, read from your game files at run time and never shipped with the plugin, points the way; when the way is off screen it slides to the edge of the view and points there, with a little tap. Without that texture Wayfinder draws an original glove of its own. Choose bead, glove or both; an optional dotted trail; the distance in yalms on hover, always or never; a soft ring when you arrive. Host tests only; not seen in game.
+* XivWayfinder itself: a softly pulsing bead floats a couple of yalms ahead of you (1.5 to 3, your choice) in the direction to go, bobbing and breathing, dim while you face the right way and brighter as you turn away. Beside it, the game's own white pointing glove, read from your game files at run time and never shipped with the plugin, points the way; when the way is off screen it slides to the edge of the view and points there, with a little tap. Without that texture XivWayfinder draws an original glove of its own. Choose bead, glove or both; an optional dotted trail; the distance in yalms on hover, always or never; a soft ring when you arrive. Host tests only; not seen in game.
 * What it follows, in order and switchable: a target you set with `/wayfinder X Y [zone]` (map coordinates, pasted however the game writes them) or another plugin sets over IPC, your map flag, and your tracked quest's next step where the game gives it a place (the map's own quest markers, else the quest's to-do locations). In another zone it says which aetheryte to teleport to instead of pointing. `/wayfinder clear`, `/wayfinder auto|target|flag|quest`, `/wayfinder status`. The flag, quest and aetheryte reads have not been checked in game.
-* With vnavmesh installed, the pointer follows the walkable path's next corner instead of a straight line. Wayfinder only asks vnavmesh for paths; it never moves your character.
+* With vnavmesh installed, the pointer follows the walkable path's next corner instead of a straight line. XivWayfinder only asks vnavmesh for paths; it never moves your character.
 * Steps aside in cutscenes, zone changes, group pose and with the game UI hidden, and in combat and duties unless you turn that off.
 * `/wayfinder test` places a target 20 yalms straight ahead of you, so the pointer can be seen working anywhere.
-* For other plugins: `Wayfinder.SetTarget`, `Wayfinder.SetMapTarget`, `Wayfinder.Clear` and `Wayfinder.GetState` over Dalamud IPC, documented in docs/IPC.md, for Ghostty's coordinate links and XivMcp to call. No other plugin calls them yet.
+* For other plugins: `XivWayfinder.v1.SetTarget`, `XivWayfinder.v1.SetMapTarget`, `XivWayfinder.v1.Clear` and `XivWayfinder.v1.GetState` over Dalamud IPC, documented in docs/IPC.md, for Ghostty's coordinate links and XivMcp to call. No other plugin calls them yet.

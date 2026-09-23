@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-# Package a built Wayfinder plugin for Dalamud, and write the one-entry plugin
+# Package a built XivWayfinder plugin for Dalamud, and write the one-entry plugin
 # repository listing that spacegho.st/mods/ffxiv/plugins.json is assembled from.
 # Publishes nothing: the release workflow attaches what this writes.
 #
-#   dotnet build Wayfinder.slnx -c Release && tools/package.sh
+#   dotnet build XivWayfinder.slnx -c Release && tools/package.sh
 #
-# Output, all under $OUT (default ../wayfinder-build/release):
-#   latest.zip                  the plugin folder as Dalamud installs it (Wayfinder.json,
-#                               Wayfinder.dll, Wayfinder.Core.dll, no .pdb). The name is stable on purpose, so
+# Output, all under $OUT (default ../xiv-wayfinder-build/release):
+#   latest.zip                  the plugin folder as Dalamud installs it (XivWayfinder.json,
+#                               XivWayfinder.dll, XivWayfinder.Core.dll, no .pdb). The name is stable on purpose, so
 #                               .../releases/latest/download/latest.zip never changes.
-#   Wayfinder-<version>.zip       the same bytes under a self-describing name
+#   XivWayfinder-<version>.zip       the same bytes under a self-describing name
 #   pluginmaster.json           stable-channel listing (one entry, a JSON array)
 #   pluginmaster-testing.json   testing-channel listing, when TESTING=1
 #
 # Environment:
 #   BIN                the build output to package (default
-#                      $WAYFINDER_ARTIFACTS/bin/Wayfinder.Plugin/release, else
-#                      ../wayfinder-build/artifacts/bin/Wayfinder.Plugin/release)
-#   OUT                where to write (default ../wayfinder-build/release)
+#                      $XIVWAYFINDER_ARTIFACTS/bin/XivWayfinder.Plugin/release, else
+#                      ../xiv-wayfinder-build/artifacts/bin/XivWayfinder.Plugin/release)
+#   OUT                where to write (default ../xiv-wayfinder-build/release)
 #   REPO               owner/name on GitHub (default $GITHUB_REPOSITORY, else
-#                      Spaceghost/wayfinder-dalamud)
+#                      Spaceghost/xivwayfinder-dalamud)
 #   TESTING            1 to write pluginmaster-testing.json instead of pluginmaster.json
 #   RELEASE_TAG        the tag being released; the listing then carries the changelog
 #   SOURCE_DATE_EPOCH  timestamp for the zip entries and LastUpdate (default: the last
@@ -33,14 +33,14 @@ cd "$ROOT"
 command -v zip >/dev/null || { echo "error: zip is required" >&2; exit 127; }
 command -v python3 >/dev/null || { echo "error: python3 is required" >&2; exit 127; }
 
-ARTIFACTS="${WAYFINDER_ARTIFACTS:-$ROOT/../wayfinder-build/artifacts}"
-BIN="${BIN:-$ARTIFACTS/bin/Wayfinder.Plugin/release}"
-OUT="${OUT:-$ROOT/../wayfinder-build/release}"
-REPO="${REPO:-${GITHUB_REPOSITORY:-Spaceghost/wayfinder-dalamud}}"
-MANIFEST="$ROOT/src/Wayfinder.Plugin/Wayfinder.json"
+ARTIFACTS="${XIVWAYFINDER_ARTIFACTS:-$ROOT/../xiv-wayfinder-build/artifacts}"
+BIN="${BIN:-$ARTIFACTS/bin/XivWayfinder.Plugin/release}"
+OUT="${OUT:-$ROOT/../xiv-wayfinder-build/release}"
+REPO="${REPO:-${GITHUB_REPOSITORY:-Spaceghost/xivwayfinder-dalamud}}"
+MANIFEST="$ROOT/src/XivWayfinder.Plugin/XivWayfinder.json"
 
-[[ -f "$BIN/Wayfinder.dll" ]] || {
-  echo "error: $BIN/Wayfinder.dll missing; run: dotnet build Wayfinder.slnx -c Release" >&2
+[[ -f "$BIN/XivWayfinder.dll" ]] || {
+  echo "error: $BIN/XivWayfinder.dll missing; run: dotnet build XivWayfinder.slnx -c Release" >&2
   exit 1
 }
 [[ -f "$MANIFEST" ]] || { echo "error: $MANIFEST missing" >&2; exit 1; }
@@ -51,10 +51,10 @@ if [[ -z "${SOURCE_DATE_EPOCH:-}" ]]; then
   SOURCE_DATE_EPOCH="$(git -C "$ROOT" log -1 --format=%ct 2>/dev/null || echo 0)"
 fi
 
-STAGE="${TMPDIR:-/tmp}/wayfinder-package-$$"
+STAGE="${TMPDIR:-/tmp}/xivwayfinder-package-$$"
 trap 'rm -rf "$STAGE"' EXIT
 rm -rf "$STAGE"
-mkdir -p "$STAGE/Wayfinder" "$OUT"
+mkdir -p "$STAGE/XivWayfinder" "$OUT"
 
 # Everything the built plugin needs and nothing else: the managed assemblies and the
 # manifest. Dalamud provides its own assemblies (the SDK keeps those out of the output),
@@ -64,30 +64,30 @@ mkdir -p "$STAGE/Wayfinder" "$OUT"
     # A case pattern's * matches slashes too, so the narrow paths come first.
     case "$f" in
       ./runtimes/win-x64/native/*) ;;                                  # native code for the game's process, if any
-      ./runtimes/* | ./Wayfinder/*) continue ;;                          # other platforms; DalamudPackager's own staging copy
+      ./runtimes/* | ./XivWayfinder/*) continue ;;                          # other platforms; DalamudPackager's own staging copy
       ./*.deps.json | ./*.runtimeconfig.json | *.pdb | *.zip) continue ;;
       ./*/*) continue ;;                                               # nothing else from a subfolder
       ./*.dll | ./*.json) ;;
       *) continue ;;
     esac
-    mkdir -p "$STAGE/Wayfinder/$(dirname "$f")"
-    cp "$f" "$STAGE/Wayfinder/$f"
+    mkdir -p "$STAGE/XivWayfinder/$(dirname "$f")"
+    cp "$f" "$STAGE/XivWayfinder/$f"
   done )
-cp "$MANIFEST" "$STAGE/Wayfinder/Wayfinder.json"
+cp "$MANIFEST" "$STAGE/XivWayfinder/XivWayfinder.json"
 
 # Dalamud unpacks the zip straight into the plugin folder, so the files sit at the root.
-find "$STAGE/Wayfinder" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
-rm -f "$OUT/latest.zip" "$OUT/Wayfinder-$VERSION.zip"
-( cd "$STAGE/Wayfinder" && find . -type f | LC_ALL=C sort | sed 's|^\./||' |
+find "$STAGE/XivWayfinder" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
+rm -f "$OUT/latest.zip" "$OUT/XivWayfinder-$VERSION.zip"
+( cd "$STAGE/XivWayfinder" && find . -type f | LC_ALL=C sort | sed 's|^\./||' |
     TZ=UTC zip -X -D -q "$OUT/latest.zip" -@ )
-cp "$OUT/latest.zip" "$OUT/Wayfinder-$VERSION.zip"
+cp "$OUT/latest.zip" "$OUT/XivWayfinder-$VERSION.zip"
 echo "== $OUT/latest.zip"
 # Listed once and kept: `unzip -l | grep -q` makes unzip die of SIGPIPE, which under
 # `set -o pipefail` fails the check even when the file is there.
 ZIP_ENTRIES="$(unzip -Z1 "$OUT/latest.zip")"
 printf '%s\n' "$ZIP_ENTRIES"
 # What Dalamud opens the zip for. A missing manifest installs a plugin that cannot load.
-for want in Wayfinder.dll Wayfinder.json ; do
+for want in XivWayfinder.dll XivWayfinder.json ; do
   printf '%s\n' "$ZIP_ENTRIES" | grep -qxF "$want" || { echo "error: $want is not in the zip" >&2; exit 1; }
 done
 
