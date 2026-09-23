@@ -1,8 +1,9 @@
 # XivWayfinder: the full guide
 
 > **Status: not yet seen in game.** Everything here is the design as built and host-tested (the maths, the
-> priority rules, the timing, the command and IPC parsing); what the pointer looks like in the game, and whether
-> the game reads below return what they are expected to, has not been observed. The `/wayfinder test` command
+> priority rules, the timing, the command and IPC parsing, the minion glove's placement and the path trail's
+> sampling); what the pointer looks like in the game, whether the minion glove's client-side model appears at all,
+> and whether the game reads below return what they are expected to, has not been observed. The `/wayfinder test` command
 > exists to check it: see [Proving it in game](#proving-it-in-game).
 
 ## What it points at
@@ -55,7 +56,7 @@ always get the plain zone note. XivWayfinder never teleports you.
 
 ## What it looks like
 
-*Pointer*: **Bead**, **Glove** or **Both** (`/wayfinder bead|glove|both`, default both).
+*Pointer*: **Bead**, **Glove**, **Both** or **Minion glove** (`/wayfinder bead|glove|both|minion`, default both).
 
 * **The bead** floats 1.5 to 3 yalms ahead of your character (default 2.2) at chest height, in the direction to
   go. It bobs gently, breathes (its size and glow swell and ebb over 2.6 s), and its brightness says how well you
@@ -66,8 +67,16 @@ always get the plain zone note. XivWayfinder never teleports you.
   direction as the camera sees it. When the way lies off screen (behind the camera, or far to one side) it slides
   to the edge of the view where that direction leaves it, fingertip inside the margin, pointing out. It taps
   forward once a second. Pointing left, it is mirrored so the thumb stays on top.
-* **Trail** (off by default): a dotted line of small beads along the way, every 2.5 yalms from 2 yalms out, ten of
-  them by default, with a soft shimmer travelling outward along them.
+* **The minion glove** (see [below](#the-minion-glove)): the game's own 3D Wind-up Cursor model, floating beside
+  the bead and pointing along the way. The bead stays unless you switch it off; the flat glove still goes to the
+  screen edge when the way is off screen.
+* **Trail** (on by default): path highlighting. With a vnavmesh path, beads are laid along the walkable route
+  every 2.5 yalms from its start, fixed to the ground: the next stretch ahead of you (ten spacings by default, 27
+  yalms) is shown, joined by a soft line that bends where the route bends, brightest near you and fading along,
+  with a shimmer travelling outward. Beads you walk past drop away behind you. Without a path (no vnavmesh, no
+  mesh for the zone, no path found, still waiting for one, or *Follow vnavmesh's walkable path* off) it is the
+  straight dotted line towards the target, every 2.5 yalms from 2 yalms out, with *straight line* written under
+  its first bead; the settings window and `/wayfinder status` say why there is no path.
 * **Distance**: `42 y` under the bead (or the glove) on hover (default), always, or never.
 * **Arrived**: within 4 yalms (the arrival radius) the pointer gives way to a breathing ring on the spot and a
   small bead with *here* above it.
@@ -95,6 +104,24 @@ it is followed; the palm and fingertip fractions above are fixed. If neither tex
 own glove cursor* is off, XivWayfinder draws its own glove from simple shapes (cuff, palm, three curled fingers,
 thumb, pointing finger), white with an ink outline: an original drawing in the same spirit, not a copy.
 
+### The minion glove
+
+`/wayfinder minion`, or *Minion glove (Wind-up Cursor model)* in the settings. Not the default: it is the part
+most likely to misbehave, and it has not been seen in game.
+
+| | |
+| --- | --- |
+| Which model | The `Companion` sheet row whose English singular name is *Wind-up Cursor* (the sheet stores `wind-up cursor`), matched by name at run time; its `Model` is a `ModelChara` row. Read-only from game version 2026.09.15.0000.0000: Companion 51, ModelChara 469 (Type 3, Model 8044, Base 1, Variant 1: `chara/monster/m8044/obj/body/b0001/model/m8044b0001.mdl`). Nothing is hardcoded or shipped; when the row is not found the pointer behaves as **Both**. |
+| How it is shown | A local BattleChara from `ClientObjectManager.CreateBattleCharacter()` (the way Brio and Ktisis make theirs), `ModelContainer.ModelCharaId` set to that row, the `IsTargetable` flag cleared, placed with `SetPosition` and `SetRotation`, and `EnableDraw()` one frame later. Each frame it is moved and turned; with *Tilt it up and down slopes* the draw object's rotation (`DrawObject->Object.Rotation`) is written with a pitch, and its scale with the size setting. |
+| Where | 1.6 yalms ahead along the way, 0.7 to the right, 0.5 above your feet (all settings), bobbing gently and tapping forward once a second, easing rather than snapping as the way turns. |
+| Which way | Along the route: with a vnavmesh path, towards the point 4 yalms further along it, so it follows the bends and tilts with the slope underfoot; without one, towards the target (a flag has no height, so it stays level). *Turn the model* corrects it if the model's finger does not point along its own forward. |
+| When it goes | Deleted with `DeleteObjectByIndex` at once when you leave the zone, log out, enter a cutscene or group pose, hide the UI, switch the pointer off or away from the minion, when it is hidden in combat or a duty, and when the plugin unloads; after a second when you arrive or the target is in another zone. If the game removed it first, XivWayfinder only forgets it (it checks the slot still holds its model before deleting). Three failed creations and it gives up until you choose the style again. |
+
+It is not a companion summon: no action is used, nothing is sent to the server, and no other player can see it.
+What is not known until it is tried in game: that the model loads and animates on a plain BattleChara, whether
+its finger points along its forward (hence the turn setting), whether the game keeps the tilt or resets the draw
+object's rotation each frame (then it simply stays level), and how big it is at size 1.
+
 ## When it steps aside
 
 Always hidden during cutscenes, zone changes, group pose, when you hide the game UI, and
@@ -104,7 +131,7 @@ with no character. Hidden in combat and in duties by default; both are settings.
 
 With [vnavmesh](https://github.com/awgil/ffxiv_navmesh) installed and loaded, and *Follow vnavmesh's walkable
 path* on (the default), XivWayfinder asks vnavmesh for the path to the target and points at its next corner instead
-of straight at the target; the trail, when on, follows the path. A target without a height (the flag, typed
+of straight at the target; the trail, when on, lays its beads along the path (see *Trail* above). A target without a height (the flag, typed
 coordinates) is placed on the navmesh floor under it first. A new path is asked for only when the target moves,
 you stray more than 6 yalms from the path, or there is none yet, and never more often than every two seconds.
 Until a path arrives, or when none is found, it points in a straight line. The settings window shows what
@@ -123,9 +150,9 @@ presses a key, moves, turns or teleports your character.
 | `/wayfinder clear` | Forgets that target. |
 | `/wayfinder test [yalms]` | A target 20 yalms (3 to 200) straight ahead of your character. |
 | `/wayfinder auto` · `target` · `flag` · `quest` | What to follow. |
-| `/wayfinder bead` · `glove` · `both` | What the pointer looks like. |
+| `/wayfinder bead` · `glove` · `both` · `minion` | What the pointer looks like; `minion` (or `cursor`) is the Wind-up Cursor model. |
 | `/wayfinder on` · `off` · `toggle` | Shows or hides it. |
-| `/wayfinder status` | One line: what it points at, how far, and why it is hidden if it is. |
+| `/wayfinder status` | One line: what it points at, how far, along a path or in a straight line (and why), and why it is hidden if it is. |
 
 `/xivwayfinder` is an alias for `/wayfinder`, with every argument the same.
 
@@ -148,5 +175,14 @@ Nothing below has been done yet. With the plugin loaded as a dev plugin:
 6. Enter a cutscene, hide the UI, start a fight: the pointer steps aside as the settings say.
 7. With vnavmesh installed, stand behind a wall from a flag: the pointer aims around it.
 8. Switch *Use the game's own glove cursor* off and on: the drawn glove and the game's glove swap.
+9. `/wayfinder minion`, then `/wayfinder test`. Expect the white Wind-up Cursor glove model beside the bead,
+   pointing at the test target, and the settings to say the model was found (Companion 51, ModelChara 469 on
+   2026.09.15). Check: does its finger point the way (else note the *Turn the model* value that fixes it); is its
+   size sensible; is it untargetable (click it); does it go away on `/wayfinder off`, a zone change, a cutscene,
+   group pose and unloading the plugin (`/xlplugins`), with no leftover model; does a friend next to you see
+   nothing. Walk up and down a slope with vnavmesh: does it tilt, or stay level.
+10. With vnavmesh, set a flag behind a building: the trail's beads and line should bend around it along the
+    walkable way and stay on the ground as you walk past them. Unload vnavmesh: the trail becomes a straight
+    line labelled *straight line*, and `/wayfinder status` says *in a straight line (vnavmesh: not installed)*.
 
 Please report what you see, with `/wayfinder status` and `/xllog` lines for anything that looks wrong.

@@ -9,6 +9,12 @@ public enum PointerStyle
     Bead,
     Glove,
     Both,
+
+    /// <summary>
+    /// The game's own Wind-up Cursor minion model floating beside the bead, pointing; the drawn glove still goes to
+    /// the screen's edge when the way is off screen.
+    /// </summary>
+    Minion,
 }
 
 /// <summary>When the distance in yalms is written beside the pointer.</summary>
@@ -59,7 +65,7 @@ public static class WayfinderCommands
     public const string Help =
         "/wayfinder X Y [zone] points at map coordinates (the zone defaults to where you are) · /wayfinder clear · " +
         "/wayfinder test (a target 20 yalms ahead) · /wayfinder auto|target|flag|quest chooses what to follow · " +
-        "/wayfinder bead|glove|both · /wayfinder on|off · /wayfinder status · /wayfinder opens the settings. /xivwayfinder works the same.";
+        "/wayfinder bead|glove|both|minion · /wayfinder on|off · /wayfinder status · /wayfinder opens the settings. /xivwayfinder works the same.";
 
     public static WayfinderRequest Parse(string? arguments)
     {
@@ -101,6 +107,8 @@ public static class WayfinderCommands
                     return new WayfinderRequest(Verb.Style) { Style = PointerStyle.Glove };
                 case "both":
                     return new WayfinderRequest(Verb.Style) { Style = PointerStyle.Both };
+                case "minion" or "cursor":
+                    return new WayfinderRequest(Verb.Style) { Style = PointerStyle.Minion };
                 case "test":
                 {
                     if (tokens.Length == 1)

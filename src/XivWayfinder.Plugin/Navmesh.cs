@@ -39,11 +39,17 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
     /// <summary>For the settings window.</summary>
     public string Status { get; private set; } = "not installed";
 
-    /// <summary>The corners of the current path, for the trail; empty when pointing in a straight line.</summary>
-    public ReadOnlySpan<Vector3> Path => path;
+    /// <summary>
+    /// The corners of the current path, for the trail; empty when pointing in a straight line. The array is
+    /// replaced, never changed in place, so the overlay can read it while the framework swaps in a new one.
+    /// </summary>
+    public Vector3[] Path => path;
 
     /// <summary>Which corner of <see cref="Path"/> the pointer aims at, or -1.</summary>
     public int Corner { get; private set; } = -1;
+
+    /// <summary>The pointer and the trail follow <see cref="Path"/> this frame.</summary>
+    public bool Following => Corner >= 0 && path.Length >= 2;
 
     /// <summary>
     /// The point to aim at this frame: the next corner of the walkable path, or null to point straight at
@@ -56,7 +62,7 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
             lastInstallCheck = now;
             installed = pluginInterface.InstalledPlugins.Any(p => p.InternalName == "vnavmesh" && p.IsLoaded);
             if (!installed)
-                Status = "not installed: pointing in a straight line";
+                Status = "not installed";
         }
 
         if (!installed)
@@ -74,7 +80,7 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
         if (inFlight is { IsCompleted: true } done)
         {
             path = done.IsCompletedSuccessfully && done.Result is { Count: > 1 } corners ? [.. corners] : [];
-            Status = path.Length > 0 ? $"following a {path.Length}-corner path" : "no path found: pointing in a straight line";
+            Status = path.Length > 0 ? $"following a {path.Length}-corner path" : "no path found";
             inFlight = null;
         }
 
@@ -110,7 +116,7 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
         {
             if (!isReady.InvokeFunc())
             {
-                Status = "waiting for vnavmesh to load this zone's mesh";
+                Status = "waiting for this zone's mesh";
                 return;
             }
 
@@ -127,12 +133,12 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
             cancel = new CancellationTokenSource();
             inFlight = pathfind.InvokeFunc(player, to, false, cancel.Token);
             pathGoal = goal;
-            Status = "asking vnavmesh for a path";
+            Status = "asking for a path";
         }
         catch (IpcNotReadyError)
         {
             installed = false;
-            Status = "vnavmesh is not answering: pointing in a straight line";
+            Status = "not answering";
             Idle();
         }
         catch (Exception ex)
@@ -140,7 +146,7 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
             if (!warned)
                 log.Warning(ex, "XivWayfinder: vnavmesh pathfinding failed; pointing in a straight line");
             warned = true;
-            Status = "vnavmesh error: pointing in a straight line";
+            Status = "error while asking for a path";
             Idle();
         }
     }
