@@ -40,7 +40,29 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>The glove picture's edge in pixels.</summary>
     public float GloveSize { get; set; } = 44f;
 
-    public bool Trail { get; set; }
+    /// <summary>With the minion glove, also show the bead.</summary>
+    public bool MinionWithBead { get; set; } = true;
+
+    /// <summary>How far ahead of the character the minion glove floats, yalms.</summary>
+    public float MinionAhead { get; set; } = MinionLayout.Default.Ahead;
+
+    /// <summary>How far to the right of the way (negative: left) it floats, yalms.</summary>
+    public float MinionSide { get; set; } = MinionLayout.Default.Side;
+
+    /// <summary>Its height above the character's feet, yalms.</summary>
+    public float MinionHeight { get; set; } = MinionLayout.Default.Height;
+
+    /// <summary>The model's size, 1 as the game makes it.</summary>
+    public float MinionSize { get; set; } = 1f;
+
+    /// <summary>Degrees added to its yaw, for when the finger does not point the way in game.</summary>
+    public float MinionTurn { get; set; }
+
+    /// <summary>Tilt it up and down slopes (writes the draw object's rotation; not verified in game).</summary>
+    public bool MinionTilt { get; set; } = true;
+
+    /// <summary>Highlight the way: along vnavmesh's path when there is one, else a straight dotted line.</summary>
+    public bool Trail { get; set; } = true;
 
     /// <summary>Trail beads, spaced <see cref="TrailSpacing"/> yalms apart.</summary>
     public int TrailDots { get; set; } = 10;
@@ -63,6 +85,8 @@ public sealed class Configuration : IPluginConfiguration
 
     public SourceToggles Toggles() => new(UseExplicit, UseFlag, UseQuest);
 
+    public MinionLayout MinionPlacement() => new(MinionAhead, MinionSide, MinionHeight, MinionTurn, MinionTilt ? MinionLayout.Default.MaxPitchDegrees : 0f);
+
     /// <summary>Keeps hand-edited or old values inside what the overlay can draw.</summary>
     public void Clamp()
     {
@@ -70,6 +94,11 @@ public sealed class Configuration : IPluginConfiguration
         BeadHeight = Fit(BeadHeight, 0f, 2.5f, 1.1f);
         BeadSize = Fit(BeadSize, 3f, 20f, 8f);
         GloveSize = Fit(GloveSize, 20f, 96f, 44f);
+        MinionAhead = Fit(MinionAhead, 0.8f, 3f, MinionLayout.Default.Ahead);
+        MinionSide = Fit(MinionSide, -2f, 2f, MinionLayout.Default.Side);
+        MinionHeight = Fit(MinionHeight, 0f, 2.5f, MinionLayout.Default.Height);
+        MinionSize = Fit(MinionSize, 0.25f, 3f, 1f);
+        MinionTurn = Fit(MinionTurn, -180f, 180f, 0f);
         TrailDots = Math.Clamp(TrailDots, 2, 40);
         TrailSpacing = Fit(TrailSpacing, 1f, 8f, 2.5f);
         ArriveRadius = Fit(ArriveRadius, 1f, 20f, 4f);

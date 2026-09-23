@@ -82,6 +82,7 @@ its own; `XivWayfinder.v1.SetTarget` and `XivWayfinder.v1.Clear` are the write s
   "playerTerritoryId": 148,
   "guide": "walk",
   "navmesh": true,
+  "routeNote": "",
   "target": {
     "source": "flag",
     "territoryId": 148,
@@ -103,10 +104,11 @@ its own; `XivWayfinder.v1.SetTarget` and `XivWayfinder.v1.Clear` are the write s
 | `visible` | Something is being drawn right now. |
 | `reason` | Why not, when not: `switched off`, `no character`, `changing zone`, `cutscene`, `group pose`, `game UI hidden`, `in combat`, `in a duty`, `nothing to point at`. |
 | `mode` | `auto`, `target`, `flag` or `quest`: which sources the player follows. |
-| `style` | `bead`, `glove` or `both`. |
+| `style` | `bead`, `glove`, `both` or `minion`. |
 | `playerTerritoryId` | The player's territory. |
 | `guide` | `none`, `walk` (same zone, pointing), `arrived`, `teleport` (another zone, an aetheryte is named) or `elsewhere` (another zone without an aetheryte). |
 | `navmesh` | The pointer follows a vnavmesh path rather than a straight line. |
+| `routeNote` | When `navmesh` is false: why, as vnavmesh's state (`not installed`, `no path found`, `waiting for this zone's mesh`, `asking for a path`, `switched off in the settings`, ...); empty when following a path. |
 | `target` | `null`, or the target: `source` is `target` (IPC or `/wayfinder`), `flag` or `quest`; `y` is `null` when the height is unknown. Numbers are rounded to 0.01. |
 | `distance` | Ground distance in yalms for `walk` and `arrived`, else `null`. |
 | `aetheryte` | For `teleport`: `{"id", "name", "attuned"}`, the aetheryte nearest the target in its zone, attuned ones first. |
