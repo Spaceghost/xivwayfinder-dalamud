@@ -1,7 +1,11 @@
 # XivWayfinder
 
 <p align="center">
-  <img src="images/banner.png" width="100%" alt="XivWayfinder: a glowing bead and a trail of small beads on a dark sky">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/readme/hero-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="images/readme/hero-light.png">
+    <img src="images/readme/hero-dark.png" width="100%" alt="XivWayfinder: which way to go, softly">
+  </picture>
 </p>
 
 <img src="images/icon.png" width="96" height="96" align="right" alt="XivWayfinder icon">
