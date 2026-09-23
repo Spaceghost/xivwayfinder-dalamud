@@ -54,7 +54,18 @@ public static class Pulse
     {
         if (count <= 0 || index < 0 || index >= count)
             return 0f;
-        var along = (index + 0.5f) / count;
+        return TrailAt((index + 0.5f) / count, t, period);
+    }
+
+    /// <summary>
+    /// The same for a point <paramref name="along"/> of the way (0 at the player, 1 at the trail's far end): the
+    /// crest travels outward along the route, and points fade with distance.
+    /// </summary>
+    public static float TrailAt(float along, double t, float period)
+    {
+        if (!float.IsFinite(along))
+            return 0f;
+        along = Math.Clamp(along, 0f, 1f);
         var crest = !(period > 0f) || !double.IsFinite(t) ? 0f : (float)(t / period % 1.0);
         var gap = MathF.Abs(along - crest);
         gap = MathF.Min(gap, 1f - gap);

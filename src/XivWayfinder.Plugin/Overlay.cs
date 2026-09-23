@@ -17,7 +17,7 @@ internal readonly record struct Scene(bool Visible, Guide Guide, Vector3 Player,
 /// draw-list calls (no ImGui state is pushed), and never throws: a failure is logged once a minute and the
 /// frame is skipped.
 /// </summary>
-internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTexture gameGlove, Navmesh navmesh, IPluginLog log)
+internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTexture gameGlove, GloveMinion minion, Navmesh navmesh, IPluginLog log)
 {
     private const float GoalLookAhead = 40f;
 
@@ -107,7 +107,11 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
 
         Vector2? hoverAt = null;
         var beadScale = 1f;
-        if (config.Style is PointerStyle.Bead or PointerStyle.Both)
+        // the minion glove stands in for the drawn one near the character; without its model, Minion is Both
+        var minionStyle = config.Style == PointerStyle.Minion;
+        var minionModel = minionStyle && minion.Available;
+        var paired = config.Style == PointerStyle.Both || (minionStyle && !minionModel);
+        if (config.Style is PointerStyle.Bead or PointerStyle.Both || (minionStyle && (config.MinionWithBead || !minionModel)))
         {
             var bead = Heading.Ahead(p, dir, config.BeadDistance, config.BeadHeight + Pulse.Bob(t, 2.2f, 0.12f));
             if (gameGui.WorldToScreen(bead, out var sBead, out var beadInView) && beadInView)
@@ -119,15 +123,16 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
             }
         }
 
-        if (config.Style is PointerStyle.Glove or PointerStyle.Both)
+        // the minion model points near the character; the drawn glove still goes to the edge when the way is off screen
+        if (config.Style is PointerStyle.Glove or PointerStyle.Both || (minionStyle && (!minionModel || !onScreen)))
         {
             var size = config.GloveSize;
             var model = UseGameGlove(out _, out _, out _) ? Glove.GameSprite : VectorGlove.Model;
             Vector2 anchor;
             float gloveAlpha;
             var angle = ScreenEdge.Angle(screenDir);
-            var above = config.Style == PointerStyle.Both ? 2.1f : 1.6f;
-            if (onScreen && gameGui.WorldToScreen(Heading.Ahead(p, dir, config.Style == PointerStyle.Both ? 0.8f : 1.4f, above), out var sNear, out var nearInView) && nearInView)
+            var above = paired ? 2.1f : 1.6f;
+            if (onScreen && gameGui.WorldToScreen(Heading.Ahead(p, dir, paired ? 0.8f : 1.4f, above), out var sNear, out var nearInView) && nearInView)
             {
                 anchor = sNear;
                 gloveAlpha = appear * (0.55f + 0.45f * glow);
@@ -207,47 +212,73 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
         }
     }
 
+    private const int MaxTrail = 48;
+    private const int MaxLine = 128;
+
+    /// <summary>
+    /// The trail. Along vnavmesh's path when there is one: beads fixed to the route every
+    /// <see cref="Configuration.TrailSpacing"/> yalms, the next stretch ahead of the character joined by a soft line,
+    /// brightest near the character and fading along, with a shimmer travelling outward; beads walked past drop away
+    /// behind. Without a path, the straight dotted line towards the target, labelled "straight line".
+    /// </summary>
     private void DrawTrail(ImDrawListPtr dl, in Scene scene, Vector2 dir, double t)
     {
         var p = scene.Player;
-        var count = config.TrailDots;
         var spacing = config.TrailSpacing;
-        var corners = navmesh.Path;
-        var corner = navmesh.Corner;
-        var total = scene.Guide.Distance;
-        for (var i = 0; i < count; i++)
+        var length = spacing * config.TrailDots + 2f;
+        Span<TrailPoint> beads = stackalloc TrailPoint[MaxTrail];
+        var path = navmesh.Following ? navmesh.Path : [];
+        var along = path.Length >= 2;
+        int n;
+        if (along)
         {
-            var along = 2f + i * spacing;
-            if (along >= total)
-                break;
-            Vector3 at;
-            if (corner >= 0 && corner < corners.Length)
-                at = AlongPath(p, corners, corner, along);
-            else
-                at = Heading.Ahead(p, dir, along, 0f);
-            at.Y += 0.25f;
+            var arc = PathTrail.Project(path, p, out _);
+
+            // the route's line for the stretch ahead, a yalm at a time so it bends where the path does
+            Span<TrailPoint> line = stackalloc TrailPoint[MaxLine];
+            var m = PathTrail.Sample(path, arc, 1f, 0.8f, MathF.Min(length, MaxLine), line);
+            var prevOk = false;
+            var prev = Vector2.Zero;
+            var prevAhead = 0f;
+            for (var i = 0; i < m; i++)
+            {
+                var ok = gameGui.WorldToScreen(line[i].Position + new Vector3(0f, 0.12f, 0f), out var s, out var inView) && inView;
+                if (ok && prevOk)
+                {
+                    var fade = 1f - 0.75f * Math.Clamp((prevAhead + line[i].Ahead) * 0.5f / length, 0f, 1f);
+                    dl.AddLine(prev, s, Colors.Pack(config.BeadColor, 0.35f * fade * appear), 3f);
+                }
+
+                prevOk = ok;
+                prev = s;
+                prevAhead = line[i].Ahead;
+            }
+
+            n = PathTrail.Sample(path, arc, spacing, 0.8f, length, beads);
+        }
+        else
+        {
+            n = PathTrail.Straight(p, dir, spacing, config.TrailDots, scene.Guide.Distance, beads);
+        }
+
+        var labelled = along;
+        for (var i = 0; i < n; i++)
+        {
+            var at = beads[i].Position;
+            at.Y = (along ? at.Y : p.Y) + 0.25f;
             if (!gameGui.WorldToScreen(at, out var s, out var inView) || !inView)
                 continue;
-            var b = Pulse.Trail(i, count, t, 1.8f) * appear;
+            // near the character a bead fades in rather than popping up under its feet
+            var near = Pulse.SmoothStep(0.8f, 2f, beads[i].Ahead);
+            var b = Pulse.TrailAt(beads[i].Ahead / length, t, 1.8f) * near * appear;
             dl.AddCircleFilled(s, 2.2f + 1.6f * b, Colors.Pack(config.BeadColor, 0.9f * b), 12);
+            if (!labelled)
+            {
+                // say what this is: a straight line, not the walkable way
+                labelled = true;
+                Label(dl, s + new Vector2(0f, 8f), "straight line", 0.6f * appear);
+            }
         }
-    }
-
-    /// <summary>The point <paramref name="along"/> yalms from the player along the path's remaining corners.</summary>
-    private static Vector3 AlongPath(Vector3 player, ReadOnlySpan<Vector3> corners, int from, float along)
-    {
-        var a = player;
-        for (var i = from; i < corners.Length; i++)
-        {
-            var b = corners[i];
-            var leg = Heading.FlatDistance(a, b);
-            if (along <= leg && leg > 1e-4f)
-                return Vector3.Lerp(a, b, along / leg);
-            along -= leg;
-            a = b;
-        }
-
-        return a;
     }
 
     private void DrawArrived(ImDrawListPtr dl, in Scene scene, double t)

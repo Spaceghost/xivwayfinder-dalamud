@@ -49,6 +49,8 @@ public sealed class CommandAndIpcTests
         Assert.Equal(PointerStyle.Glove, WayfinderCommands.Parse("glove").Style);
         Assert.Equal(PointerStyle.Bead, WayfinderCommands.Parse("bead").Style);
         Assert.Equal(PointerStyle.Both, WayfinderCommands.Parse("both").Style);
+        Assert.Equal(PointerStyle.Minion, WayfinderCommands.Parse("minion").Style);
+        Assert.Equal(PointerStyle.Minion, WayfinderCommands.Parse("Cursor").Style);
         Assert.Equal(20f, WayfinderCommands.Parse("test").Distance);
         Assert.Equal(35f, WayfinderCommands.Parse("test 35").Distance);
         Assert.Equal(Verb.Invalid, WayfinderCommands.Parse("test 1").Verb);
@@ -153,6 +155,7 @@ public sealed class CommandAndIpcTests
         Assert.Equal("auto", root.GetProperty("mode").GetString());
         Assert.Equal("glove", root.GetProperty("style").GetString());
         Assert.True(root.GetProperty("navmesh").GetBoolean());
+        Assert.Equal("", root.GetProperty("routeNote").GetString());
         Assert.Equal(42.19, root.GetProperty("distance").GetDouble(), 3);
         var t = root.GetProperty("target");
         Assert.Equal("flag", t.GetProperty("source").GetString());
@@ -200,6 +203,17 @@ public sealed class CommandAndIpcTests
             Guide = new Guide(GuideKind.Walk, target, 19.6f, new Vector2(1, 0), null),
         });
         Assert.Equal("pointing at target \"test: 20 yalms ahead\": 20 yalms away · following auto · showing", line);
+    }
+
+    [Fact]
+    public void StatusLineSaysWhetherItFollowsAPathOrAStraightLine()
+    {
+        var target = new Target(TargetSource.Flag, 132, 0, 0, null, "map flag");
+        var walk = new Guide(GuideKind.Walk, target, 55f, new Vector2(1, 0), null);
+        var path = WayfinderIpc.StatusLine(new WayfinderState { Visible = true, Guide = walk, Navmesh = true, RouteNote = "following a 6-corner path" });
+        Assert.Contains("55 yalms away, along vnavmesh's path ·", path);
+        var straight = WayfinderIpc.StatusLine(new WayfinderState { Visible = true, Guide = walk, RouteNote = "not installed" });
+        Assert.Contains("55 yalms away, in a straight line (vnavmesh: not installed) ·", straight);
     }
 
     [Fact]

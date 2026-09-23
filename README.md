@@ -22,9 +22,10 @@ through walls.
 > **Pointing only.** XivWayfinder never moves, turns or teleports your character, and never asks vnavmesh to.
 
 > **Status: experimental, not verified in game.** Host tests cover the direction and angle maths, the
-> screen-edge clamping, the glove's placement and mirroring, the target priority, the pulse and tap timing, the
-> command and IPC parsing and the state JSON. Nothing has been observed in the game yet: not the drawing, not the
-> flag, quest and aetheryte reads, not vnavmesh. What follows is implemented intent. `/wayfinder test` puts a
+> screen-edge clamping, the glove's placement and mirroring, the minion glove's placement, turning and tilt, the
+> path trail's sampling along the route, the target priority, the pulse and tap timing, the command and IPC
+> parsing and the state JSON. Nothing has been observed in the game yet: not the drawing, not the minion glove's
+> client-side model, not the flag, quest and aetheryte reads, not vnavmesh. What follows is implemented intent. `/wayfinder test` puts a
 > target 20 yalms ahead of you to prove it; [docs/WAYFINDER.md](docs/WAYFINDER.md#proving-it-in-game) lists
 > what to look for.
 
@@ -39,7 +40,14 @@ through walls.
   time, never copied into this repository. Near your character while the way is on screen, clamped to the screen
   edge and pointing when it is not, with a little tap. Without that texture, XivWayfinder draws an original glove of
   its own. Choose **bead**, **glove** or **both**.
-- An optional dotted trail of small beads, the distance in yalms on hover or always, a soft ring when you arrive.
+- **The minion glove** (`/wayfinder minion`, not the default): the game's own 3D model of the *Wind-up Cursor*
+  minion, the white pointing glove, floating beside the bead and turning to point the way, tilting up and down
+  slopes. It is a client-side model only you see, found in your game data by name at run time: never a summoned
+  minion, never shipped with the plugin, nothing sent to the server. The flat glove still points from the screen
+  edge when the way is off screen. Untested in game.
+- **Path highlighting**: with vnavmesh, a trail of beads and a soft line laid along the walkable route ahead of
+  you, fixed to the ground so you walk past them, not a line as the crow flies. Without a path it is a straight
+  dotted line and says so. The distance in yalms on hover or always, a soft ring when you arrive.
 - For a target in another zone: *Teleport to (aetheryte)* instead of an arrow, attuned aetherytes first.
 - Steps aside in cutscenes, zone changes, group pose and with the UI hidden; in combat and duties too unless you
   say otherwise.
@@ -81,16 +89,17 @@ Dalamud's configuration. `XIVWAYFINDER_ARTIFACTS` and `XIVWAYFINDER_STAGE` overr
 | `/wayfinder clear` | Forgets that target. |
 | `/wayfinder test [yalms]` | A target 20 yalms straight ahead: the quickest way to see it work. |
 | `/wayfinder auto` · `target` · `flag` · `quest` | Follow everything by priority, or one source only. |
-| `/wayfinder bead` · `glove` · `both` | The pointer's look. |
+| `/wayfinder bead` · `glove` · `both` · `minion` | The pointer's look; `minion` is the Wind-up Cursor model. |
 | `/wayfinder on` · `off` · `status` | Show, hide, or say what it is doing. |
 
 `/xivwayfinder` is the same command under the plugin's full name.
 
 ## Settings
 
-What to follow and in which order (target, flag, quest), the aetheryte hint, bead or glove or both, the game's
-glove or the drawn one, the bead's distance, height, size and colour, the glove's size, the trail, the distance
-readout, the arrival radius, hiding in combat and duties, and vnavmesh. The window's first line always says what
+What to follow and in which order (target, flag, quest), the aetheryte hint, bead or glove or both or the minion
+glove (and where it floats, its size, a turn correction and tilting), the game's glove or the drawn one, the bead's
+distance, height, size and colour, the glove's size, the trail (on by default) and whether it follows a path or a
+straight line, the distance readout, the arrival radius, hiding in combat and duties, and vnavmesh. The window's first line always says what
 is being pointed at and, when nothing shows, why. Details: [docs/WAYFINDER.md](docs/WAYFINDER.md).
 
 ## For other plugins
@@ -107,8 +116,10 @@ Four IPC functions, no assembly reference needed. Full rules and the JSON: [docs
 ## Privacy and security
 
 XivWayfinder talks to nothing on the network and writes nothing but its own settings. It reads the game's own UI
-files for the glove picture, the game's sheets for zones, maps and aetherytes, and the journal, flag and map
-markers from game memory; it changes none of them.
+files for the glove picture, the game's sheets for zones, maps, aetherytes and the Wind-up Cursor minion, and the
+journal, flag and map markers from game memory; it changes none of them. With the minion glove chosen it creates
+one object of its own in the game's client-side object list (as Brio and Ktisis do for theirs), moves it, and
+deletes it again; that object exists only in your game's memory.
 
 ## Development
 
