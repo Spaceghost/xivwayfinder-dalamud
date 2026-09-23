@@ -42,10 +42,10 @@ jobs:
         run: tools/fetch-dalamud.sh
 
       - name: Test
-        run: dotnet test tests/Wayfinder.Core.Tests -c Release
+        run: dotnet test tests/XivWayfinder.Core.Tests -c Release
 
       - name: Build
-        run: dotnet build src/Wayfinder.Plugin/Wayfinder.Plugin.csproj -c Release
+        run: dotnet build src/XivWayfinder.Plugin/XivWayfinder.Plugin.csproj -c Release
 
       - name: Package (the release path, run on every push)
         env:
@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: wayfinder-plugin-${{ github.sha }}
+          name: xivwayfinder-plugin-${{ github.sha }}
           path: ${{ runner.temp }}/release
           if-no-files-found: error
           retention-days: 14

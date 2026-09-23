@@ -1,12 +1,12 @@
 <Project>
   <!--
-    Build outputs live outside the source tree (~/wayfinder-build by default).
-    Set WAYFINDER_ARTIFACTS to give a concurrent build its own bin/obj tree.
+    Build outputs live outside the source tree (~/xiv-wayfinder-build by default).
+    Set XIVWAYFINDER_ARTIFACTS to give a concurrent build its own bin/obj tree.
   -->
   <PropertyGroup>
     <UseArtifactsOutput>true</UseArtifactsOutput>
-    <ArtifactsPath Condition="'$(WAYFINDER_ARTIFACTS)' != ''">$(WAYFINDER_ARTIFACTS)</ArtifactsPath>
-    <ArtifactsPath Condition="'$(ArtifactsPath)' == ''">$(MSBuildThisFileDirectory)../wayfinder-build/artifacts</ArtifactsPath>
+    <ArtifactsPath Condition="'$(XIVWAYFINDER_ARTIFACTS)' != ''">$(XIVWAYFINDER_ARTIFACTS)</ArtifactsPath>
+    <ArtifactsPath Condition="'$(ArtifactsPath)' == ''">$(MSBuildThisFileDirectory)../xiv-wayfinder-build/artifacts</ArtifactsPath>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

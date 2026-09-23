@@ -1,4 +1,4 @@
-# Wayfinder: the full guide
+# XivWayfinder: the full guide
 
 > **Status: not yet seen in game.** Everything here is the design as built and host-tested (the maths, the
 > priority rules, the timing, the command and IPC parsing); what the pointer looks like in the game, and whether
@@ -10,7 +10,7 @@
 Three sources, in this priority order when *Follow* is **Everything, by priority** (`/wayfinder auto`):
 
 1. **A target you or another plugin set.** `/wayfinder X Y [zone]`, `/wayfinder test`, or
-   [IPC](IPC.md) (`Wayfinder.SetTarget`, `Wayfinder.SetMapTarget`). One at a time; a new one replaces the old,
+   [IPC](IPC.md) (`XivWayfinder.v1.SetTarget`, `XivWayfinder.v1.SetMapTarget`). One at a time; a new one replaces the old,
    `/wayfinder clear` removes it, and reaching it clears it (after 1.5 s inside the arrival radius, unless
    *Forget a /wayfinder target once reached* is off).
 2. **Your map flag.** The first flag in `AgentMap.FlagMapMarkers` while `FlagMarkerCount` is above zero. The flag
@@ -24,7 +24,7 @@ to flag or quest only, and says so; an IPC call never changes your settings.
 ### Where a quest step is
 
 What was looked at in the game's data structures (FFXIVClientStructs as shipped with Dalamud 15.0.3.5, and the
-Lumina sheets), and what Wayfinder uses:
+Lumina sheets), and what XivWayfinder uses:
 
 | Source | What it has | Used |
 | --- | --- | --- |
@@ -46,12 +46,12 @@ guess, not a documented meaning. Nothing of this has been checked against a real
 
 ### Another zone
 
-When the target is in another zone, Wayfinder does not point: a small glass note above your character says
+When the target is in another zone, XivWayfinder does not point: a small glass note above your character says
 **Teleport to *aetheryte*** (the aetheryte nearest the target in that zone, attuned ones first, *(not attuned)*
 otherwise) with the target and its zone underneath. Aetheryte positions come from the `MapMarker` sheet
 (`DataType` 3, `DataKey` the aetheryte), converted from map pixels to world coordinates, else the aetheryte's
 first `Level` row. A zone without one says *In zone*. Switch *In another zone, name the nearest aetheryte* off to
-always get the plain zone note. Wayfinder never teleports you.
+always get the plain zone note. XivWayfinder never teleports you.
 
 ## What it looks like
 
@@ -79,7 +79,7 @@ ImGui state and catches every exception: a failed frame is logged (once a minute
 
 ### The glove picture
 
-Wayfinder ships no image of the glove. At run time it reads the cursor from your installed game files, the way
+XivWayfinder ships no image of the glove. At run time it reads the cursor from your installed game files, the way
 the game draws it, so texture mods apply too:
 
 | | |
@@ -92,7 +92,7 @@ the game draws it, so texture mods apply too:
 Measured on game version 2026.09.15.0000.0000 by reading those files read-only from the game's sqpack. At run
 time the part is taken from the ULD itself (the first part that uses the cursor texture), so a patch that moves
 it is followed; the palm and fingertip fractions above are fixed. If neither texture exists, or *Use the game's
-own glove cursor* is off, Wayfinder draws its own glove from simple shapes (cuff, palm, three curled fingers,
+own glove cursor* is off, XivWayfinder draws its own glove from simple shapes (cuff, palm, three curled fingers,
 thumb, pointing finger), white with an ink outline: an original drawing in the same spirit, not a copy.
 
 ## When it steps aside
@@ -103,15 +103,15 @@ with no character. Hidden in combat and in duties by default; both are settings.
 ## Walkable paths with vnavmesh
 
 With [vnavmesh](https://github.com/awgil/ffxiv_navmesh) installed and loaded, and *Follow vnavmesh's walkable
-path* on (the default), Wayfinder asks vnavmesh for the path to the target and points at its next corner instead
+path* on (the default), XivWayfinder asks vnavmesh for the path to the target and points at its next corner instead
 of straight at the target; the trail, when on, follows the path. A target without a height (the flag, typed
 coordinates) is placed on the navmesh floor under it first. A new path is asked for only when the target moves,
 you stray more than 6 yalms from the path, or there is none yet, and never more often than every two seconds.
 Until a path arrives, or when none is found, it points in a straight line. The settings window shows what
 vnavmesh is doing.
 
-**Pointing only.** Wayfinder uses vnavmesh's queries (`Nav.IsReady`, `Nav.PathfindCancelable`,
-`Query.Mesh.NearestPoint`) and never its movement gates (`Path.MoveTo`, `SimpleMove.*`). Nothing in Wayfinder
+**Pointing only.** XivWayfinder uses vnavmesh's queries (`Nav.IsReady`, `Nav.PathfindCancelable`,
+`Query.Mesh.NearestPoint`) and never its movement gates (`Path.MoveTo`, `SimpleMove.*`). Nothing in XivWayfinder
 presses a key, moves, turns or teleports your character.
 
 ## Commands
@@ -126,6 +126,8 @@ presses a key, moves, turns or teleports your character.
 | `/wayfinder bead` · `glove` · `both` | What the pointer looks like. |
 | `/wayfinder on` · `off` · `toggle` | Shows or hides it. |
 | `/wayfinder status` | One line: what it points at, how far, and why it is hidden if it is. |
+
+`/xivwayfinder` is an alias for `/wayfinder`, with every argument the same.
 
 Zone names match case- and accent-insensitively: exactly first, then the start of a name, then anywhere in it;
 a territory id works too. Among equal matches the lowest territory id wins.
