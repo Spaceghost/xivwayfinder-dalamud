@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Wayfinder.Core/Wayfinder.Core.csproj" />
+    <Project Path="src/Wayfinder.Plugin/Wayfinder.Plugin.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Wayfinder.Core.Tests/Wayfinder.Core.Tests.csproj" />
+  </Folder>
+</Solution>

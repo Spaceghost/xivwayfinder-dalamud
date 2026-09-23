@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="730" height="380" viewBox="0 0 730 380">
+  <title>Wayfinder: which way to go, softly</title>
+  <defs>
+    <radialGradient id="bg" cx="70%" cy="40%" r="90%"><stop offset="0" stop-color="#23304f"/><stop offset="0.55" stop-color="#121a30"/><stop offset="1" stop-color="#070b16"/></radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd36b" stop-opacity="0.7"/><stop offset="0.35" stop-color="#ffc24a" stop-opacity="0.3"/><stop offset="1" stop-color="#ffb030" stop-opacity="0"/></radialGradient>
+    <radialGradient id="bead" cx="40%" cy="36%" r="65%"><stop offset="0" stop-color="#fffbe9"/><stop offset="0.45" stop-color="#ffe29a"/><stop offset="1" stop-color="#f2b640"/></radialGradient>
+    <radialGradient id="dot" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe7a8"/><stop offset="1" stop-color="#ffcf66" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1122" stop-opacity="0"/><stop offset="1" stop-color="#1c2a4a"/></linearGradient>
+  </defs>
+  <rect width="730" height="380" fill="url(#bg)"/>
+  <rect y="250" width="730" height="130" fill="url(#ground)"/>
+  <path d="M40 340 C 220 300, 360 250, 560 170" fill="none" stroke="#ffd36b" stroke-opacity="0.12" stroke-width="2" stroke-dasharray="2 14" stroke-linecap="round"/>
+  <g fill="url(#dot)">
+    <circle cx="150" cy="318" r="12" opacity="0.35"/>
+    <circle cx="240" cy="296" r="14" opacity="0.45"/>
+    <circle cx="330" cy="268" r="16" opacity="0.6"/>
+    <circle cx="418" cy="234" r="18" opacity="0.75"/>
+    <circle cx="492" cy="202" r="20" opacity="0.9"/>
+  </g>
+  <g fill="#ffe3a0">
+    <circle cx="150" cy="318" r="4" opacity="0.45"/>
+    <circle cx="240" cy="296" r="5" opacity="0.55"/>
+    <circle cx="330" cy="268" r="6" opacity="0.7"/>
+    <circle cx="418" cy="234" r="7" opacity="0.85"/>
+    <circle cx="492" cy="202" r="8" opacity="0.95"/>
+  </g>
+  <circle cx="580" cy="160" r="130" fill="url(#halo)"/>
+  <circle cx="580" cy="160" r="42" fill="url(#bead)"/>
+  <circle cx="580" cy="160" r="42" fill="none" stroke="#fff4cf" stroke-opacity="0.8" stroke-width="2.5"/>
+  <ellipse cx="566" cy="144" rx="14" ry="10" fill="#ffffff" opacity="0.7"/>
+  <text x="44" y="96" font-family="Georgia, 'DejaVu Serif', serif" font-size="56" fill="#fff6e0">Wayfinder</text>
+  <text x="46" y="136" font-family="'DejaVu Sans', Arial, sans-serif" font-size="20" fill="#ffd36b" fill-opacity="0.85">which way to go, softly</text>
+</svg>
