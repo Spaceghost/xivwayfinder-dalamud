@@ -39,6 +39,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly GameReader reader = null!;
     private readonly Navmesh navmesh = null!;
     private readonly GloveTexture glove = null!;
+    private readonly GloveMinion minion = null!;
     private readonly Overlay overlay = null!;
     private readonly SettingsWindow window = null!;
     private readonly ICallGateProvider<uint, float, float, string, bool>? setTarget;
@@ -56,6 +57,8 @@ public sealed class Plugin : IDalamudPlugin
     private Target? quest;
     private Target? arrivalFor;
     private double lastScan = double.NegativeInfinity;
+    private double lastUpdate = double.NaN;
+    private PointerStyle lastStyle;
     private Scene scene;
 
     public Plugin(IDalamudPluginInterface pluginInterface, IPluginLog log, IFramework framework, ICommandManager commands, IChatGui chat,
@@ -79,8 +82,10 @@ public sealed class Plugin : IDalamudPlugin
             reader = new GameReader(data, aetherytes, log);
             navmesh = new Navmesh(pluginInterface, log);
             glove = new GloveTexture(textures, data, log);
-            overlay = new Overlay(gameGui, config, glove, navmesh, log);
-            window = new SettingsWindow(config, Save, () => state, () => glove.Status, () => navmesh.Status, () => Test(TestDistanceDefault), ClearFromUi);
+            minion = new GloveMinion(data, log);
+            lastStyle = config.Style;
+            overlay = new Overlay(gameGui, config, glove, minion, navmesh, log);
+            window = new SettingsWindow(config, Save, () => state, () => glove.Status, () => minion.Status, () => navmesh.Status, () => Test(TestDistanceDefault), ClearFromUi);
             windowSystem.AddWindow(window);
 
             framework.Update += OnUpdate;
@@ -117,6 +122,9 @@ public sealed class Plugin : IDalamudPlugin
 
     private const float TestDistanceDefault = WayfinderCommands.TestDistance;
 
+    /// <summary>How far along the route the minion glove looks to decide where to point, yalms.</summary>
+    private const float MinionLookAhead = 4f;
+
     private double Now => clock.Elapsed.TotalSeconds;
 
     private void OnUpdate(IFramework _)
@@ -145,9 +153,18 @@ public sealed class Plugin : IDalamudPlugin
             InCombat: condition[ConditionFlag.InCombat],
             InDuty: condition[ConditionFlag.BoundByDuty] || condition[ConditionFlag.BoundByDuty56] || condition[ConditionFlag.BoundByDuty95]);
         var (visible, reason) = Visibility.Decide(situation, new VisibilityRules(config.Enabled, config.HideInCombat, config.HideInDuty));
+        var now = Now;
+        var dt = double.IsNaN(lastUpdate) ? 0f : (float)Math.Clamp(now - lastUpdate, 0, 0.25);
+        lastUpdate = now;
+        if (config.Style != lastStyle)
+        {
+            lastStyle = config.Style;
+            minion.Retry();
+        }
 
         if (player is null)
         {
+            minion.Update(MinionWant.Hard, null, config.MinionSize, config.MinionTilt, now, dt);
             navmesh.Idle();
             scene = default;
             state = new WayfinderState { Enabled = config.Enabled, Visible = false, Reason = reason, Mode = config.Mode, Style = config.Style };
@@ -155,7 +172,6 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         var position = player.Position;
-        var now = Now;
         if (now - lastScan >= 0.25)
         {
             lastScan = now;
@@ -197,6 +213,8 @@ public sealed class Plugin : IDalamudPlugin
             arrival.Reset();
         }
 
+        UpdateMinion(visible, guide, position, aim, now, dt);
+
         var targetZone = guide.Target is { } t ? reader.ZoneName(t.TerritoryId) : "";
         scene = new Scene(visible, guide, position, player.Rotation, aim, targetZone);
         state = new WayfinderState
@@ -210,7 +228,53 @@ public sealed class Plugin : IDalamudPlugin
             Guide = guide,
             ZoneName = targetZone,
             Navmesh = aim is not null,
+            RouteNote = aim is not null ? "" : config.UseNavmesh ? navmesh.Status : "switched off in the settings",
         };
+    }
+
+    /// <summary>The minion glove: where it floats and which way it points, or why it should not be there.</summary>
+    private void UpdateMinion(bool visible, Guide guide, Vector3 player, Vector3? aim, double now, float dt)
+    {
+        MinionWant want;
+        MinionPose? pose = null;
+        if (!visible || config.Style != PointerStyle.Minion)
+        {
+            want = MinionWant.Hard;
+        }
+        else if (guide.Kind != GuideKind.Walk || guide.Target is not { } target)
+        {
+            want = MinionWant.Soft;
+        }
+        else
+        {
+            var layout = config.MinionPlacement();
+            var dir = guide.Direction;
+            var goal = aim ?? target.Position(player.Y);
+            var heightKnown = aim is not null || target.Y.HasValue;
+            if (navmesh.Following && navmesh.Path is { Length: >= 2 } path)
+            {
+                // along the route: towards a point a few yalms further along it, so the finger follows the bends
+                // and tilts with the slope underfoot rather than aiming at the target or a far corner
+                var ahead = PathTrail.LookAhead(path, PathTrail.Project(path, player, out _), MinionLookAhead);
+                var along = Heading.DirectionTo(player, ahead);
+                if (along != Vector2.Zero)
+                {
+                    dir = along;
+                    goal = ahead;
+                    heightKnown = true;
+                }
+            }
+
+            var at = MinionGlove.Place(player, dir, layout, now);
+            want = at is null ? MinionWant.Soft : MinionWant.Show;
+            if (at is { } a)
+            {
+                var pitch = MinionGlove.Pitch(player, goal, heightKnown, layout.MaxPitchDegrees);
+                pose = new MinionPose(a, MinionGlove.Yaw(dir, layout.TurnDegrees), pitch);
+            }
+        }
+
+        minion.Update(want, pose, config.MinionSize, config.MinionTilt, now, dt);
     }
 
     private void DrawUi()
@@ -269,7 +333,9 @@ public sealed class Plugin : IDalamudPlugin
                 case Verb.Style:
                     config.Style = request.Style;
                     Save();
-                    Print("pointer: " + request.Style.ToString().ToLowerInvariant() + ".");
+                    Print(request.Style == PointerStyle.Minion
+                        ? "pointer: the Wind-up Cursor minion glove, shown only to you (" + minion.Status + ")."
+                        : "pointer: " + request.Style.ToString().ToLowerInvariant() + ".");
                     break;
                 case Verb.On or Verb.Off or Verb.Toggle:
                     config.Enabled = request.Verb == Verb.On || (request.Verb == Verb.Toggle && !config.Enabled);
@@ -419,6 +485,24 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose() => DisposeCore();
 
+    /// <summary>Deletes the minion glove's client-side object, on the framework thread, before the plugin goes.</summary>
+    private void RemoveMinion()
+    {
+        if (minion is null || framework.IsFrameworkUnloading)
+            return;
+        try
+        {
+            if (framework.IsInFrameworkUpdateThread)
+                minion.Remove();
+            else if (!framework.RunOnFrameworkThread(minion.Remove).Wait(TimeSpan.FromSeconds(2)))
+                log.Warning("XivWayfinder: removing the minion glove timed out");
+        }
+        catch (Exception ex)
+        {
+            log.Error(ex, "XivWayfinder: removing the minion glove failed");
+        }
+    }
+
     private void DisposeCore()
     {
         if (commandRegistered)
@@ -438,6 +522,7 @@ public sealed class Plugin : IDalamudPlugin
         clearTarget?.UnregisterFunc();
         getState?.UnregisterFunc();
         framework.Update -= OnUpdate;
+        RemoveMinion();
         pluginInterface.UiBuilder.Draw -= DrawUi;
         pluginInterface.UiBuilder.OpenMainUi -= OpenUi;
         pluginInterface.UiBuilder.OpenConfigUi -= OpenUi;

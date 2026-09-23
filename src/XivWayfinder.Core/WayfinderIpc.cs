@@ -16,6 +16,9 @@ public sealed record WayfinderState
     public Guide Guide { get; init; } = Guide.Nothing;
     public string ZoneName { get; init; } = "";
     public bool Navmesh { get; init; }
+
+    /// <summary>When not following a path, why: vnavmesh's state ("not installed", "no path found", ...).</summary>
+    public string RouteNote { get; init; } = "";
 }
 
 /// <summary>
@@ -102,6 +105,7 @@ public static class WayfinderIpc
             w.WriteNumber("playerTerritoryId", state.PlayerTerritoryId);
             w.WriteString("guide", state.Guide.Kind.ToString().ToLowerInvariant());
             w.WriteBoolean("navmesh", state.Navmesh);
+            w.WriteString("routeNote", CleanLabel(state.RouteNote));
             if (state.Guide.Target is { } t)
             {
                 w.WriteStartObject("target");
@@ -153,7 +157,7 @@ public static class WayfinderIpc
         var what = g.Target is { } t ? $"{Name(t.Source)} \"{(t.Label.Length > 0 ? t.Label : "unnamed")}\"" : "nothing";
         var where = g.Kind switch
         {
-            GuideKind.Walk => string.Create(CultureInfo.InvariantCulture, $"{g.Distance:0} yalms away{(state.Navmesh ? ", along vnavmesh's path" : "")}"),
+            GuideKind.Walk => string.Create(CultureInfo.InvariantCulture, $"{g.Distance:0} yalms away{Route(state)}"),
             GuideKind.Arrived => "you are there",
             GuideKind.Teleport => $"in {state.ZoneName}: teleport to {g.Aetheryte!.Name}{(g.Aetheryte.Unlocked ? "" : " (not attuned yet)")}",
             GuideKind.Elsewhere => $"in {state.ZoneName}, which has no aetheryte",
@@ -161,6 +165,11 @@ public static class WayfinderIpc
         };
         return $"pointing at {what}: {where} · following {Name(state.Mode)} · {(state.Visible ? "showing" : "hidden: " + state.Reason)}";
     }
+
+    private static string Route(WayfinderState state) =>
+        state.Navmesh ? ", along vnavmesh's path"
+        : state.RouteNote.Length > 0 ? $", in a straight line (vnavmesh: {state.RouteNote})"
+        : "";
 
     public static string Name(SourceMode mode) => mode switch
     {

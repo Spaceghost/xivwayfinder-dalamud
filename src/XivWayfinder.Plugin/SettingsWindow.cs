@@ -12,21 +12,23 @@ internal sealed class SettingsWindow : Window
     private readonly Action save;
     private readonly Func<WayfinderState> state;
     private readonly Func<string> gloveStatus;
+    private readonly Func<string> minionStatus;
     private readonly Func<string> navmeshStatus;
     private readonly Action test;
     private readonly Action clear;
 
-    public SettingsWindow(Configuration config, Action save, Func<WayfinderState> state, Func<string> gloveStatus, Func<string> navmeshStatus, Action test, Action clear)
+    public SettingsWindow(Configuration config, Action save, Func<WayfinderState> state, Func<string> gloveStatus, Func<string> minionStatus, Func<string> navmeshStatus, Action test, Action clear)
         : base("XivWayfinder###WayfinderSettings")
     {
         this.config = config;
         this.save = save;
         this.state = state;
         this.gloveStatus = gloveStatus;
+        this.minionStatus = minionStatus;
         this.navmeshStatus = navmeshStatus;
         this.test = test;
         this.clear = clear;
-        Size = new Vector2(420, 560);
+        Size = new Vector2(440, 640);
         SizeCondition = ImGuiCond.FirstUseEver;
     }
 
@@ -70,8 +72,11 @@ internal sealed class SettingsWindow : Window
         changed |= Radio("Glove", PointerStyle.Glove, config.Style, v => config.Style = v);
         ImGui.SameLine();
         changed |= Radio("Both", PointerStyle.Both, config.Style, v => config.Style = v);
+        changed |= Radio("Minion glove (Wind-up Cursor model)", PointerStyle.Minion, config.Style, v => config.Style = v);
         changed |= Check("Use the game's own glove cursor", config.UseGameGlove, v => config.UseGameGlove = v);
         ImGui.TextDisabled(gloveStatus());
+        if (config.Style == PointerStyle.Minion)
+            changed |= MinionSettings();
         changed |= Slider("Bead distance (yalms)", config.BeadDistance, 1.5f, 3f, v => config.BeadDistance = v);
         changed |= Slider("Bead height (yalms)", config.BeadHeight, 0f, 2.5f, v => config.BeadHeight = v);
         changed |= Slider("Bead size", config.BeadSize, 3f, 20f, v => config.BeadSize = v);
@@ -83,7 +88,7 @@ internal sealed class SettingsWindow : Window
             changed = true;
         }
 
-        changed |= Check("Dotted trail", config.Trail, v => config.Trail = v);
+        changed |= Check("Highlight the way (trail)", config.Trail, v => config.Trail = v);
         if (config.Trail)
         {
             var dots = config.TrailDots;
@@ -94,6 +99,10 @@ internal sealed class SettingsWindow : Window
             }
 
             changed |= Slider("Trail spacing (yalms)", config.TrailSpacing, 1f, 8f, v => config.TrailSpacing = v);
+            var s2 = state();
+            ImGui.TextDisabled(s2.Navmesh
+                ? "The trail follows vnavmesh's walkable path."
+                : "The trail is a straight line, not the walkable way" + (s2.RouteNote.Length > 0 ? " (vnavmesh: " + s2.RouteNote + ")." : "."));
         }
 
         ImGui.TextUnformatted("Distance");
@@ -119,6 +128,31 @@ internal sealed class SettingsWindow : Window
             config.Clamp();
             save();
         }
+    }
+
+    /// <summary>Where the minion glove floats and how it turns; shown only when it is the chosen pointer.</summary>
+    private bool MinionSettings()
+    {
+        var changed = false;
+        ImGui.Indent();
+        ImGui.TextWrapped(minionStatus());
+        ImGui.TextDisabled("Only you see it: a client-side model, never a summoned minion, nothing sent to the server.");
+        changed |= Check("Show the bead too", config.MinionWithBead, v => config.MinionWithBead = v);
+        changed |= Slider("Glove ahead (yalms)", config.MinionAhead, 0.8f, 3f, v => config.MinionAhead = v);
+        changed |= Slider("Glove to the side (yalms)", config.MinionSide, -2f, 2f, v => config.MinionSide = v);
+        changed |= Slider("Glove height (yalms)", config.MinionHeight, 0f, 2.5f, v => config.MinionHeight = v);
+        changed |= Slider("Glove model size", config.MinionSize, 0.25f, 3f, v => config.MinionSize = v);
+        var turn = config.MinionTurn;
+        if (ImGui.SliderFloat("Turn the model (degrees)", ref turn, -180f, 180f, "%.0f"))
+        {
+            config.MinionTurn = turn;
+            changed = true;
+        }
+
+        ImGui.TextDisabled("If the finger does not point the way, turn it here.");
+        changed |= Check("Tilt it up and down slopes", config.MinionTilt, v => config.MinionTilt = v);
+        ImGui.Unindent();
+        return changed;
     }
 
     private static bool Check(string label, bool value, Action<bool> set)

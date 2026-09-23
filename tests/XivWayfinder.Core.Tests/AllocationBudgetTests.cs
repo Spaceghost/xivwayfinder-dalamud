@@ -46,6 +46,18 @@ public sealed class AllocationBudgetTests
                 sink += Pulse.Trail(i, 10, t, 1.8f);
             sink += glow + quad[2].X + Pulse.Tap(t, 1.1f) + Pulse.Bob(t, 2.2f, 0.12f) + Colors.Pack(Colors.Gold, glow);
             sink += PathFollow.DistanceFromPath(Path, player);
+
+            // path highlighting and the minion glove
+            Span<TrailPoint> trail = stackalloc TrailPoint[48];
+            var arc = PathTrail.Project(Path, player, out var away);
+            var n = PathTrail.Sample(Path, arc, 2.5f, 0.8f, 27f, trail);
+            for (var i = 0; i < n; i++)
+                sink += Pulse.TrailAt(trail[i].Ahead / 27f, t, 1.8f) + trail[i].Position.Y;
+            n = PathTrail.Straight(player, dir, 2.5f, 10, 40f, trail);
+            var look = PathTrail.LookAhead(Path, arc, 4f);
+            var at = MinionGlove.Place(player, Heading.DirectionTo(player, look), MinionLayout.Default, t);
+            var q = MinionGlove.Orientation(MinionGlove.Yaw(dir, 0f), MinionGlove.Pitch(player, look, true, 35f));
+            sink += q.W + (at?.X ?? 0f) + away + n + MinionGlove.EaseAngle(0.2f, 1.4f, 1f / 60, 0.1f);
         });
         Assert.True(bytes == 0, $"{bytes} bytes allocated per frame, budget 0");
         Assert.True(float.IsFinite(sink));
