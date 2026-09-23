@@ -66,8 +66,8 @@ https://spacegho.st/mods/ffxiv/plugins.json
 ```
 
 1. `/xlsettings` → **Experimental** → **Custom Plugin Repositories**: add the URL, **+**, save.
-2. `/xlplugins` → **All Plugins**: search **XivWayfinder**. There is no release yet; until there is, use the
-   dev-plugin route below.
+2. In the same tab, tick **Get plugin testing builds**: XivWayfinder has test builds only so far.
+3. `/xlplugins` → **All Plugins**: search **XivWayfinder** and install it.
 
 ## Install (dev plugin)
 
