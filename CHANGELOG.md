@@ -13,9 +13,9 @@ Statuses mean the same thing in every one of these mods:
 * **BETA** — merged, but not yet verified in game.
 * **SOON** — still being built.
 
-## [Unreleased] — In the workshop
+## [0.1.0] — Released 2026-09-23
 
-Merged, not in a release yet.
+BETA entries are in this release but have not been verified in game yet; they become NEW or FIX once they have been seen working.
 
 * The minion glove: `/wayfinder minion` (or *Minion glove (Wind-up Cursor model)* in the settings) shows the game's own 3D model of the Wind-up Cursor minion, the white pointing glove, floating beside the bead and turning to point along the way, tilting up and down slopes. It is found in your game data by name at run time and shown as a client-side model only you can see: never a summoned minion, never shipped with the plugin, nothing sent to the server, and it is removed on zone changes, logout, cutscenes, group pose and unload. Where it floats, its size, a turn correction and tilting are settings; the flat glove still points from the screen edge when the way is off screen. Not the default. Host tests cover its placement, turning, tilt and lifetime rules; it has not been seen in game.
 * Path highlighting: with vnavmesh, the trail now lays its beads and a soft line along the walkable route ahead of you, fixed to the ground so you walk past them and they drop away behind, instead of a line as the crow flies. Without a path it is a straight dotted line labelled *straight line*, and the settings and `/wayfinder status` say why (vnavmesh not installed, no path found, ...). The trail is now on by default, and `GetState` gains `routeNote`. Host tests cover the sampling along the route; not seen in game.
