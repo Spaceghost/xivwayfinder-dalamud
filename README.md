@@ -10,6 +10,8 @@
 
 <img src="images/icon.png" width="96" height="96" align="right" alt="XivWayfinder icon">
 
+**[Site](https://spacegho.st/mods/ffxiv/xivwayfinder/) · [Install](https://spacegho.st/mods/ffxiv/plugins/) · [Vote on what's next](https://spacegho.st/mods/ffxiv/xivwayfinder/vote/) · [Screenshots](https://spacegho.st/mods/ffxiv/term/gallery/?mod=xivwayfinder) · [Changelog](CHANGELOG.md)**
+
 **Which way to go, softly: a glowing bead and the classic pointing glove, in FINAL FANTASY XIV.**
 
 XivWayfinder is a Dalamud plugin that draws a softly pulsing bead a couple of yalms ahead of your character in the
@@ -64,8 +66,8 @@ https://spacegho.st/mods/ffxiv/plugins.json
 ```
 
 1. `/xlsettings` → **Experimental** → **Custom Plugin Repositories**: add the URL, **+**, save.
-2. `/xlplugins` → **All Plugins**: search **XivWayfinder**. There is no release yet; until there is, use the
-   dev-plugin route below.
+2. In the same tab, tick **Get plugin testing builds**: XivWayfinder has test builds only so far.
+3. `/xlplugins` → **All Plugins**: search **XivWayfinder** and install it.
 
 ## Install (dev plugin)
 
