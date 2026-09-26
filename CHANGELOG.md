@@ -13,6 +13,13 @@ Statuses mean the same thing in every one of these mods:
 * **BETA** — merged, but not yet verified in game.
 * **SOON** — still being built.
 
+## [Unreleased] — In the workshop
+
+Merged, not in a release yet.
+
+* Map links lead the way instead of opening the map: clicking a <flag> link in chat, or a quest's *Show on Map*, starts leading you there (that quest's next step first) instead of opening the map, and switches the pointer to the glove minion to lead. Opening the map yourself works as always, and holding Shift opens it for a link too. Once you arrive it goes back to following your usual sources. Only a flag set a moment before counts as a link, so the map key with an old flag still opens the map. *Map links lead the way* in the settings turns it off. Host tests cover which opens are followed; not tried in game.
+* The glove minion leads the way: it floats a few yalms ahead of you along the walkable route (vnavmesh's, else straight), pointing on along it, and waits at the end, so following it is following the path. *Lead by* sets how far ahead (2 to 10 yalms); turn it off to have it float beside the bead as before. Host tests cover the placement along the route; not tried in game.
+
 ## [0.1.0] — Released 2026-09-23
 
 BETA entries are in this release but have not been verified in game yet; they become NEW or FIX once they have been seen working.

@@ -41,7 +41,7 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
     }
 
     /// <summary>The next step of the tracked (or else the most likely) quest that has a known location.</summary>
-    public Target? Quest(uint playerTerritory, Vector3 player)
+    public Target? Quest(uint playerTerritory, Vector3 player, ushort prefer = 0)
     {
         try
         {
@@ -70,7 +70,7 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
                 leads.Add(new QuestLead(q.QuestId, q.Sequence, q.IsHidden, order, q.IsPriority, i));
             }
 
-            foreach (var lead in QuestPick.Order(leads))
+            foreach (var lead in QuestPick.Order(leads, prefer))
             {
                 var name = QuestName(lead.QuestId);
                 var place = FromMapMarkers(lead.QuestId, name, playerTerritory, player) ?? FromQuestSheet(lead, name, playerTerritory, player);

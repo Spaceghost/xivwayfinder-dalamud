@@ -64,6 +64,9 @@ internal sealed class SettingsWindow : Window
         changed |= Check("The tracked quest's next step", config.UseQuest, v => config.UseQuest = v);
         changed |= Check("In another zone, name the nearest aetheryte", config.AetheryteHint, v => config.AetheryteHint = v);
         changed |= Check("Forget a /wayfinder target once reached", config.ClearOnArrival, v => config.ClearOnArrival = v);
+        changed |= Check("Map links lead the way instead of opening the map (Shift: the map)", config.MapLinks, v => config.MapLinks = v);
+        if (config.MapLinks)
+            changed |= Check("  ...with the glove minion leading", config.MapLinksMinion, v => config.MapLinksMinion = v);
 
         ImGui.Separator();
         ImGui.TextUnformatted("Pointer");
@@ -138,8 +141,16 @@ internal sealed class SettingsWindow : Window
         ImGui.TextWrapped(minionStatus());
         ImGui.TextDisabled("Only you see it: a client-side model, never a summoned minion, nothing sent to the server.");
         changed |= Check("Show the bead too", config.MinionWithBead, v => config.MinionWithBead = v);
-        changed |= Slider("Glove ahead (yalms)", config.MinionAhead, 0.8f, 3f, v => config.MinionAhead = v);
-        changed |= Slider("Glove to the side (yalms)", config.MinionSide, -2f, 2f, v => config.MinionSide = v);
+        changed |= Check("Lead the way: float ahead along the route", config.MinionLeads, v => config.MinionLeads = v);
+        if (config.MinionLeads)
+        {
+            changed |= Slider("Lead by (yalms)", config.MinionLeadDistance, 2f, 10f, v => config.MinionLeadDistance = v);
+        }
+        else
+        {
+            changed |= Slider("Glove ahead (yalms)", config.MinionAhead, 0.8f, 3f, v => config.MinionAhead = v);
+            changed |= Slider("Glove to the side (yalms)", config.MinionSide, -2f, 2f, v => config.MinionSide = v);
+        }
         changed |= Slider("Glove height (yalms)", config.MinionHeight, 0f, 2.5f, v => config.MinionHeight = v);
         changed |= Slider("Glove model size", config.MinionSize, 0.25f, 3f, v => config.MinionSize = v);
         var turn = config.MinionTurn;
