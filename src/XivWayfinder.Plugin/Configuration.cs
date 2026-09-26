@@ -61,6 +61,21 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Tilt it up and down slopes (writes the draw object's rotation; not verified in game).</summary>
     public bool MinionTilt { get; set; } = true;
 
+    /// <summary>The minion glove leads the way: it floats ahead along the route instead of beside the bead.</summary>
+    public bool MinionLeads { get; set; } = true;
+
+    /// <summary>How far ahead along the route it leads, yalms (2–10).</summary>
+    public float MinionLeadDistance { get; set; } = 4f;
+
+    /// <summary>
+    /// Map links lead instead of opening the map: a &lt;flag&gt; link or a quest's Show on Map starts following that
+    /// place (see <see cref="MapLinks"/>). Hold Shift to open the map as usual.
+    /// </summary>
+    public bool MapLinks { get; set; } = true;
+
+    /// <summary>Following a map link switches the pointer to the minion glove, to lead the way.</summary>
+    public bool MapLinksMinion { get; set; } = true;
+
     /// <summary>Highlight the way: along vnavmesh's path when there is one, else a straight dotted line.</summary>
     public bool Trail { get; set; } = true;
 
@@ -99,6 +114,7 @@ public sealed class Configuration : IPluginConfiguration
         MinionHeight = Fit(MinionHeight, 0f, 2.5f, MinionLayout.Default.Height);
         MinionSize = Fit(MinionSize, 0.25f, 3f, 1f);
         MinionTurn = Fit(MinionTurn, -180f, 180f, 0f);
+        MinionLeadDistance = Fit(MinionLeadDistance, 2f, 10f, 4f);
         TrailDots = Math.Clamp(TrailDots, 2, 40);
         TrailSpacing = Fit(TrailSpacing, 1f, 8f, 2.5f);
         ArriveRadius = Fit(ArriveRadius, 1f, 20f, 4f);

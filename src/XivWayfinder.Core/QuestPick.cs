@@ -22,10 +22,14 @@ public static class QuestPick
     /// <summary><c>Quest</c> sheet rows are the journal's quest id plus this.</summary>
     public const uint QuestRowBase = 0x10000;
 
-    /// <summary>The journal, best candidate first; hidden quests are left out.</summary>
-    public static List<QuestLead> Order(IEnumerable<QuestLead> leads) =>
+    /// <summary>
+    /// The journal, best candidate first; hidden quests are left out. <paramref name="prefer"/> (a quest the player
+    /// asked to be shown, from a map link) comes before everything else.
+    /// </summary>
+    public static List<QuestLead> Order(IEnumerable<QuestLead> leads, ushort prefer = 0) =>
         leads.Where(q => q.QuestId != 0 && !q.Hidden)
-            .OrderBy(q => q.Tracked ? 0 : q.Priority ? 1 : 2)
+            .OrderBy(q => prefer != 0 && q.QuestId == prefer ? 0 : 1)
+            .ThenBy(q => q.Tracked ? 0 : q.Priority ? 1 : 2)
             .ThenBy(q => q.Tracked ? q.TrackedOrder : q.JournalIndex)
             .ThenBy(q => q.JournalIndex)
             .ToList();

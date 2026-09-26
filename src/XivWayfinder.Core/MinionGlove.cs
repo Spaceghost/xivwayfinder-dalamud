@@ -60,6 +60,35 @@ public static class MinionGlove
     }
 
     /// <summary>
+    /// Leading the way: the glove floats <paramref name="lead"/> yalms ahead of the character along the walkable
+    /// route (<paramref name="path"/>, from vnavmesh), at the layout's height with a gentle bob, pointing on along the
+    /// route from there, so following it is following the path. Near the end of the route it waits at the end. With
+    /// no route it leads along <paramref name="dir"/> in a straight line. -> where it floats and the way it points,
+    /// or null with no direction.
+    /// </summary>
+    public static (Vector3 At, Vector2 Dir)? Lead(Vector3 player, ReadOnlySpan<Vector3> path, Vector2 dir, float lead, MinionLayout layout, double t)
+    {
+        lead = float.IsFinite(lead) ? Math.Clamp(lead, 1f, 12f) : 4f;
+        var bob = layout.Height + Pulse.Bob(t, 2.2f, 0.08f);
+        if (path.Length >= 2)
+        {
+            var arc = PathTrail.Project(path, player, out _);
+            var at = PathTrail.LookAhead(path, arc, lead);
+            var on = PathTrail.LookAhead(path, arc, lead + 1.5f);
+            var way = Heading.DirectionTo(at, on);
+            if (way == Vector2.Zero)
+                way = Heading.DirectionTo(player, at); // at the end: point on from where you are
+            if (way != Vector2.Zero)
+                return (new Vector3(at.X, at.Y + bob, at.Z), way);
+        }
+
+        if (dir == Vector2.Zero || !float.IsFinite(dir.X) || !float.IsFinite(dir.Y))
+            return null;
+        var d = Vector2.Normalize(dir);
+        return (new Vector3(player.X + d.X * lead, player.Y + bob, player.Z + d.Y * lead), d);
+    }
+
+    /// <summary>
     /// The (X, Z) direction to the right of someone facing <paramref name="dir"/>. The world is X east, Z south, Y
     /// up: facing south (+Z) the right hand is west (−X).
     /// </summary>

@@ -2,11 +2,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.Command;
+using Dalamud.Hooking;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using XivWayfinder.Core;
 using XivWayfinder.Shared;
 
@@ -16,7 +19,7 @@ namespace XivWayfinder.Plugin;
 /// XivWayfinder: a softly pulsing bead and a pointing glove that show which way to head, towards a target set by
 /// command or IPC, the map flag, or the tracked quest's next step. Pointing only: it never moves the character.
 /// </summary>
-public sealed class Plugin : IDalamudPlugin
+public sealed unsafe class Plugin : IDalamudPlugin
 {
     public const string Command = "/wayfinder";
 
@@ -32,6 +35,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly IObjectTable objects;
     private readonly ICondition condition;
     private readonly IGameGui gameGui;
+    private readonly IKeyState keyState;
     private readonly WindowSystem windowSystem = new("XivWayfinder");
     private readonly Stopwatch clock = Stopwatch.StartNew();
     private readonly ArrivalTimer arrival = new();
@@ -46,6 +50,10 @@ public sealed class Plugin : IDalamudPlugin
     private readonly ICallGateProvider<uint, float, float, string, bool>? setMapTarget;
     private readonly ICallGateProvider<bool>? clearTarget;
     private readonly ICallGateProvider<string>? getState;
+    private delegate void OpenMapDelegate(AgentMap* agent, OpenMapInfo* info);
+
+    private readonly Hook<OpenMapDelegate>? openMapHook;
+    private readonly ArrivalTimer linkArrival = new();
     private bool commandRegistered;
     private bool aliasRegistered;
 
@@ -56,6 +64,12 @@ public sealed class Plugin : IDalamudPlugin
     private Target? flag;
     private Target? quest;
     private Target? arrivalFor;
+
+    // following a map link (MapLinks): the source to follow instead of config.Mode, and the quest it showed
+    private volatile object? linkMode; // a boxed SourceMode, or null
+    private volatile ushort linkQuest;
+    private Target? lastFlagSeen;
+    private double flagChangedAt = double.NegativeInfinity;
     private double lastScan = double.NegativeInfinity;
     private double lastUpdate = double.NaN;
     private PointerStyle lastStyle;
@@ -63,7 +77,7 @@ public sealed class Plugin : IDalamudPlugin
 
     public Plugin(IDalamudPluginInterface pluginInterface, IPluginLog log, IFramework framework, ICommandManager commands, IChatGui chat,
         IClientState clientState, IObjectTable objects, ICondition condition, IGameGui gameGui, IDataManager data, ITextureProvider textures,
-        IAetheryteList aetherytes)
+        IAetheryteList aetherytes, IGameInteropProvider interop, IKeyState keyState)
     {
         this.pluginInterface = pluginInterface;
         this.log = log;
@@ -74,6 +88,7 @@ public sealed class Plugin : IDalamudPlugin
         this.objects = objects;
         this.condition = condition;
         this.gameGui = gameGui;
+        this.keyState = keyState;
 
         try
         {
@@ -111,6 +126,16 @@ public sealed class Plugin : IDalamudPlugin
             clearTarget.RegisterFunc(ClearExplicit);
             getState = pluginInterface.GetIpcProvider<string>(IpcContract.GetState);
             getState.RegisterFunc(() => WayfinderIpc.StateJson(state));
+
+            try
+            {
+                openMapHook = interop.HookFromAddress<OpenMapDelegate>((nint)AgentMap.MemberFunctionPointers.OpenMap, OpenMapDetour);
+                openMapHook.Enable();
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "XivWayfinder: could not watch the map opening; map links open the map as usual");
+            }
         }
         catch
         {
@@ -172,14 +197,18 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         var position = player.Position;
+        var mode = linkMode is SourceMode m ? m : config.Mode;
         if (now - lastScan >= 0.25)
         {
             lastScan = now;
             flag = config.UseFlag ? reader.Flag() : null;
-            quest = config.UseQuest && config.Mode is SourceMode.Auto or SourceMode.Quest ? reader.Quest(zone, position) : null;
+            if (!SameFlag(flag, lastFlagSeen))
+                flagChangedAt = now;
+            lastFlagSeen = flag;
+            quest = config.UseQuest && mode is SourceMode.Auto or SourceMode.Quest ? reader.Quest(zone, position, linkQuest) : null;
         }
 
-        var target = TargetPicker.Pick(config.Mode, config.Toggles(), explicitTarget, flag, quest);
+        var target = TargetPicker.Pick(mode, config.Toggles(), explicitTarget, flag, quest);
         Vector3? aim = null;
         if (target is not null && target.TerritoryId == zone && config.UseNavmesh)
             aim = navmesh.Aim(zone, position, target.Position(position.Y), target.Y.HasValue, now);
@@ -213,6 +242,13 @@ public sealed class Plugin : IDalamudPlugin
             arrival.Reset();
         }
 
+        // a followed map link ends once you get there: back to the usual sources
+        if (linkMode is not null && linkArrival.Update(guide.Kind == GuideKind.Arrived, now, 1.5))
+        {
+            EndLink();
+            Print("you have arrived; following the usual way again.");
+        }
+
         UpdateMinion(visible, guide, position, aim, now, dt);
 
         var targetZone = guide.Target is { } t ? reader.ZoneName(t.TerritoryId) : "";
@@ -222,7 +258,7 @@ public sealed class Plugin : IDalamudPlugin
             Enabled = config.Enabled,
             Visible = visible && guide.Kind != GuideKind.None,
             Reason = guide.Kind == GuideKind.None && visible ? "nothing to point at" : reason,
-            Mode = config.Mode,
+            Mode = mode,
             Style = config.Style,
             PlayerTerritoryId = zone,
             Guide = guide,
@@ -265,11 +301,32 @@ public sealed class Plugin : IDalamudPlugin
                 }
             }
 
-            var at = MinionGlove.Place(player, dir, layout, now);
+            Vector3? at;
+            if (config.MinionLeads)
+            {
+                // leading: ahead along the route, pointing on along it from there
+                var route = navmesh.Following && navmesh.Path is { Length: >= 2 } p ? p : [];
+                var lead = MinionGlove.Lead(player, route, guide.Direction, config.MinionLeadDistance, layout, now);
+                at = lead?.At;
+                if (lead is { } l)
+                {
+                    dir = l.Dir;
+                    if (route.Length >= 2)
+                    {
+                        goal = PathTrail.LookAhead(route, PathTrail.Project(route, player, out _), config.MinionLeadDistance + MinionLookAhead);
+                        heightKnown = true;
+                    }
+                }
+            }
+            else
+            {
+                at = MinionGlove.Place(player, dir, layout, now);
+            }
+
             want = at is null ? MinionWant.Soft : MinionWant.Show;
             if (at is { } a)
             {
-                var pitch = MinionGlove.Pitch(player, goal, heightKnown, layout.MaxPitchDegrees);
+                var pitch = MinionGlove.Pitch(a, goal, heightKnown, layout.MaxPitchDegrees);
                 pose = new MinionPose(a, MinionGlove.Yaw(dir, layout.TurnDegrees), pitch);
             }
         }
@@ -326,6 +383,7 @@ public sealed class Plugin : IDalamudPlugin
                     SetMapTargetFromCommand(request);
                     break;
                 case Verb.Mode:
+                    EndLink();
                     config.Mode = request.Mode;
                     Save();
                     Print("following " + WayfinderIpc.Name(request.Mode) + (request.Mode == SourceMode.Auto ? ": target, then flag, then quest." : " only."));
@@ -459,10 +517,70 @@ public sealed class Plugin : IDalamudPlugin
 
     private bool ClearExplicit()
     {
-        var had = explicitTarget is not null;
+        var had = explicitTarget is not null || linkMode is not null;
         explicitTarget = null;
+        EndLink();
         return had;
     }
+
+    // Map links ------------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// The game opening its map (<c>AgentMap.OpenMap</c>, on the game thread): a &lt;flag&gt; link or a quest's Show
+    /// on Map is followed instead (<see cref="MapLinks.Decide"/>); everything else opens as usual.
+    /// </summary>
+    private void OpenMapDetour(AgentMap* agent, OpenMapInfo* info)
+    {
+        try
+        {
+            if (info != null)
+            {
+                // a link click sets the flag and opens the map in the same frame, before the next scan sees it
+                var now = Now;
+                var current = config.UseFlag ? reader.Flag() : null;
+                var since = current is null ? -1 : !SameFlag(current, lastFlagSeen) ? 0 : now - flagChangedAt;
+                var action = MapLinks.Decide((uint)info->Type, info->QuestId, config.MapLinks && config.Enabled, keyState[VirtualKey.SHIFT], since);
+                if (action != MapLinkAction.Open)
+                {
+                    FollowLink(action, MapLinks.JournalId(info->QuestId));
+                    return;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            log.Error(ex, "XivWayfinder: following a map link failed; opening the map");
+        }
+
+        openMapHook!.Original(agent, info);
+    }
+
+    private void FollowLink(MapLinkAction action, ushort questId)
+    {
+        linkMode = action == MapLinkAction.FollowQuest ? SourceMode.Quest : SourceMode.Flag;
+        linkQuest = action == MapLinkAction.FollowQuest ? questId : (ushort)0;
+        linkArrival.Reset();
+        lastScan = double.NegativeInfinity; // look for it now
+        var what = action == MapLinkAction.FollowQuest ? "that quest's next step" : "the flag";
+        if (config.MapLinksMinion && config.Style != PointerStyle.Minion)
+        {
+            config.Style = PointerStyle.Minion;
+            Save();
+            what += " (the glove leads the way)";
+        }
+
+        Print($"leading you to {what} instead of opening the map; hold Shift to open the map.");
+    }
+
+    private void EndLink()
+    {
+        linkMode = null;
+        linkQuest = 0;
+        linkArrival.Reset();
+    }
+
+    private static bool SameFlag(Target? a, Target? b) =>
+        a is null ? b is null : b is not null && a.TerritoryId == b.TerritoryId && a.X == b.X && a.Z == b.Z;
 
     private void ClearFromUi() => Print(ClearExplicit() ? "target cleared." : "there was no /wayfinder target to clear.");
 
@@ -522,6 +640,7 @@ public sealed class Plugin : IDalamudPlugin
         clearTarget?.UnregisterFunc();
         getState?.UnregisterFunc();
         framework.Update -= OnUpdate;
+        openMapHook?.Dispose();
         RemoveMinion();
         pluginInterface.UiBuilder.Draw -= DrawUi;
         pluginInterface.UiBuilder.OpenMainUi -= OpenUi;
