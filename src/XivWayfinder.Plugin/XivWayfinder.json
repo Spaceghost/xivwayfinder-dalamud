@@ -2,7 +2,7 @@
   "Author": "Johnneylee Jack Rollins",
   "Name": "XivWayfinder",
   "InternalName": "XivWayfinder",
-  "AssemblyVersion": "0.1.0.2",
+  "AssemblyVersion": "0.1.1.1",
   "Punchline": "A softly glowing bead and the classic pointing glove show which way to go.",
   "Description": "XivWayfinder points the way in FINAL FANTASY XIV: a softly pulsing bead floats a couple of yalms ahead of you in the direction to go, and the game's own white pointing glove points there too, sliding to the edge of the screen when the way is behind you. It follows, in order, a target you set with /wayfinder X Y or another plugin sets over IPC, your map flag, and your tracked quest's next step; in another zone it names the nearest aetheryte instead. With vnavmesh installed it points along the walkable path. It only points and never moves your character. Not yet verified in game.",
   "ApplicableVersion": "any",

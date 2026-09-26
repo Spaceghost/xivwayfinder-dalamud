@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>XivWayfinder</AssemblyName>
     <RootNamespace>XivWayfinder.Plugin</RootNamespace>
-    <Version>0.1.0.2</Version>
+    <Version>0.1.1.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
