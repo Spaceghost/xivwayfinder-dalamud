@@ -11,6 +11,19 @@ public readonly record struct QuestLead(ushort QuestId, byte Sequence, bool Hidd
 /// <summary>A place a quest step happens: world position in a territory, named for the label.</summary>
 public readonly record struct QuestLocation(uint TerritoryId, float X, float Y, float Z, string Label);
 
+/// <summary>A journal quest with where its next step is.</summary>
+public readonly record struct QuestFound(QuestLead Lead, QuestLocation Place);
+
+/// <summary>How the quest to point at is chosen.</summary>
+public enum QuestChoice
+{
+    /// <summary>The next step nearest you, of every quest you have accepted.</summary>
+    Nearest,
+
+    /// <summary>The tracked quest first, then a priority quest, then the journal order.</summary>
+    Tracked,
+}
+
 /// <summary>
 /// Which quest's next step to point at, and where it is. The quest comes first from the tracked list (the one the
 /// player chose to follow), then a priority quest, then the journal order. Where comes first from what the game's
@@ -33,6 +46,60 @@ public static class QuestPick
             .ThenBy(q => q.Tracked ? q.TrackedOrder : q.JournalIndex)
             .ThenBy(q => q.JournalIndex)
             .ToList();
+
+    /// <summary>
+    /// The quest to point at from those whose next step was found (<paramref name="found"/>, in <see cref="Order"/>'s
+    /// order). A quest the player asked to be shown (<paramref name="prefer"/>) always comes first. Otherwise,
+    /// <see cref="QuestChoice.Nearest"/> takes the step nearest the player (along the ground) in their own zone,
+    /// and only with none there the first of the rest; <see cref="QuestChoice.Tracked"/> takes the first.
+    /// </summary>
+    public static QuestFound? Choose(IReadOnlyList<QuestFound> found, QuestChoice choice, ushort prefer, uint playerTerritory, Vector3 player)
+    {
+        if (found.Count == 0)
+            return null;
+        if (prefer != 0)
+        {
+            foreach (var f in found)
+            {
+                if (f.Lead.QuestId == prefer)
+                    return f;
+            }
+        }
+
+        if (choice != QuestChoice.Nearest)
+            return found[0];
+        QuestFound? best = null;
+        var bestDistance = float.PositiveInfinity;
+        foreach (var f in found)
+        {
+            if (f.Place.TerritoryId != playerTerritory)
+                continue;
+            var dx = f.Place.X - player.X;
+            var dz = f.Place.Z - player.Z;
+            var d = dx * dx + dz * dz;
+            if (d < bestDistance)
+            {
+                best = f;
+                bestDistance = d;
+            }
+        }
+
+        return best ?? found[0];
+    }
+
+    /// <summary>Whether a journal quest is one of your current Main Scenario quests (the scenario guide's).</summary>
+    public static bool IsMainScenario(ushort questId, ReadOnlySpan<ushort> mainScenario)
+    {
+        if (questId == 0)
+            return false;
+        foreach (var q in mainScenario)
+        {
+            if (q != 0 && (q == questId || q == questId + QuestRowBase || q + QuestRowBase == questId))
+                return true;
+        }
+
+        return false;
+    }
 
     /// <summary>A map marker's objective id names a quest either by journal id or by <c>Quest</c> row.</summary>
     public static bool MatchesObjective(uint objectiveId, ushort questId) =>

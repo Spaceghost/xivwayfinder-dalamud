@@ -66,10 +66,13 @@ public static class MinionGlove
     /// no route it leads along <paramref name="dir"/> in a straight line. -> where it floats and the way it points,
     /// or null with no direction.
     /// </summary>
-    public static (Vector3 At, Vector2 Dir)? Lead(Vector3 player, ReadOnlySpan<Vector3> path, Vector2 dir, float lead, MinionLayout layout, double t)
+    /// <param name="eager">The Main Scenario: it leads a little further ahead and bounces, beckoning.</param>
+    public static (Vector3 At, Vector2 Dir)? Lead(Vector3 player, ReadOnlySpan<Vector3> path, Vector2 dir, float lead, MinionLayout layout, double t, bool eager = false)
     {
         lead = float.IsFinite(lead) ? Math.Clamp(lead, 1f, 12f) : 4f;
-        var bob = layout.Height + Pulse.Bob(t, 2.2f, 0.08f);
+        if (eager)
+            lead += EagerExtra;
+        var bob = layout.Height + (eager ? Pulse.Bob(t, 1.1f, 0.16f) : Pulse.Bob(t, 2.2f, 0.08f));
         if (path.Length >= 2)
         {
             var arc = PathTrail.Project(path, player, out _);
@@ -87,6 +90,9 @@ public static class MinionGlove
         var d = Vector2.Normalize(dir);
         return (new Vector3(player.X + d.X * lead, player.Y + bob, player.Z + d.Y * lead), d);
     }
+
+    /// <summary>How much further ahead the glove leads on the Main Scenario, yalms.</summary>
+    public const float EagerExtra = 1.5f;
 
     /// <summary>
     /// The (X, Z) direction to the right of someone facing <paramref name="dir"/>. The world is X east, Z south, Y

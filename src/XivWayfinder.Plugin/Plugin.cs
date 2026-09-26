@@ -205,7 +205,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             if (!SameFlag(flag, lastFlagSeen))
                 flagChangedAt = now;
             lastFlagSeen = flag;
-            quest = config.UseQuest && mode is SourceMode.Auto or SourceMode.Quest ? reader.Quest(zone, position, linkQuest) : null;
+            quest = config.UseQuest && mode is SourceMode.Auto or SourceMode.Quest ? reader.Quest(zone, position, linkQuest, config.QuestChoice) : null;
         }
 
         var target = TargetPicker.Pick(mode, config.Toggles(), explicitTarget, flag, quest);
@@ -306,7 +306,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
             {
                 // leading: ahead along the route, pointing on along it from there
                 var route = navmesh.Following && navmesh.Path is { Length: >= 2 } p ? p : [];
-                var lead = MinionGlove.Lead(player, route, guide.Direction, config.MinionLeadDistance, layout, now);
+                var eager = config.MainScenarioStyle && target.MainScenario;
+                var lead = MinionGlove.Lead(player, route, guide.Direction, config.MinionLeadDistance, layout, now, eager);
                 at = lead?.At;
                 if (lead is { } l)
                 {

@@ -18,6 +18,12 @@ public sealed class Configuration : IPluginConfiguration
     public bool UseFlag { get; set; } = true;
     public bool UseQuest { get; set; } = true;
 
+    /// <summary>Which quest: the next step nearest you of all you have accepted (default), or the tracked one first.</summary>
+    public QuestChoice QuestChoice { get; set; } = QuestChoice.Nearest;
+
+    /// <summary>On your Main Scenario quest's steps: its amber colour, a "Main Scenario" label, and an eager glove.</summary>
+    public bool MainScenarioStyle { get; set; } = true;
+
     /// <summary>For a target in another zone, name the nearest aetheryte to it instead of pointing.</summary>
     public bool AetheryteHint { get; set; } = true;
 
@@ -122,6 +128,8 @@ public sealed class Configuration : IPluginConfiguration
             Mode = SourceMode.Auto;
         if (!Enum.IsDefined(Style))
             Style = PointerStyle.Both;
+        if (!Enum.IsDefined(QuestChoice))
+            QuestChoice = QuestChoice.Nearest;
         if (!Enum.IsDefined(Distance))
             Distance = DistanceMode.Hover;
     }

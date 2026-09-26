@@ -61,7 +61,16 @@ internal sealed class SettingsWindow : Window
         changed |= Radio("Quest##mode", SourceMode.Quest, config.Mode, v => config.Mode = v);
         changed |= Check("Targets from /wayfinder and other plugins", config.UseExplicit, v => config.UseExplicit = v);
         changed |= Check("The map flag", config.UseFlag, v => config.UseFlag = v);
-        changed |= Check("The tracked quest's next step", config.UseQuest, v => config.UseQuest = v);
+        changed |= Check("A quest's next step", config.UseQuest, v => config.UseQuest = v);
+        if (config.UseQuest)
+        {
+            ImGui.Indent();
+            changed |= Radio("The nearest##quest", QuestChoice.Nearest, config.QuestChoice, v => config.QuestChoice = v);
+            ImGui.SameLine();
+            changed |= Radio("The tracked one first##quest", QuestChoice.Tracked, config.QuestChoice, v => config.QuestChoice = v);
+            changed |= Check("Main Scenario steps stand out (amber, labelled, an eager glove)", config.MainScenarioStyle, v => config.MainScenarioStyle = v);
+            ImGui.Unindent();
+        }
         changed |= Check("In another zone, name the nearest aetheryte", config.AetheryteHint, v => config.AetheryteHint = v);
         changed |= Check("Forget a /wayfinder target once reached", config.ClearOnArrival, v => config.ClearOnArrival = v);
         changed |= Check("Map links lead the way instead of opening the map (Shift: the map)", config.MapLinks, v => config.MapLinks = v);
