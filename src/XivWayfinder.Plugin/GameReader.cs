@@ -41,7 +41,7 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
     }
 
     /// <summary>The next step of the tracked (or else the most likely) quest that has a known location.</summary>
-    public Target? Quest(uint playerTerritory, Vector3 player, ushort prefer = 0)
+    public Target? Quest(uint playerTerritory, Vector3 player, ushort prefer = 0, QuestChoice choice = QuestChoice.Tracked)
     {
         try
         {
@@ -70,12 +70,25 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
                 leads.Add(new QuestLead(q.QuestId, q.Sequence, q.IsHidden, order, q.IsPriority, i));
             }
 
+            // every quest's next step for the nearest; the tracked order stops at the first found
+            var found = new List<QuestFound>();
             foreach (var lead in QuestPick.Order(leads, prefer))
             {
                 var name = QuestName(lead.QuestId);
                 var place = FromMapMarkers(lead.QuestId, name, playerTerritory, player) ?? FromQuestSheet(lead, name, playerTerritory, player);
                 if (place is { } p)
-                    return new Target(TargetSource.Quest, p.TerritoryId, p.X, p.Z, p.Y, p.Label);
+                {
+                    found.Add(new QuestFound(lead, p));
+                    if (choice == QuestChoice.Tracked || lead.QuestId == prefer)
+                        break;
+                }
+            }
+
+            if (QuestPick.Choose(found, choice, prefer, playerTerritory, player) is { } pick)
+            {
+                var msq = QuestPick.IsMainScenario(pick.Lead.QuestId, MainScenarioQuests());
+                var p = pick.Place;
+                return new Target(TargetSource.Quest, p.TerritoryId, p.X, p.Z, p.Y, p.Label, msq);
             }
         }
         catch (Exception ex)
@@ -86,6 +99,17 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
         }
 
         return null;
+    }
+
+    /// <summary>Your current Main Scenario quests, as the game's scenario guide has them (<c>AgentScenarioTree</c>).</summary>
+    private static ushort[] MainScenarioQuests()
+    {
+        var agent = AgentScenarioTree.Instance();
+        if (agent == null || agent->Data == null)
+            return [];
+        var ids = agent->Data->MainScenarioQuestIds;
+        // [3] is the last completed one, kept only while none is accepted: not a quest to follow
+        return [ids[0], ids[1], ids[2]];
     }
 
     private static QuestLocation? FromMapMarkers(ushort questId, string name, uint playerTerritory, Vector3 player)

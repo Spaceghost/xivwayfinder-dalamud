@@ -28,6 +28,9 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
     private float glow = 0.3f;
     private bool mirrored;
 
+    // the bead's colour this frame: the Main Scenario's amber on its steps (Colors.For), else the chosen one
+    private Vector4 bead = Colors.Gold;
+
     public void Draw(in Scene scene)
     {
         try
@@ -51,6 +54,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
         var dt = (float)Math.Clamp(t - last, 0, 0.1);
         last = t;
         var show = scene.Visible && scene.Guide.Kind != GuideKind.None;
+        bead = Colors.For(scene.Guide.Target, config.BeadColor, config.MainScenarioStyle);
         appear = Pulse.Approach(appear, show ? 1f : 0f, dt, 0.12f);
         if (!show || appear < 0.01f)
             return;
@@ -157,6 +161,9 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
             var text = string.Create(CultureInfo.InvariantCulture, $"{guide.Distance:0} y");
             Label(dl, at + new Vector2(0f, 16f * beadScale + 6f), text, appear);
         }
+
+        if (hoverAt is { } ms && config.MainScenarioStyle && guide.Target is { MainScenario: true })
+            Label(dl, ms - new Vector2(0f, 16f * beadScale + 10f), "Main Scenario", 0.85f * appear);
     }
 
     private bool ShowDistance(Vector2 at) => config.Distance switch
@@ -168,7 +175,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
 
     private void DrawBead(ImDrawListPtr dl, Vector2 c, float r, float alpha)
     {
-        var colour = config.BeadColor;
+        var colour = bead;
         for (var i = 4; i >= 1; i--)
             dl.AddCircleFilled(c, r * (1f + i * 0.55f), Colors.Pack(colour, alpha * 0.07f * (5 - i)), 32);
         dl.AddCircleFilled(c, r, Colors.Pack(Colors.Lighten(colour, 0.15f), 0.35f + 0.65f * alpha), 32);
@@ -186,7 +193,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
 
     private void DrawGlove(ImDrawListPtr dl, Vector2 anchor, float size, float angle, float alpha)
     {
-        dl.AddCircleFilled(anchor, size * 0.42f, Colors.Pack(config.BeadColor, 0.18f * alpha), 24);
+        dl.AddCircleFilled(anchor, size * 0.42f, Colors.Pack(bead, 0.18f * alpha), 24);
         Span<Vector2> quad = stackalloc Vector2[4];
         if (UseGameGlove(out var wrap, out var uv0, out var uv1))
         {
@@ -246,7 +253,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
                 if (ok && prevOk)
                 {
                     var fade = 1f - 0.75f * Math.Clamp((prevAhead + line[i].Ahead) * 0.5f / length, 0f, 1f);
-                    dl.AddLine(prev, s, Colors.Pack(config.BeadColor, 0.35f * fade * appear), 3f);
+                    dl.AddLine(prev, s, Colors.Pack(bead, 0.35f * fade * appear), 3f);
                 }
 
                 prevOk = ok;
@@ -271,7 +278,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
             // near the character a bead fades in rather than popping up under its feet
             var near = Pulse.SmoothStep(0.8f, 2f, beads[i].Ahead);
             var b = Pulse.TrailAt(beads[i].Ahead / length, t, 1.8f) * near * appear;
-            dl.AddCircleFilled(s, 2.2f + 1.6f * b, Colors.Pack(config.BeadColor, 0.9f * b), 12);
+            dl.AddCircleFilled(s, 2.2f + 1.6f * b, Colors.Pack(bead, 0.9f * b), 12);
             if (!labelled)
             {
                 // say what this is: a straight line, not the walkable way
@@ -294,7 +301,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
             ok[i] = gameGui.WorldToScreen(goal + new Vector3(c * radius, 0.05f, s * radius), out ring[i], out _);
         }
 
-        var colour = Colors.Pack(config.BeadColor, 0.85f * appear);
+        var colour = Colors.Pack(bead, 0.85f * appear);
         for (var i = 0; i < n; i++)
         {
             var j = (i + 1) % n;
@@ -316,7 +323,8 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
         var line1 = guide.Kind == GuideKind.Teleport
             ? $"Teleport to {guide.Aetheryte!.Name}" + (guide.Aetheryte.Unlocked ? "" : " (not attuned)")
             : $"In {scene.TargetZone}";
-        var line2 = (target.Label.Length > 0 ? target.Label + " · " : "") + scene.TargetZone;
+        var line2 = (target.MainScenario && config.MainScenarioStyle ? "Main Scenario · " : "")
+            + (target.Label.Length > 0 ? target.Label + " · " : "") + scene.TargetZone;
         var at = gameGui.WorldToScreen(scene.Player + new Vector3(0f, 2.7f, 0f), out var head, out var inView) && inView
             ? head
             : new Vector2((min.X + max.X) * 0.5f, min.Y + (max.Y - min.Y) * 0.18f);
@@ -327,7 +335,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
         var height = s1.Y + s2.Y + 12f;
         var topLeft = new Vector2(at.X - width * 0.5f, at.Y - height);
         dl.AddRectFilled(topLeft, topLeft + new Vector2(width, height), Colors.Pack(Colors.Ink, 0.72f * appear), 8f);
-        dl.AddRect(topLeft, topLeft + new Vector2(width, height), Colors.Pack(config.BeadColor, 0.6f * appear), 8f);
+        dl.AddRect(topLeft, topLeft + new Vector2(width, height), Colors.Pack(bead, 0.6f * appear), 8f);
         DrawBead(dl, topLeft + new Vector2(14f, height * 0.5f), 4.5f * (0.92f + 0.16f * Pulse.Breath(t, 2.6f)), appear);
         dl.AddText(topLeft + new Vector2(26f, 5f), Colors.Pack(Colors.Ivory, appear), line1);
         dl.AddText(topLeft + new Vector2(26f, 7f + s1.Y), Colors.Pack(Colors.Ivory, 0.7f * appear), line2);

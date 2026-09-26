@@ -14,6 +14,13 @@ public static class Colors
     /// <summary>Outlines and text shadows.</summary>
     public static readonly Vector4 Ink = new(0.07f, 0.08f, 0.12f, 1f);
 
+    /// <summary>The Main Scenario's amber, like the flame of the game's own Main Scenario quest icon.</summary>
+    public static readonly Vector4 MainScenario = new(1f, 0.56f, 0.16f, 1f);
+
+    /// <summary>The bead's colour for a target: the Main Scenario's when it is on (<paramref name="mainScenarioStyle"/>), else the chosen one.</summary>
+    public static Vector4 For(Target? target, Vector4 bead, bool mainScenarioStyle) =>
+        mainScenarioStyle && target is { MainScenario: true } ? MainScenario : bead;
+
     /// <summary>Packs an RGBA colour with an extra opacity factor; components are clamped to 0..1.</summary>
     public static uint Pack(Vector4 rgba, float alpha = 1f)
     {
