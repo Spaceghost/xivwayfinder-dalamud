@@ -27,7 +27,8 @@ public enum SourceMode
 /// <summary>
 /// Somewhere to go: a world position (X, Z; Y when it is known) in a territory (a <c>TerritoryType</c> row id).
 /// </summary>
-public sealed record Target(TargetSource Source, uint TerritoryId, float X, float Z, float? Y, string Label)
+/// <param name="MainScenario">A step of your current Main Scenario quest: shown in its own colours, the glove eager.</param>
+public sealed record Target(TargetSource Source, uint TerritoryId, float X, float Z, float? Y, string Label, bool MainScenario = false)
 {
     public Vector3 Position(float fallbackY) => new(X, Y ?? fallbackY, Z);
 }

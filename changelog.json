@@ -11,6 +11,10 @@
       "items": [
         {
           "status": "next",
+          "text": "The nearest quest, and the Main Scenario standing out: quests are now followed by the next step nearest you of every quest you have accepted (in your zone; elsewhere only when none is here), so the glove always leads to the closest thing to do; *The tracked one first* in the settings brings back the old order. When that step is part of your current Main Scenario quest (the game's own scenario guide says which), the bead and trail turn the Main Scenario's amber, a *Main Scenario* label floats over the bead (and heads the note for another zone), and the glove minion leads a little further ahead with an eager bounce. Host tests cover the choice, the Main Scenario check, the colours and the lead; not tried in game."
+        },
+        {
+          "status": "next",
           "text": "Map links lead the way instead of opening the map: clicking a <flag> link in chat, or a quest's *Show on Map*, starts leading you there (that quest's next step first) instead of opening the map, and switches the pointer to the glove minion to lead. Opening the map yourself works as always, and holding Shift opens it for a link too. Once you arrive it goes back to following your usual sources. Only a flag set a moment before counts as a link, so the map key with an old flag still opens the map. *Map links lead the way* in the settings turns it off. Host tests cover which opens are followed; not tried in game."
         },
         {
