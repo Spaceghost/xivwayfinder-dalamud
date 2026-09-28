@@ -81,7 +81,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
                 DrawArrived(dl, scene, t);
                 break;
             case GuideKind.Teleport or GuideKind.Elsewhere:
-                DrawNote(dl, scene, t, min, max);
+                DrawTravelCue(dl, scene, min, max);
                 break;
         }
     }
@@ -359,29 +359,22 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
         }
     }
 
-    private void DrawNote(ImDrawListPtr dl, in Scene scene, double t, Vector2 min, Vector2 max)
+    private void DrawTravelCue(ImDrawListPtr dl, in Scene scene, Vector2 min, Vector2 max)
     {
         var guide = scene.Guide;
-        var target = guide.Target!;
-        var line1 = guide.Kind == GuideKind.Teleport
-            ? $"Teleport to {guide.Aetheryte!.Name}" + (guide.Aetheryte.Unlocked ? "" : " (not attuned)")
-            : $"In {scene.TargetZone}";
-        var line2 = (target.MainScenario && config.MainScenarioStyle ? "Main Scenario · " : "")
-            + (target.Label.Length > 0 ? target.Label + " · " : "") + scene.TargetZone;
-        var at = gameGui.WorldToScreen(scene.Player + new Vector3(0f, 2.7f, 0f), out var head, out var inView) && inView
-            ? head
-            : new Vector2((min.X + max.X) * 0.5f, min.Y + (max.Y - min.Y) * 0.18f);
-
-        var s1 = ImGui.CalcTextSize(line1);
-        var s2 = ImGui.CalcTextSize(line2);
-        var width = MathF.Max(s1.X, s2.X) + 34f;
-        var height = s1.Y + s2.Y + 12f;
-        var topLeft = new Vector2(at.X - width * 0.5f, at.Y - height);
-        dl.AddRectFilled(topLeft, topLeft + new Vector2(width, height), Colors.Pack(Colors.Ink, 0.72f * appear), 8f);
-        dl.AddRect(topLeft, topLeft + new Vector2(width, height), Colors.Pack(bead, 0.6f * appear), 8f);
-        DrawBead(dl, topLeft + new Vector2(14f, height * 0.5f), 4.5f * (0.92f + 0.16f * Pulse.Breath(t, 2.6f)), appear);
-        dl.AddText(topLeft + new Vector2(26f, 5f), Colors.Pack(Colors.Ivory, appear), line1);
-        dl.AddText(topLeft + new Vector2(26f, 7f + s1.Y), Colors.Pack(Colors.Ivory, 0.7f * appear), line2);
+        var hint = guide.Kind == GuideKind.Teleport
+            ? guide.Aetheryte!.Unlocked
+                ? $"Teleport to {guide.Aetheryte.Name}"
+                : $"Travel to {scene.TargetZone} · {guide.Aetheryte.Name} is not attuned"
+            : $"Travel to {scene.TargetZone} to follow this target";
+        // A remote objective has no honest world-space heading. Keep its travel instruction near the
+        // screen edge instead of putting an opaque, pointer-shaped window over the character.
+        var textSize = ImGui.CalcTextSize(hint);
+        var at = new Vector2(MathF.Max(min.X + 16f, max.X - textSize.X - 30f), min.Y + 42f);
+        var shadow = Colors.Pack(Colors.Ink, 0.9f * appear);
+        dl.AddText(at + new Vector2(1f, 1f), shadow, hint);
+        dl.AddText(at, Colors.Pack(Colors.Ivory, appear), hint);
+        dl.AddCircleFilled(at + new Vector2(-9f, textSize.Y * 0.5f), 3.5f, Colors.Pack(bead, appear), 16);
     }
 
     private static void Label(ImDrawListPtr dl, Vector2 centre, string text, float alpha)

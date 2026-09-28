@@ -10,6 +10,10 @@
       "blurb": "Merged, not in a release yet.",
       "items": [
         {
+          "status": "next",
+          "text": "Cross-zone objectives show a short travel cue near the screen edge instead of a dark rectangular window over your character. An attuned destination aetheryte is named when available; otherwise the cue names the zone. A directional pointer appears when there is a target in the current zone."
+        },
+        {
           "status": "beta",
           "text": "Places you keep: `/wayfinder save NAME` records where you stand, `/wayfinder go NAME` points back there (including its height), `/wayfinder forget NAME` removes it, and `/wayfinder places` lists the book. Names ignore case, accents and punctuation, duplicates update in place, corrupt saved rows are discarded, and the book is capped at 100. Housing is explicitly refused until ward, plot and room identity can be stored safely. Host tests cover parsing, normalized lookup, replacement, removal and persisted-data validation; not tried in game."
         },
