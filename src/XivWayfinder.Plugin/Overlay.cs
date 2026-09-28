@@ -27,6 +27,8 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
     private float appear;
     private float glow = 0.3f;
     private bool mirrored;
+    private Vector3? warningCorner;
+    private double warningStarted;
 
     // The bead's colour eases between source colours instead of snapping when the selected target changes.
     private Vector4 bead = Colors.Gold;
@@ -110,6 +112,40 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
         var goalInFront = gameGui.WorldToScreen(goalPoint, out var sGoal, out var goalInView);
         if (!hasDir && goalInFront && haveChest)
             hasDir = ScreenEdge.Direction(sChest, sGoal, ref screenDir);
+
+        var tap = Pulse.Tap(t, 1.1f);
+        var warning = navmesh.Following
+            ? PathFollow.ApproachingCorner(navmesh.Path, navmesh.Corner, p)
+            : null;
+        if (warning is { } cornerTurn && hasDir)
+        {
+            var corner = navmesh.Path[navmesh.Corner];
+            if (warningCorner != corner)
+            {
+                warningCorner = corner;
+                warningStarted = t;
+            }
+
+            // Project the next path leg like the current direction, then ease the glove towards it as the player
+            // closes the final three yalms. The bead and trail continue to mark the current leg.
+            var turnPoint = Heading.Ahead(p, cornerTurn.Direction, 1.5f, 1.2f);
+            var turnScreen = Vector2.Zero;
+            if (haveChest && gameGui.WorldToScreen(turnPoint, out var sTurn, out _) && ScreenEdge.Direction(sChest, sTurn, ref turnScreen))
+            {
+                var leaned = Vector2.Lerp(screenDir, turnScreen, cornerTurn.Blend);
+                if (leaned.LengthSquared() > 1e-6f)
+                    screenDir = Vector2.Normalize(leaned);
+            }
+
+            // Two quick taps for one ordinary 1.1-second tap period, then return to the normal rhythm.
+            if (t - warningStarted < 1.1)
+                tap = Pulse.Tap(t - warningStarted, 0.55f);
+        }
+        else
+        {
+            warningCorner = null;
+        }
+
         var gloveMargin = config.GloveSize * 0.8f;
         var onScreen = goalInFront && goalInView && ScreenEdge.Inside(sGoal, min + new Vector2(gloveMargin), max - new Vector2(gloveMargin));
 
@@ -157,7 +193,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
                 gloveAlpha = appear;
             }
 
-            anchor += screenDir * (Pulse.Tap(t, 1.1f) * size * 0.12f);
+            anchor += screenDir * (tap * size * 0.12f);
             mirrored = Glove.Mirror(angle, mirrored);
             DrawGlove(dl, anchor, size, angle, gloveAlpha);
             hoverAt ??= anchor;

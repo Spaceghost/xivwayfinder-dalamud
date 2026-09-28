@@ -122,6 +122,22 @@ public sealed class MotionAndPathTests
     }
 
     [Fact]
+    public void WarnsOnlyForANearbyRealTurn()
+    {
+        var warning = PathFollow.ApproachingCorner(Path, 1, new Vector3(8, 99, 0));
+        Assert.NotNull(warning);
+        Assert.Equal(Vector2.UnitY, warning.Value.Direction);
+        Assert.InRange(warning.Value.Blend, 0.2f, 0.4f);
+
+        Assert.Null(PathFollow.ApproachingCorner(Path, 1, new Vector3(6, 0, 0))); // too far away
+        Assert.Null(PathFollow.ApproachingCorner(Path, 0, Vector3.Zero)); // the first point has no incoming leg
+        Assert.Null(PathFollow.ApproachingCorner(Path, Path.Length - 1, Path[^1])); // the destination has no next leg
+
+        Vector3[] gentle = [new(0, 0, 0), new(10, 0, 0), new(20, 0, 2)];
+        Assert.Null(PathFollow.ApproachingCorner(gentle, 1, new Vector3(9, 0, 0))); // a bend below 30 degrees is noise
+    }
+
+    [Fact]
     public void TinyPaths()
     {
         Assert.Equal(-1, PathFollow.NextCorner([], Vector3.Zero, 1.5f));
