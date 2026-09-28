@@ -58,6 +58,18 @@ public sealed class CommandAndIpcTests
     }
 
     [Theory]
+    [InlineData("save forge", Verb.SavePlace, "forge")]
+    [InlineData("go Café Meetup", Verb.GoPlace, "Café Meetup")]
+    [InlineData("forget old spot", Verb.ForgetPlace, "old spot")]
+    [InlineData("places", Verb.ListPlaces, "")]
+    public void NamedPlaceCommandsComeBeforeFreeTextZones(string text, Verb verb, string name)
+    {
+        var request = WayfinderCommands.Parse(text);
+        Assert.Equal(verb, request.Verb);
+        Assert.Equal(name, request.Name);
+    }
+
+    [Theory]
     [InlineData("11.2")]
     [InlineData("1 2 3")]
     [InlineData("0 14")]

@@ -38,6 +38,10 @@ public enum Verb
     Off,
     Toggle,
     Status,
+    SavePlace,
+    GoPlace,
+    ForgetPlace,
+    ListPlaces,
     Invalid,
 }
 
@@ -51,6 +55,7 @@ public sealed record WayfinderRequest(Verb Verb)
     public PointerStyle Style { get; init; }
     public float Distance { get; init; } = WayfinderCommands.TestDistance;
     public string Error { get; init; } = "";
+    public string Name { get; init; } = "";
 }
 
 /// <summary>
@@ -65,6 +70,7 @@ public static class WayfinderCommands
     public const string Help =
         "/wayfinder X Y [zone] points at map coordinates (the zone defaults to where you are) · /wayfinder clear · " +
         "/wayfinder test (a target 20 yalms ahead) · /wayfinder auto|target|flag|quest chooses what to follow · " +
+        "/wayfinder save|go|forget NAME and /wayfinder places keep named places · " +
         "/wayfinder bead|glove|both|minion · /wayfinder on|off · /wayfinder status · /wayfinder opens the settings. /xivwayfinder works the same.";
 
     public static WayfinderRequest Parse(string? arguments)
@@ -75,6 +81,24 @@ public static class WayfinderCommands
             return new WayfinderRequest(Verb.Open);
 
         var first = tokens[0].ToLowerInvariant();
+        if (first is "save" or "go" or "forget")
+        {
+            if (tokens.Length < 2)
+                return Invalid($"/wayfinder {first} NAME: give the place a name");
+            var verb = first switch
+            {
+                "save" => Verb.SavePlace,
+                "go" => Verb.GoPlace,
+                _ => Verb.ForgetPlace,
+            };
+            return new WayfinderRequest(verb) { Name = string.Join(' ', tokens[1..]) };
+        }
+
+        if (first == "places")
+            return tokens.Length == 1
+                ? new WayfinderRequest(Verb.ListPlaces)
+                : Invalid("/wayfinder places takes no other words");
+
         if (tokens.Length == 1 || first == "test")
         {
             switch (first)

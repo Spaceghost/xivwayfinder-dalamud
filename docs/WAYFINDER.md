@@ -149,6 +149,9 @@ presses a key, moves, turns or teleports your character.
 | `/wayfinder X Y [zone]` | Points at map coordinates, in the zone you are in or the one named. Paste them as the game writes them: `11.2 14.5`, `(11.2, 14.5)`, `X: 11.2 Y: 14.5 Z: 0.3`, or a chat map link's text. |
 | `/wayfinder clear` | Forgets that target. |
 | `/wayfinder test [yalms]` | A target 20 yalms (3 to 200) straight ahead of your character. |
+| `/wayfinder save NAME` | Saves the current non-housing world position under a name (or updates that name). |
+| `/wayfinder go NAME` | Points at a saved place; names ignore case, accents and punctuation. |
+| `/wayfinder forget NAME` · `/wayfinder places` | Removes one saved place, or lists the book. |
 | `/wayfinder auto` · `target` · `flag` · `quest` | What to follow. |
 | `/wayfinder bead` · `glove` · `both` · `minion` | What the pointer looks like; `minion` (or `cursor`) is the Wind-up Cursor model. |
 | `/wayfinder on` · `off` · `toggle` | Shows or hides it. |
@@ -158,6 +161,9 @@ presses a key, moves, turns or teleports your character.
 
 Zone names match case- and accent-insensitively: exactly first, then the start of a name, then anywhere in it;
 a territory id works too. Among equal matches the lowest territory id wins.
+
+Named places store territory and world position locally in the plugin configuration. Residential districts and
+interiors are refused for now because the same territory and coordinates can mean a different ward, plot or room.
 
 ## Proving it in game
 

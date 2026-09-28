@@ -90,6 +90,7 @@ Dalamud's configuration. `XIVWAYFINDER_ARTIFACTS` and `XIVWAYFINDER_STAGE` overr
 | `/wayfinder X Y [zone]` | Points at map coordinates: `11.2 14.5`, `(11.2, 14.5)`, `X: 11.2 Y: 14.5`, `21.5 22.1 central shroud`. |
 | `/wayfinder clear` | Forgets that target. |
 | `/wayfinder test [yalms]` | A target 20 yalms straight ahead: the quickest way to see it work. |
+| `/wayfinder save NAME` · `go NAME` · `forget NAME` · `places` | Keep named non-housing places and point back to them. |
 | `/wayfinder auto` · `target` · `flag` · `quest` | Follow everything by priority, or one source only. |
 | `/wayfinder bead` · `glove` · `both` · `minion` | The pointer's look; `minion` is the Wind-up Cursor model. |
 | `/wayfinder on` · `off` · `status` | Show, hide, or say what it is doing. |
@@ -106,7 +107,7 @@ is being pointed at and, when nothing shows, why. Details: [docs/WAYFINDER.md](d
 
 ## For other plugins
 
-Four IPC functions, no assembly reference needed. Full rules and the JSON: [docs/IPC.md](docs/IPC.md).
+Four IPC functions and two events, no assembly reference needed. Full rules and the JSON: [docs/IPC.md](docs/IPC.md).
 
 | Name | Signature | Meaning |
 | --- | --- | --- |
