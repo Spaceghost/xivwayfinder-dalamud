@@ -217,17 +217,33 @@ public sealed class CommandAndIpcTests
     }
 
     [Fact]
+    public void StateChangeKeyDebouncesDistanceOnlyChanges()
+    {
+        var target = new Target(TargetSource.Flag, 132, 10, 20, null, "flag");
+        var first = new WayfinderState { Guide = new Guide(GuideKind.Walk, target, 50, Vector2.UnitX, null) };
+        var nearer = new WayfinderState { Guide = new Guide(GuideKind.Walk, target, 12, Vector2.UnitX, null) };
+        var arrived = new WayfinderState { Guide = new Guide(GuideKind.Arrived, target, 3, Vector2.Zero, null) };
+        var other = new WayfinderState { Guide = new Guide(GuideKind.Walk, target with { Label = "other" }, 50, Vector2.UnitX, null) };
+
+        Assert.Equal(StateChangeKey.From(first), StateChangeKey.From(nearer));
+        Assert.NotEqual(StateChangeKey.From(first), StateChangeKey.From(arrived));
+        Assert.NotEqual(StateChangeKey.From(first), StateChangeKey.From(other));
+    }
+
+    [Fact]
     public void IpcNamesAreTheDocumentedOnes()
     {
         Assert.Equal("XivWayfinder.v1.SetTarget", IpcContract.SetTarget);
         Assert.Equal("XivWayfinder.v1.SetMapTarget", IpcContract.SetMapTarget);
         Assert.Equal("XivWayfinder.v1.Clear", IpcContract.Clear);
         Assert.Equal("XivWayfinder.v1.GetState", IpcContract.GetState);
+        Assert.Equal("XivWayfinder.v1.Arrived", IpcContract.Arrived);
+        Assert.Equal("XivWayfinder.v1.StateChanged", IpcContract.StateChanged);
         // vnavmesh's, from its IPCProvider.cs; none of the ones that move the character
         Assert.All(new[] { IpcContract.NavIsReady, IpcContract.NavPathfindCancelable, IpcContract.NavNearestPoint },
             n => Assert.DoesNotMatch(@"\.(Path|SimpleMove)\.", n));
         var doc = File.ReadAllText(Path.Combine(RepoRoot(), "docs", "IPC.md"));
-        foreach (var name in new[] { IpcContract.SetTarget, IpcContract.SetMapTarget, IpcContract.Clear, IpcContract.GetState })
+        foreach (var name in new[] { IpcContract.SetTarget, IpcContract.SetMapTarget, IpcContract.Clear, IpcContract.GetState, IpcContract.Arrived, IpcContract.StateChanged })
             Assert.Contains("`" + name + "`", doc);
     }
 

@@ -15,6 +15,8 @@ They follow the family's `<Plugin>.v1.<Verb>` naming (`XivArcade.v1.Search`, `Xi
 | `XivWayfinder.v1.SetMapTarget` | `uint territoryId, float mapX, float mapY, string label` → `bool` | The same, in the map coordinates the game prints. |
 | `XivWayfinder.v1.Clear` | → `bool` | Forget the target set by IPC or `/wayfinder`. |
 | `XivWayfinder.v1.GetState` | → `string` | What XivWayfinder is pointing at, as JSON. |
+| `XivWayfinder.v1.Arrived` | event: `string label, uint territoryId` | Raised once after the player remains inside a target's arrival radius. |
+| `XivWayfinder.v1.StateChanged` | event: `string stateJson` | Raised when the target or guide kind changes, with the `GetState` JSON. |
 
 ## Rules
 
@@ -44,6 +46,14 @@ var setTarget = pluginInterface.GetIpcSubscriber<uint, float, float, string, boo
 var setMapTarget = pluginInterface.GetIpcSubscriber<uint, float, float, string, bool>("XivWayfinder.v1.SetMapTarget");
 var clear = pluginInterface.GetIpcSubscriber<bool>("XivWayfinder.v1.Clear");
 var getState = pluginInterface.GetIpcSubscriber<string>("XivWayfinder.v1.GetState");
+var arrived = pluginInterface.GetIpcSubscriber<string, uint, object>("XivWayfinder.v1.Arrived");
+var stateChanged = pluginInterface.GetIpcSubscriber<string, object>("XivWayfinder.v1.StateChanged");
+
+// Subscribe once, and unsubscribe the same delegates when your plugin unloads.
+Action<string, uint> onArrived = (label, territoryId) => { /* queue brief work */ };
+Action<string> onStateChanged = stateJson => { /* parse or queue it */ };
+arrived.Subscribe(onArrived);
+stateChanged.Subscribe(onStateChanged);
 
 // later; IpcNotReadyError means XivWayfinder is not installed or not loaded
 try
@@ -56,6 +66,9 @@ catch (Dalamud.Plugin.Ipc.Exceptions.IpcNotReadyError)
     // offer to install XivWayfinder, or print the coordinates instead
 }
 ```
+
+Event subscribers run synchronously on Dalamud's framework thread and should return quickly. `StateChanged` is
+debounced: changing distance alone does not raise it. Call `GetState` whenever a fresh distance is needed.
 
 ### For Ghostty's `/ask` coordinate links
 

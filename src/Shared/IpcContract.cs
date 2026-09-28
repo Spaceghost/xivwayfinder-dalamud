@@ -26,6 +26,18 @@ public static class IpcContract
     /// <summary>() → string. What XivWayfinder is pointing at, as JSON (see docs/IPC.md).</summary>
     public const string GetState = "XivWayfinder.v1.GetState";
 
+    /// <summary>
+    /// Event (string label, uint territoryId). Raised once after the player has remained inside a target's arrival
+    /// radius; subscribers should return quickly because delivery is on the framework thread.
+    /// </summary>
+    public const string Arrived = "XivWayfinder.v1.Arrived";
+
+    /// <summary>
+    /// Event (string stateJson). Raised when the guide kind or target changes, with the same JSON as
+    /// <see cref="GetState"/>. Distance-only changes are deliberately debounced.
+    /// </summary>
+    public const string StateChanged = "XivWayfinder.v1.StateChanged";
+
     // vnavmesh (github.com/awgil/ffxiv_navmesh, vnavmesh/IPCProvider.cs). Only queries: XivWayfinder never calls the
     // Path.* or SimpleMove.* gates, which move the character.
 

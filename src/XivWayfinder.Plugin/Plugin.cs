@@ -39,6 +39,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private readonly WindowSystem windowSystem = new("XivWayfinder");
     private readonly Stopwatch clock = Stopwatch.StartNew();
     private readonly ArrivalTimer arrival = new();
+    private readonly ArrivalTimer eventArrival = new();
     private readonly Configuration config = null!;
     private readonly GameReader reader = null!;
     private readonly Navmesh navmesh = null!;
@@ -50,6 +51,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private readonly ICallGateProvider<uint, float, float, string, bool>? setMapTarget;
     private readonly ICallGateProvider<bool>? clearTarget;
     private readonly ICallGateProvider<string>? getState;
+    private readonly ICallGateProvider<string, uint, object>? arrivedEvent;
+    private readonly ICallGateProvider<string, object>? stateChangedEvent;
     private delegate void OpenMapDelegate(AgentMap* agent, OpenMapInfo* info);
 
     private readonly Hook<OpenMapDelegate>? openMapHook;
@@ -64,6 +67,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private Target? flag;
     private Target? quest;
     private Target? arrivalFor;
+    private Target? eventArrivalFor;
+    private StateChangeKey? publishedState;
 
     // following a map link (MapLinks): the source to follow instead of config.Mode, and the quest it showed
     private volatile object? linkMode; // a boxed SourceMode, or null
@@ -126,6 +131,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
             clearTarget.RegisterFunc(ClearExplicit);
             getState = pluginInterface.GetIpcProvider<string>(IpcContract.GetState);
             getState.RegisterFunc(() => WayfinderIpc.StateJson(state));
+            arrivedEvent = pluginInterface.GetIpcProvider<string, uint, object>(IpcContract.Arrived);
+            stateChangedEvent = pluginInterface.GetIpcProvider<string, object>(IpcContract.StateChanged);
 
             try
             {
@@ -189,10 +196,12 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
         if (player is null)
         {
+            eventArrival.Reset();
+            eventArrivalFor = null;
             minion.Update(MinionWant.Hard, null, config.MinionSize, config.MinionTilt, now, dt);
             navmesh.Idle();
             scene = default;
-            state = new WayfinderState { Enabled = config.Enabled, Visible = false, Reason = reason, Mode = config.Mode, Style = config.Style };
+            PublishState(new WayfinderState { Enabled = config.Enabled, Visible = false, Reason = reason, Mode = config.Mode, Style = config.Style });
             return;
         }
 
@@ -219,6 +228,12 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ? reader.AetherytesIn(target.TerritoryId)
             : [];
         var guide = TargetPicker.Plan(zone, position, target, config.ArriveRadius, spots, aim);
+        if (!Equals(guide.Target, eventArrivalFor))
+        {
+            eventArrival.Reset();
+            eventArrivalFor = guide.Target;
+        }
+        var arrivedNow = guide.Target is not null && eventArrival.Update(guide.Kind == GuideKind.Arrived, now, 1.5);
 
         var mine = explicitTarget;
         if (!ReferenceEquals(mine, arrivalFor))
@@ -253,7 +268,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
         var targetZone = guide.Target is { } t ? reader.ZoneName(t.TerritoryId) : "";
         scene = new Scene(visible, guide, position, player.Rotation, aim, targetZone);
-        state = new WayfinderState
+        PublishState(new WayfinderState
         {
             Enabled = config.Enabled,
             Visible = visible && guide.Kind != GuideKind.None,
@@ -265,7 +280,40 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ZoneName = targetZone,
             Navmesh = aim is not null,
             RouteNote = aim is not null ? "" : config.UseNavmesh ? navmesh.Status : "switched off in the settings",
-        };
+        });
+        if (arrivedNow && guide.Target is { } reached)
+            PublishArrived(reached);
+    }
+
+    private void PublishState(WayfinderState next)
+    {
+        state = next;
+        var key = StateChangeKey.From(next);
+        if (publishedState == key)
+            return;
+        publishedState = key;
+        try
+        {
+            stateChangedEvent?.SendMessage(WayfinderIpc.StateJson(next));
+        }
+        catch (Exception ex)
+        {
+            // A subscriber must not be able to interrupt the pointer's update loop.
+            log.Debug(ex, "XivWayfinder StateChanged subscriber failed");
+        }
+    }
+
+    private void PublishArrived(Target target)
+    {
+        try
+        {
+            arrivedEvent?.SendMessage(WayfinderIpc.CleanLabel(target.Label), target.TerritoryId);
+        }
+        catch (Exception ex)
+        {
+            // A subscriber must not be able to interrupt the pointer's update loop.
+            log.Debug(ex, "XivWayfinder Arrived subscriber failed");
+        }
     }
 
     /// <summary>The minion glove: where it floats and which way it points, or why it should not be there.</summary>

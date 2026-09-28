@@ -151,6 +151,7 @@ public static class TargetPicker
 public sealed class ArrivalTimer
 {
     private double insideSince = double.NaN;
+    private bool fired;
 
     /// <summary>True once the player has been within the radius for <paramref name="hold"/> seconds.</summary>
     public bool Update(bool inside, double now, double hold)
@@ -158,13 +159,21 @@ public sealed class ArrivalTimer
         if (!inside)
         {
             insideSince = double.NaN;
+            fired = false;
             return false;
         }
 
         if (double.IsNaN(insideSince))
             insideSince = now;
-        return now - insideSince >= hold;
+        if (fired || now - insideSince < hold)
+            return false;
+        fired = true;
+        return true;
     }
 
-    public void Reset() => insideSince = double.NaN;
+    public void Reset()
+    {
+        insideSince = double.NaN;
+        fired = false;
+    }
 }

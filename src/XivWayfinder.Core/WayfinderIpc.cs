@@ -22,6 +22,15 @@ public sealed record WayfinderState
 }
 
 /// <summary>
+/// The stable part of a state used to gate <c>StateChanged</c>: distance and animation updates do not make noise,
+/// but moving to another target or another kind of guidance does.
+/// </summary>
+public readonly record struct StateChangeKey(GuideKind Guide, Target? Target)
+{
+    public static StateChangeKey From(WayfinderState state) => new(state.Guide.Kind, state.Guide.Target);
+}
+
+/// <summary>
 /// The IPC functions' argument checks and the JSON <c>XivWayfinder.v1.GetState</c> returns. Other plugins' input is
 /// checked here, never trusted: numbers must be finite and inside a zone's range, labels are trimmed and cleaned.
 /// </summary>

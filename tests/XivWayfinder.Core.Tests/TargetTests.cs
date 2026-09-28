@@ -106,6 +106,7 @@ public sealed class TargetTests
         Assert.False(timer.Update(true, 10.0, 1.5));
         Assert.False(timer.Update(true, 11.0, 1.5));
         Assert.True(timer.Update(true, 11.6, 1.5));
+        Assert.False(timer.Update(true, 11.7, 1.5), "arrival fires once while remaining inside");
         // walking out resets it
         Assert.False(timer.Update(false, 12.0, 1.5));
         Assert.False(timer.Update(true, 12.1, 1.5));

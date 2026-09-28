@@ -11,6 +11,10 @@
       "items": [
         {
           "status": "beta",
+          "text": "Arrival and change events for other plugins: `XivWayfinder.v1.Arrived` reports a reached target once after the arrival hold, and `XivWayfinder.v1.StateChanged` carries the same JSON as `GetState` whenever the target or guide kind changes. Distance-only movement is debounced, subscriber failures cannot interrupt the pointer, and the IPC guide documents subscription lifetime and framework-thread rules. Host tests cover one-shot arrival, debouncing and every documented contract name; not tried in game."
+        },
+        {
+          "status": "beta",
           "text": "A colour for every source: ordinary targets keep the chosen gold, map flags use sky blue, and quest steps use reddish purple, with colour-blind-distinguishable defaults and a smooth transition when the source changes. Each colour has its own picker, while *One colour for all targets* restores the previous shared-colour look; Main Scenario amber still takes precedence. Host tests cover source selection and frame-rate-independent colour easing; not tried in game."
         },
         {
