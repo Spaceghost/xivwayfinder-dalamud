@@ -452,6 +452,18 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 case Verb.Status:
                     Print(WayfinderIpc.StatusLine(state));
                     break;
+                case Verb.SavePlace:
+                    SavePlace(request.Name);
+                    break;
+                case Verb.GoPlace:
+                    GoPlace(request.Name);
+                    break;
+                case Verb.ForgetPlace:
+                    ForgetPlace(request.Name);
+                    break;
+                case Verb.ListPlaces:
+                    ListPlaces();
+                    break;
             }
         }
         catch (Exception ex)
@@ -512,6 +524,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     /// <summary>A target the player asked for by command: make sure the settings let it show.</summary>
     private void UseExplicit(Target target)
     {
+        EndLink();
         explicitTarget = target;
         var notes = new List<string>();
         if (!config.UseExplicit)
@@ -537,6 +550,72 @@ public sealed unsafe class Plugin : IDalamudPlugin
             Save();
             Print(string.Join("; ", notes) + ".");
         }
+    }
+
+    private void SavePlace(string name)
+    {
+        if (objects.LocalPlayer is not { } player || clientState.TerritoryType == 0)
+        {
+            Print("no character position to save.");
+            return;
+        }
+
+        var zone = clientState.TerritoryType;
+        if (reader.IsHousing(zone))
+        {
+            Print("places inside housing are not saved yet: a ward, plot and room are needed to find the same place again.");
+            return;
+        }
+
+        if (!SavedPlaces.Store(config.Places, new SavedPlace(name, zone, player.Position.X, player.Position.Y, player.Position.Z), out var replaced, out var error))
+        {
+            Print(error + ".");
+            return;
+        }
+
+        Save();
+        var clean = config.Places[SavedPlaces.Find(config.Places, name)].Name;
+        Print($"{(replaced ? "updated" : "saved")} {clean} in {reader.ZoneName(zone)}.");
+    }
+
+    private void GoPlace(string name)
+    {
+        var index = SavedPlaces.Find(config.Places, name);
+        if (index < 0)
+        {
+            Print($"no saved place called \"{SavedPlaces.CleanName(name)}\"; /wayfinder places lists them.");
+            return;
+        }
+
+        var place = config.Places[index];
+        UseExplicit(new Target(TargetSource.Explicit, place.TerritoryId, place.X, place.Z, place.Y, place.Name));
+        Print($"pointing at {place.Name} in {reader.ZoneName(place.TerritoryId)}.");
+    }
+
+    private void ForgetPlace(string name)
+    {
+        var clean = SavedPlaces.CleanName(name);
+        if (!SavedPlaces.Forget(config.Places, clean))
+        {
+            Print($"no saved place called \"{clean}\".");
+            return;
+        }
+
+        Save();
+        Print($"forgot {clean}.");
+    }
+
+    private void ListPlaces()
+    {
+        if (config.Places.Count == 0)
+        {
+            Print("no saved places; stand somewhere and use /wayfinder save NAME.");
+            return;
+        }
+
+        Print($"saved places ({config.Places.Count}):");
+        foreach (var place in config.Places.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase))
+            Print($"{place.Name} — {reader.ZoneName(place.TerritoryId)}");
     }
 
     private bool SetTargetFromIpc(uint territoryId, float x, float z, string label)

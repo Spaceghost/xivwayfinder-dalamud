@@ -11,6 +11,10 @@
       "items": [
         {
           "status": "beta",
+          "text": "Places you keep: `/wayfinder save NAME` records where you stand, `/wayfinder go NAME` points back there (including its height), `/wayfinder forget NAME` removes it, and `/wayfinder places` lists the book. Names ignore case, accents and punctuation, duplicates update in place, corrupt saved rows are discarded, and the book is capped at 100. Housing is explicitly refused until ward, plot and room identity can be stored safely. Host tests cover parsing, normalized lookup, replacement, removal and persisted-data validation; not tried in game."
+        },
+        {
+          "status": "beta",
           "text": "The glove warns of a turn on vnavmesh routes: inside three yalms of a real corner it smoothly leans towards the next leg and taps twice quickly for one ordinary tap period. Bends under 30 degrees, endpoints and malformed short segments are ignored so town paths do not make it fidget. The bead and trail continue to show the current leg. Host tests cover distance, turn angle, endpoints and height-independent detection; not tried in game."
         },
         {

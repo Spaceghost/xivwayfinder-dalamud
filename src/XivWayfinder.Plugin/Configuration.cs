@@ -110,6 +110,8 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Forget a /wayfinder or IPC target once it has been reached.</summary>
     public bool ClearOnArrival { get; set; } = true;
 
+    public List<SavedPlace> Places { get; set; } = [];
+
     public SourceToggles Toggles() => new(UseExplicit, UseFlag, UseQuest);
 
     public MinionLayout MinionPlacement() => new(MinionAhead, MinionSide, MinionHeight, MinionTurn, MinionTilt ? MinionLayout.Default.MaxPitchDegrees : 0f);
@@ -117,6 +119,7 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Keeps hand-edited or old values inside what the overlay can draw.</summary>
     public void Clamp()
     {
+        Places = SavedPlaces.Sanitize(Places);
         BeadDistance = Fit(BeadDistance, 1.5f, 3f, 2.2f);
         BeadHeight = Fit(BeadHeight, 0f, 2.5f, 1.1f);
         BeadSize = Fit(BeadSize, 3f, 20f, 8f);

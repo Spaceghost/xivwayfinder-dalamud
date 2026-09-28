@@ -219,6 +219,10 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
         return new MapInfo(mapId, map.SizeFactor, map.OffsetX, map.OffsetY);
     }
 
+    /// <summary>Residential districts and interiors need ward/plot/room identity, which a territory id does not preserve.</summary>
+    public bool IsHousing(uint territory) =>
+        data.GetExcelSheet<TerritoryType>().TryGetRow(territory, out var t) && t.TerritoryIntendedUse.RowId is 13 or 14;
+
     public string ZoneName(uint territory)
     {
         if (territory == 0)
