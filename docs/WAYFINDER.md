@@ -47,12 +47,12 @@ guess, not a documented meaning. Nothing of this has been checked against a real
 
 ### Another zone
 
-When the target is in another zone, XivWayfinder does not point: a small glass note above your character says
-**Teleport to *aetheryte*** (the aetheryte nearest the target in that zone, attuned ones first, *(not attuned)*
-otherwise) with the target and its zone underneath. Aetheryte positions come from the `MapMarker` sheet
+When the target is in another zone, XivWayfinder has no world direction to point in. A short travel cue near the
+top edge says **Teleport to *aetheryte*** when one is attuned, or **Travel to *zone***. It does not cover the
+character with a window. Aetheryte positions come from the `MapMarker` sheet
 (`DataType` 3, `DataKey` the aetheryte), converted from map pixels to world coordinates, else the aetheryte's
-first `Level` row. A zone without one says *In zone*. Switch *In another zone, name the nearest aetheryte* off to
-always get the plain zone note. XivWayfinder never teleports you.
+first `Level` row. Switch *In another zone, name the nearest aetheryte* off to always get the plain zone cue.
+XivWayfinder never teleports you.
 
 ## What it looks like
 

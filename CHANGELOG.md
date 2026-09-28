@@ -17,6 +17,12 @@ Statuses mean the same thing in every one of these mods:
 
 Merged, not in a release yet.
 
+### Being built
+
+* Cross-zone objectives show a short travel cue near the screen edge instead of a dark rectangular window over your character. An attuned destination aetheryte is named when available; otherwise the cue names the zone. A directional pointer appears when there is a target in the current zone.
+
+### Merged, not yet verified in game
+
 * Places you keep: `/wayfinder save NAME` records where you stand, `/wayfinder go NAME` points back there (including its height), `/wayfinder forget NAME` removes it, and `/wayfinder places` lists the book. Names ignore case, accents and punctuation, duplicates update in place, corrupt saved rows are discarded, and the book is capped at 100. Housing is explicitly refused until ward, plot and room identity can be stored safely. Host tests cover parsing, normalized lookup, replacement, removal and persisted-data validation; not tried in game.
 * The glove warns of a turn on vnavmesh routes: inside three yalms of a real corner it smoothly leans towards the next leg and taps twice quickly for one ordinary tap period. Bends under 30 degrees, endpoints and malformed short segments are ignored so town paths do not make it fidget. The bead and trail continue to show the current leg. Host tests cover distance, turn angle, endpoints and height-independent detection; not tried in game.
 * Arrival and change events for other plugins: `XivWayfinder.v1.Arrived` reports a reached target once after the arrival hold, and `XivWayfinder.v1.StateChanged` carries the same JSON as `GetState` whenever the target or guide kind changes. Distance-only movement is debounced, subscriber failures cannot interrupt the pointer, and the IPC guide documents subscription lifetime and framework-thread rules. Host tests cover one-shot arrival, debouncing and every documented contract name; not tried in game.
