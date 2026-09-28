@@ -28,7 +28,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
     private float glow = 0.3f;
     private bool mirrored;
 
-    // the bead's colour this frame: the Main Scenario's amber on its steps (Colors.For), else the chosen one
+    // The bead's colour eases between source colours instead of snapping when the selected target changes.
     private Vector4 bead = Colors.Gold;
 
     public void Draw(in Scene scene)
@@ -54,7 +54,14 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
         var dt = (float)Math.Clamp(t - last, 0, 0.1);
         last = t;
         var show = scene.Visible && scene.Guide.Kind != GuideKind.None;
-        bead = Colors.For(scene.Guide.Target, config.BeadColor, config.MainScenarioStyle);
+        var beadTarget = Colors.For(
+            scene.Guide.Target,
+            config.BeadColor,
+            config.FlagColor,
+            config.QuestColor,
+            config.OneColorForAll,
+            config.MainScenarioStyle);
+        bead = Pulse.Approach(bead, beadTarget, dt, 0.1f);
         appear = Pulse.Approach(appear, show ? 1f : 0f, dt, 0.12f);
         if (!show || appear < 0.01f)
             return;

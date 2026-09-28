@@ -93,11 +93,12 @@ internal sealed class SettingsWindow : Window
         changed |= Slider("Bead height (yalms)", config.BeadHeight, 0f, 2.5f, v => config.BeadHeight = v);
         changed |= Slider("Bead size", config.BeadSize, 3f, 20f, v => config.BeadSize = v);
         changed |= Slider("Glove size", config.GloveSize, 20f, 96f, v => config.GloveSize = v);
-        var colour = config.BeadColor;
-        if (ImGui.ColorEdit4("Glow colour", ref colour, ImGuiColorEditFlags.NoInputs))
+        changed |= Check("One colour for all targets", config.OneColorForAll, v => config.OneColorForAll = v);
+        changed |= Color("Explicit target colour", config.BeadColor, v => config.BeadColor = v);
+        if (!config.OneColorForAll)
         {
-            config.BeadColor = colour;
-            changed = true;
+            changed |= Color("Map flag colour", config.FlagColor, v => config.FlagColor = v);
+            changed |= Color("Quest colour", config.QuestColor, v => config.QuestColor = v);
         }
 
         changed |= Check("Highlight the way (trail)", config.Trail, v => config.Trail = v);
@@ -195,6 +196,14 @@ internal sealed class SettingsWindow : Window
     private static bool Slider(string label, float value, float min, float max, Action<float> set)
     {
         if (!ImGui.SliderFloat(label, ref value, min, max, "%.1f"))
+            return false;
+        set(value);
+        return true;
+    }
+
+    private static bool Color(string label, Vector4 value, Action<Vector4> set)
+    {
+        if (!ImGui.ColorEdit4(label, ref value, ImGuiColorEditFlags.NoInputs))
             return false;
         set(value);
         return true;

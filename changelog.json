@@ -11,6 +11,10 @@
       "items": [
         {
           "status": "beta",
+          "text": "A colour for every source: ordinary targets keep the chosen gold, map flags use sky blue, and quest steps use reddish purple, with colour-blind-distinguishable defaults and a smooth transition when the source changes. Each colour has its own picker, while *One colour for all targets* restores the previous shared-colour look; Main Scenario amber still takes precedence. Host tests cover source selection and frame-rate-independent colour easing; not tried in game."
+        },
+        {
+          "status": "beta",
           "text": "The nearest quest, and the Main Scenario standing out: quests are now followed by the next step nearest you of every quest you have accepted (in your zone; elsewhere only when none is here), so the glove always leads to the closest thing to do; *The tracked one first* in the settings brings back the old order. When that step is part of your current Main Scenario quest (the game's own scenario guide says which), the bead and trail turn the Main Scenario's amber, a *Main Scenario* label floats over the bead (and heads the note for another zone), and the glove minion leads a little further ahead with an eager bounce. Host tests cover the choice, the Main Scenario check, the colours and the lead; not tried in game."
         },
         {
