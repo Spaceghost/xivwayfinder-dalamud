@@ -11,6 +11,10 @@
       "items": [
         {
           "status": "beta",
+          "text": "The glove warns of a turn on vnavmesh routes: inside three yalms of a real corner it smoothly leans towards the next leg and taps twice quickly for one ordinary tap period. Bends under 30 degrees, endpoints and malformed short segments are ignored so town paths do not make it fidget. The bead and trail continue to show the current leg. Host tests cover distance, turn angle, endpoints and height-independent detection; not tried in game."
+        },
+        {
+          "status": "beta",
           "text": "Arrival and change events for other plugins: `XivWayfinder.v1.Arrived` reports a reached target once after the arrival hold, and `XivWayfinder.v1.StateChanged` carries the same JSON as `GetState` whenever the target or guide kind changes. Distance-only movement is debounced, subscriber failures cannot interrupt the pointer, and the IPC guide documents subscription lifetime and framework-thread rules. Host tests cover one-shot arrival, debouncing and every documented contract name; not tried in game."
         },
         {
