@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace XivWayfinder.Core;
 
 /// <summary>
@@ -87,6 +89,13 @@ public static class Pulse
         var keep = MathF.Pow(0.5f, dt / halfLife);
         return target + (current - target) * keep;
     }
+
+    /// <summary>Frame-rate-independent easing for a colour, using the same half-life as the scalar form.</summary>
+    public static Vector4 Approach(Vector4 current, Vector4 target, float dt, float halfLife) => new(
+        Approach(current.X, target.X, dt, halfLife),
+        Approach(current.Y, target.Y, dt, halfLife),
+        Approach(current.Z, target.Z, dt, halfLife),
+        Approach(current.W, target.W, dt, halfLife));
 
     /// <summary>Hermite 0..1 between two edges.</summary>
     public static float SmoothStep(float edge0, float edge1, float x)

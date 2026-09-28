@@ -60,12 +60,19 @@ public class NearestQuestTests
     public void MainScenarioColours()
     {
         var mine = new Vector4(0.2f, 0.4f, 1f, 1f);
+        var flag = new Vector4(0.3f, 0.5f, 0.7f, 1f);
+        var quest = new Vector4(0.6f, 0.4f, 0.8f, 1f);
         var msq = new Target(TargetSource.Quest, Here, 0, 0, null, "q", MainScenario: true);
         var side = msq with { MainScenario = false };
-        Assert.Equal(Colors.MainScenario, Colors.For(msq, mine, true));
-        Assert.Equal(mine, Colors.For(msq, mine, false));
-        Assert.Equal(mine, Colors.For(side, mine, true));
-        Assert.Equal(mine, Colors.For(null, mine, true));
+        var mapFlag = side with { Source = TargetSource.Flag };
+        var explicitTarget = side with { Source = TargetSource.Explicit };
+        Assert.Equal(Colors.MainScenario, Colors.For(msq, mine, flag, quest, false, true));
+        Assert.Equal(quest, Colors.For(msq, mine, flag, quest, false, false));
+        Assert.Equal(quest, Colors.For(side, mine, flag, quest, false, true));
+        Assert.Equal(flag, Colors.For(mapFlag, mine, flag, quest, false, true));
+        Assert.Equal(mine, Colors.For(explicitTarget, mine, flag, quest, false, true));
+        Assert.Equal(mine, Colors.For(side, mine, flag, quest, true, true));
+        Assert.Equal(mine, Colors.For(null, mine, flag, quest, false, true));
     }
 
     [Fact]

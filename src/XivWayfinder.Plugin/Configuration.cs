@@ -43,6 +43,12 @@ public sealed class Configuration : IPluginConfiguration
 
     public Vector4 BeadColor { get; set; } = Colors.Gold;
 
+    /// <summary>Use <see cref="BeadColor"/> for every source instead of the source-specific colours.</summary>
+    public bool OneColorForAll { get; set; }
+
+    public Vector4 FlagColor { get; set; } = Colors.Flag;
+    public Vector4 QuestColor { get; set; } = Colors.Quest;
+
     /// <summary>The glove picture's edge in pixels.</summary>
     public float GloveSize { get; set; } = 44f;
 
