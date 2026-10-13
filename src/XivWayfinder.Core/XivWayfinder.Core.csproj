@@ -9,5 +9,6 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="XivWayfinder.Core.Tests" />
+    <EmbeddedResource Include="ThirdParty/meshoptimizer.LICENSE.md" />
   </ItemGroup>
 </Project>

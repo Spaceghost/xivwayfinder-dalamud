@@ -214,18 +214,19 @@ public sealed class CommandAndIpcTests
             Mode = SourceMode.Auto,
             Guide = new Guide(GuideKind.Walk, target, 19.6f, new Vector2(1, 0), null),
         });
-        Assert.Equal("pointing at target \"test: 20 yalms ahead\": 20 yalms away · following auto · showing", line);
+        Assert.Equal("pointing at target \"test: 20 yalms ahead\": 20 yalms away, waiting for a walkable route · following auto · showing", line);
     }
 
     [Fact]
-    public void StatusLineSaysWhetherItFollowsAPathOrAStraightLine()
+    public void StatusLineSaysWhetherItFollowsAPathOrWaitsForOne()
     {
         var target = new Target(TargetSource.Flag, 132, 0, 0, null, "map flag");
         var walk = new Guide(GuideKind.Walk, target, 55f, new Vector2(1, 0), null);
         var path = WayfinderIpc.StatusLine(new WayfinderState { Visible = true, Guide = walk, Navmesh = true, RouteNote = "following a 6-corner path" });
         Assert.Contains("55 yalms away, along vnavmesh's path ·", path);
         var straight = WayfinderIpc.StatusLine(new WayfinderState { Visible = true, Guide = walk, RouteNote = "not installed" });
-        Assert.Contains("55 yalms away, in a straight line (vnavmesh: not installed) ·", straight);
+        Assert.Contains("55 yalms away, waiting for a walkable route (vnavmesh: not installed) ·", straight);
+        Assert.DoesNotContain("straight line", straight);
     }
 
     [Fact]

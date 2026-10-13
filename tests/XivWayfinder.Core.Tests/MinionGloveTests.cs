@@ -80,6 +80,56 @@ public sealed class MinionGloveTests
     }
 
     [Theory]
+    [InlineData(0f, -2f, 0f)]
+    [InlineData(90f, 0f, 2f)]
+    [InlineData(180f, 2f, 0f)]
+    [InlineData(-90f, 0f, -2f)]
+    public void BesideGuideStaysAtThePlayersShoulderAsThePlayerTurns(float degrees, float x, float z)
+    {
+        var layout = MinionLayout.BesideDefault with { Height = 0 };
+        var rotation = degrees * MathF.PI / 180;
+        // Across animation phases: no old forward tap, no below-ground bob, always two yalms to the right.
+        for (var t = 0.0; t < 3; t += .037)
+        {
+            var at = MinionGlove.PlaceBeside(Player, rotation, layout, t)!.Value;
+            Assert.Equal(Player.X + x, at.X, .0001f);
+            Assert.Equal(Player.Z + z, at.Z, .0001f);
+            Assert.Equal(Player.Y, at.Y);
+            Assert.Equal(0, Vector2.Dot(Heading.Flat(Player, at), Heading.Forward(rotation)), .0001f);
+        }
+    }
+
+    [Fact]
+    public void BesideGuideCanStayLeftOrAheadOfTheShoulderWithoutDrifting()
+    {
+        const float rotation = .73f;
+        var forward = Heading.Forward(rotation); var right = MinionGlove.Right(forward);
+        var layout = MinionLayout.BesideDefault with { Ahead = .6f, Side = -1.5f, Height = 2f };
+        for (var t = 0.0; t < 3; t += .037)
+        {
+            var at = MinionGlove.PlaceBeside(Player, rotation, layout, t)!.Value;
+            Assert.Equal(.6f, Vector2.Dot(Heading.Flat(Player, at), forward), .0001f);
+            Assert.Equal(-1.5f, Vector2.Dot(Heading.Flat(Player, at), right), .0001f);
+            Assert.InRange(at.Y - Player.Y, 1.9199f, 2.0801f);
+        }
+    }
+
+    [Fact]
+    public void BesidePlacementClampsCorruptOffsetsAndRejectsInvalidPlayerPoses()
+    {
+        Assert.Equal(0, MinionLayout.CompanionAhead(0));
+        Assert.Equal(0, MinionLayout.CompanionAhead(-100));
+        Assert.Equal(3, MinionLayout.CompanionAhead(100));
+        Assert.Equal(0, MinionLayout.CompanionAhead(float.NaN));
+        Assert.Equal(2, MinionLayout.CompanionSide(float.PositiveInfinity));
+        Assert.Equal(-2, MinionLayout.CompanionSide(-100));
+        var at = MinionGlove.PlaceBeside(Player, 0, new(float.NaN, float.NaN, float.NaN, 0, 0), double.NaN)!.Value;
+        Assert.Equal(Player + new Vector3(-2,.5f,0), at);
+        Assert.Null(MinionGlove.PlaceBeside(Player, float.NaN, MinionLayout.BesideDefault, 0));
+        Assert.Null(MinionGlove.PlaceBeside(new(float.PositiveInfinity,0,0), 0, MinionLayout.BesideDefault, 0));
+    }
+
+    [Theory]
     [InlineData(0f, 1f, 0f)]
     [InlineData(1f, 0f, 90f)]
     [InlineData(0f, -1f, 180f)]
@@ -236,5 +286,59 @@ public sealed class MinionPresenceTests
         p.Failed(2);
         p.Created();
         Assert.Equal(0, p.Failures);
+    }
+
+    [Fact]
+    public void ThreeAllocatedActorsThatNeverLoadExhaustTheRetryBudget()
+    {
+        var p = new MinionPresence(); var now = 0d;
+        for (var attempt = 0; attempt < MinionPresence.MaxAttempts; attempt++)
+        {
+            Assert.True(p.MayCreate(now));
+            p.BeginLoading(now);
+            Assert.Equal(attempt, p.Failures); // allocation cannot forgive past failures
+            Assert.False(p.CheckLoadTimeout(false, now + MinionPresence.LoadTimeout));
+            now += MinionPresence.LoadTimeout + .01;
+            Assert.True(p.CheckLoadTimeout(false, now));
+            Assert.Equal(attempt + 1, p.Failures);
+            Assert.False(p.MayCreate(now + 1.99));
+            now += 2 * Math.Pow(2, attempt);
+        }
+        Assert.True(p.GaveUp);
+        Assert.False(p.MayCreate(now + 1000));
+    }
+
+    [Fact]
+    public void EachLoadTimeoutIsChargedOnceEvenIfPolledAgain()
+    {
+        var p = new MinionPresence(); p.BeginLoading(5);
+        Assert.True(p.CheckLoadTimeout(false, 16));
+        Assert.False(p.Loading);
+        Assert.False(p.CheckLoadTimeout(false, 17));
+        Assert.False(p.CheckLoadTimeout(true, 18)); // a late observation cannot forgive the retired attempt
+        Assert.Equal(1, p.Failures);
+    }
+
+    [Fact]
+    public void LoadedButHiddenActorDoesNotTimeOutOrRestartLoading()
+    {
+        var p = new MinionPresence(); p.Failed(0); p.BeginLoading(2);
+        // Native resource readiness is sufficient even when visibility is false.
+        Assert.False(p.CheckLoadTimeout(true, 3));
+        Assert.False(p.Loading); Assert.Equal(0, p.Failures);
+        for (var now = 4; now < 1000; now++) Assert.False(p.CheckLoadTimeout(false, now));
+        Assert.Equal(0, p.Failures); Assert.False(p.GaveUp);
+    }
+
+    [Fact]
+    public void LateReadinessWinsAtDeadlineAndFreshAllocationGetsAFreshDeadline()
+    {
+        var p = new MinionPresence(); p.BeginLoading(0);
+        Assert.False(p.CheckLoadTimeout(true, 11));
+        p.BeginLoading(20);
+        Assert.False(p.CheckLoadTimeout(false, 30));
+        Assert.True(p.CheckLoadTimeout(false, 30.01));
+        Assert.Equal(1, p.Failures);
+        p.Reset(); Assert.False(p.Loading); Assert.True(p.MayCreate(31));
     }
 }

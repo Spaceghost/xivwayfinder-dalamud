@@ -27,6 +27,12 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>For a target in another zone, name the nearest aetheryte to it instead of pointing.</summary>
     public bool AetheryteHint { get; set; } = true;
 
+    /// <summary>Opt-in: cast the guide's attuned Teleport destination when idle. Normal gil costs apply.</summary>
+    public bool AutoTeleport { get; set; }
+
+    /// <summary>Maximum quoted gil for one automatic Teleport (zero permits only free destinations).</summary>
+    public uint AutoTeleportMaxGil { get; set; } = 2000;
+
     public PointerStyle Style { get; set; } = PointerStyle.Both;
 
     /// <summary>The game's own glove cursor when it can be read; off draws the vector glove.</summary>
@@ -55,10 +61,10 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>With the minion glove, also show the bead.</summary>
     public bool MinionWithBead { get; set; } = true;
 
-    /// <summary>How far ahead of the character the minion glove floats, yalms.</summary>
+    /// <summary>How far ahead of the character a beside companion stands, yalms; zero is at the shoulder.</summary>
     public float MinionAhead { get; set; } = MinionLayout.Default.Ahead;
 
-    /// <summary>How far to the right of the way (negative: left) it floats, yalms.</summary>
+    /// <summary>How far to the character's right (negative: left) a beside companion stands, yalms.</summary>
     public float MinionSide { get; set; } = MinionLayout.Default.Side;
 
     /// <summary>Its height above the character's feet, yalms.</summary>
@@ -66,6 +72,18 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>The model's size, 1 as the game makes it.</summary>
     public float MinionSize { get; set; } = 1f;
+    public Dictionary<uint, GuideModelProfile> ModelProfiles { get; set; } = [];
+    public bool GuideAnimate { get; set; } = true;
+    public bool GuideGrounded { get; set; }
+    public uint GuideModelChara { get; set; }
+    public uint GuideNpcId { get; set; }
+    public Dictionary<uint, GuideModelProfile> NpcProfiles { get; set; } = [];
+    public uint GuideBNpcId { get; set; }
+    public Dictionary<uint, GuideModelProfile> BNpcProfiles { get; set; } = [];
+    public string GuideAnimation { get; set; } = "";
+    public bool GuideInPlace { get; set; } = true;
+    public string GuideModelPath { get; set; } = "";
+    public List<ImportedGuideProfile> ImportedModels { get; set; } = [];
 
     /// <summary>Degrees added to its yaw, for when the finger does not point the way in game.</summary>
     public float MinionTurn { get; set; }
@@ -88,8 +106,23 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Following a map link switches the pointer to the minion glove, to lead the way.</summary>
     public bool MapLinksMinion { get; set; } = true;
 
-    /// <summary>Highlight the way: along vnavmesh's path when there is one, else a straight dotted line.</summary>
+    /// <summary>Highlight only a confirmed vnavmesh route. Never falls back to a line through unknown geometry.</summary>
     public bool Trail { get; set; } = true;
+    /// <summary>Native scene-depth fairy lights; false retains the classic line and bead controls.</summary>
+    public bool FairyTrail { get; set; } = true;
+    public TrailElevation TrailElevation { get; set; } = TrailElevation.Overhead;
+    public float TrailHeight { get; set; } = 3f;
+    public float TrailWidth { get; set; } = 2.2f;
+    public float TrailGlow { get; set; } = 1f;
+    public float TrailOpacity { get; set; } = .85f;
+    public float TrailPulseSeconds { get; set; } = 2.4f;
+    public bool TrailLine { get; set; } = true;
+    public bool TrailBeads { get; set; } = true;
+    public bool ReducedMotion { get; set; }
+    public bool ShowRouteCue { get; set; } = true;
+    public bool ShowRouteDetail { get; set; } = true;
+    public float RouteCueX { get; set; } = 1f;
+    public float RouteCueY { get; set; } = .04f;
 
     /// <summary>Trail beads, spaced <see cref="TrailSpacing"/> yalms apart.</summary>
     public int TrailDots { get; set; } = 10;
@@ -111,25 +144,52 @@ public sealed class Configuration : IPluginConfiguration
     public bool ClearOnArrival { get; set; } = true;
 
     public List<SavedPlace> Places { get; set; } = [];
+    public JourneyPlan Journey { get; set; } = new();
 
     public SourceToggles Toggles() => new(UseExplicit, UseFlag, UseQuest);
 
     public MinionLayout MinionPlacement() => new(MinionAhead, MinionSide, MinionHeight, MinionTurn, MinionTilt ? MinionLayout.Default.MaxPitchDegrees : 0f);
 
+    public void StandBeside()
+    {
+        MinionLeads = false;
+        MinionAhead = MinionLayout.BesideDefault.Ahead;
+        MinionSide = MinionLayout.BesideDefault.Side;
+    }
+
     /// <summary>Keeps hand-edited or old values inside what the overlay can draw.</summary>
     public void Clamp()
     {
+        AutoTeleportMaxGil = Math.Min(AutoTeleportMaxGil, 100_000);
+        GuideModelPath ??= "";
+        GuideAnimation ??= "";
+        ImportedModels = (ImportedModels ?? []).Where(p => p is not null && !string.IsNullOrWhiteSpace(p.Path)
+                && p.Path.Length <= 2048).DistinctBy(p => p.Path, StringComparer.OrdinalIgnoreCase).Take(32)
+            .Select(p => p with { Size = Fit(p.Size, GuidePreviewFit.MinimumScale, 4, 1.5f), Turn = Fit(p.Turn, -180, 180, 0),
+                Animation = p.Animation ?? "" }).ToList();
+        NpcProfiles ??= [];
+        BNpcProfiles ??= [];
+        ModelProfiles ??= [];
         Places = SavedPlaces.Sanitize(Places);
+        Journey ??= new();
+        Journey.Sanitize();
         BeadDistance = Fit(BeadDistance, 1.5f, 3f, 2.2f);
         BeadHeight = Fit(BeadHeight, 0f, 2.5f, 1.1f);
         BeadSize = Fit(BeadSize, 3f, 20f, 8f);
         GloveSize = Fit(GloveSize, 20f, 96f, 44f);
-        MinionAhead = Fit(MinionAhead, 0.8f, 3f, MinionLayout.Default.Ahead);
-        MinionSide = Fit(MinionSide, -2f, 2f, MinionLayout.Default.Side);
-        MinionHeight = Fit(MinionHeight, 0f, 2.5f, MinionLayout.Default.Height);
-        MinionSize = Fit(MinionSize, 0.25f, 3f, 1f);
+        MinionAhead = MinionLayout.CompanionAhead(MinionAhead);
+        MinionSide = MinionLayout.CompanionSide(MinionSide);
+        MinionHeight = Fit(MinionHeight, 0.2f, 12f, MinionLayout.Default.Height);
+        MinionSize = Fit(MinionSize, GuidePreviewFit.MinimumScale, 4f, 1f);
         MinionTurn = Fit(MinionTurn, -180f, 180f, 0f);
         MinionLeadDistance = Fit(MinionLeadDistance, 2f, 10f, 4f);
+        if (!Enum.IsDefined(TrailElevation)) TrailElevation = TrailElevation.Overhead;
+        TrailWidth = Fit(TrailWidth,.5f,6f,2.2f);
+        TrailGlow = Fit(TrailGlow,0,2,1);
+        TrailOpacity = Fit(TrailOpacity,.1f,1,.85f);
+        TrailPulseSeconds = Fit(TrailPulseSeconds,.6f,8,2.4f);
+        RouteCueX = Fit(RouteCueX,0,1,1); RouteCueY = Fit(RouteCueY,0,1,.04f);
+        TrailHeight = Fit(TrailHeight, 2.5f, 12f, 3f);
         TrailDots = Math.Clamp(TrailDots, 2, 40);
         TrailSpacing = Fit(TrailSpacing, 1f, 8f, 2.5f);
         ArriveRadius = Fit(ArriveRadius, 1f, 20f, 4f);
@@ -145,3 +205,5 @@ public sealed class Configuration : IPluginConfiguration
 
     private static float Fit(float value, float min, float max, float fallback) => float.IsFinite(value) ? Math.Clamp(value, min, max) : fallback;
 }
+
+public sealed record GuideModelProfile(float Size, float Turn, bool Grounded, bool Leads = true);

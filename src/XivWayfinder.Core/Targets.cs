@@ -72,6 +72,10 @@ public enum GuideKind
 /// <summary>The plan for this moment: what kind of hint, towards what, how far (yalms, same zone only).</summary>
 public sealed record Guide(GuideKind Kind, Target? Target, float Distance, Vector2 Direction, AetheryteSpot? Aetheryte)
 {
+    public Target? FinalTarget { get; init; }
+    public string TransitAction { get; init; } = "";
+    public uint TransitTerritory { get; init; }
+
     public static readonly Guide Nothing = new(GuideKind.None, null, 0f, Vector2.Zero, null);
 }
 
