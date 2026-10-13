@@ -15,6 +15,10 @@ Statuses mean the same thing in every one of these mods:
 
 Development work; not a stable release. Individual entries identify verification status.
 
+### Merged, not yet verified in game
+
+* Experimental guide and journey build: local model-pack import, guide rendering components, route/companion policies, terrain checks and recovery diagnostics. Includes model-pack validation and compiled shader checksums. Offline tests do not verify live rendering, collision, boarding, teleport or cross-zone behavior; these remain development features.
+
 ### Being built
 
 * Imported guides and XivRug now share optional plugin-owned world depth through XivWayfinder.v1.AcquireWorldDepth, fixing the observed cloth-over-Fox error caused by separate buffers and hook order. The provider clears once per UI-armed render frame; consumers restore their pipeline and release each COM lease, retain private-depth fallback when unavailable, and never write game depth. Seven focused frame tests pass and both matched builds have no warnings or errors. On 2026-10-03 at 11:41 UTC, with Wayfinder loaded last, the full opaque Fox remained visible over the rug in Survey, Walk and Run with distinct limb poses. Loading XivRug last at 11:43 preserved Survey and Run visibility; both renderers logged shared-depth submissions, and warning logs stayed empty during seven minutes of checks. Stopping the preview restored the saved companion. At 11:46, unloading Wayfinder while XivRug stayed loaded kept the rug intact without a stale guide silhouette; reloading restored Fox and the player’s deep squat with saved guide, trail and rug settings unchanged. Transparent BLEND ordering remains approximate. Resize/device replacement is host-tested only; sharp stairs and the earlier tight-room placement remain unverified live.
