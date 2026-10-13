@@ -74,11 +74,11 @@ public sealed class GuideSpacingRadiusTests
         var spacing = new GuideSpacingRadius();
         Assert.True(spacing.TryMeasureImported(bind, [], Triangle, 1.7f, out var radius));
         for (var i = 0; i < 32; i++)
-        foreach (var point in bind)
-        {
-            var rotated = Vector3.Transform(point * 1.7f, Quaternion.CreateFromAxisAngle(Vector3.UnitY, i * MathF.Tau / 32));
-            Assert.True(Math.Sqrt((double)rotated.X * rotated.X + (double)rotated.Z * rotated.Z) < radius);
-        }
+            foreach (var point in bind)
+            {
+                var rotated = Vector3.Transform(point * 1.7f, Quaternion.CreateFromAxisAngle(Vector3.UnitY, i * MathF.Tau / 32));
+                Assert.True(Math.Sqrt((double)rotated.X * rotated.X + (double)rotated.Z * rotated.Z) < radius);
+            }
     }
 
     [Fact]
@@ -90,12 +90,12 @@ public sealed class GuideSpacingRadiusTests
         Assert.True(GuideSpacingRadius.TryMeasureRotatedNative(envelope, rotation, out var radius));
         Assert.True(radius > 1.4f);
         foreach (var x in new[] { -.05f, .05f })
-        foreach (var y in new[] { -.3f, 2 })
-        foreach (var z in new[] { -.05f, .05f })
-        {
-            var point = Vector3.Transform(new(x, y, z), rotation);
-            Assert.True(Math.Sqrt((double)point.X * point.X + (double)point.Z * point.Z) <= radius);
-        }
+            foreach (var y in new[] { -.3f, 2 })
+                foreach (var z in new[] { -.05f, .05f })
+                {
+                    var point = Vector3.Transform(new(x, y, z), rotation);
+                    Assert.True(Math.Sqrt((double)point.X * point.X + (double)point.Z * point.Z) <= radius);
+                }
         Assert.True(GuideSpacingRadius.TryMeasureRotatedNative(envelope,
             Quaternion.CreateFromAxisAngle(Vector3.UnitY, .7f), out var upright));
         Assert.Equal(envelope.Radius, upright);

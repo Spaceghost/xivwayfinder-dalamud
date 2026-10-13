@@ -287,8 +287,11 @@ public class VisualAssetSearchTests
     [InlineData(HttpStatusCode.Unauthorized)]
     public async Task RedirectsRateLimitsAndAuthFailuresAreNotEmptySuccess(HttpStatusCode code)
     {
-        var handler = new Handler { Reply = (_, _) => Task.FromResult(new HttpResponseMessage(code)
-        { Content = new StringContent("{}"), Headers = { Location = new Uri("https://127.0.0.1/") } }) };
+        var handler = new Handler
+        {
+            Reply = (_, _) => Task.FromResult(new HttpResponseMessage(code)
+            { Content = new StringContent("{}"), Headers = { Location = new Uri("https://127.0.0.1/") } })
+        };
         using var search = new VisualAssetSearch(handler);
         await Assert.ThrowsAsync<HttpRequestException>(() => search.SearchAsync("ambientcg", new("")));
         Assert.Single(handler.Requests);
@@ -298,12 +301,15 @@ public class VisualAssetSearchTests
     public async Task CancellationReachesTheHttpRequest()
     {
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var handler = new Handler { Reply = async (_, cancellation) =>
+        var handler = new Handler
+        {
+            Reply = async (_, cancellation) =>
         {
             started.SetResult();
             await Task.Delay(Timeout.Infinite, cancellation);
             throw new InvalidOperationException("Unreachable");
-        }};
+        }
+        };
         using var search = new VisualAssetSearch(handler);
         using var cancel = new CancellationTokenSource();
         var pending = search.SearchAsync("ambientcg", new("fox"), cancel.Token);
@@ -327,11 +333,14 @@ public class VisualAssetSearchTests
     public async Task MetadataByteLimitAppliesWithOrWithoutContentLength(bool advertiseLength)
     {
         var bytes = new byte[AssetMetadataHttp.PageByteLimit + 1];
-        var handler = new Handler { Reply = (_, _) =>
+        var handler = new Handler
+        {
+            Reply = (_, _) =>
         {
             HttpContent content = advertiseLength ? new ByteArrayContent(bytes) : new StreamContent(new UnseekableStream(bytes));
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
-        }};
+        }
+        };
         using var search = new VisualAssetSearch(handler);
         await Assert.ThrowsAsync<InvalidDataException>(() => search.SearchAsync("ambientcg", new("")));
     }

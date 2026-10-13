@@ -124,9 +124,9 @@ public sealed class MinionGloveTests
         Assert.Equal(2, MinionLayout.CompanionSide(float.PositiveInfinity));
         Assert.Equal(-2, MinionLayout.CompanionSide(-100));
         var at = MinionGlove.PlaceBeside(Player, 0, new(float.NaN, float.NaN, float.NaN, 0, 0), double.NaN)!.Value;
-        Assert.Equal(Player + new Vector3(-2,.5f,0), at);
+        Assert.Equal(Player + new Vector3(-2, .5f, 0), at);
         Assert.Null(MinionGlove.PlaceBeside(Player, float.NaN, MinionLayout.BesideDefault, 0));
-        Assert.Null(MinionGlove.PlaceBeside(new(float.PositiveInfinity,0,0), 0, MinionLayout.BesideDefault, 0));
+        Assert.Null(MinionGlove.PlaceBeside(new(float.PositiveInfinity, 0, 0), 0, MinionLayout.BesideDefault, 0));
     }
 
     [Theory]

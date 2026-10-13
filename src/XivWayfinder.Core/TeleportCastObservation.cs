@@ -12,7 +12,7 @@ public static class TeleportCastObservation
         if (!casting || actionType != 1 || actionId != 5
             || !float.IsFinite(currentSeconds) || !float.IsFinite(totalSeconds)
             || currentSeconds < 0 || totalSeconds <= 0) return false;
-        remaining = Math.Max(0, totalSeconds-currentSeconds);
+        remaining = Math.Max(0, totalSeconds - currentSeconds);
         return true;
     }
 }

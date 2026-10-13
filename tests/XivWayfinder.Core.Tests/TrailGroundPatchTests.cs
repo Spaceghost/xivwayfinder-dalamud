@@ -359,12 +359,15 @@ public sealed class TrailGroundPatchTests(Xunit.ITestOutputHelper testLog)
         {
             if (!changed) return terrain.Cast(origin, direction, distance);
             var hit = lower.Cast(origin, direction, distance)!.Value;
-            return hit with { Point = malformed switch
+            return hit with
             {
-                0 => new(float.NaN, -.2f, origin.Z),
-                1 => hit.Point + Vector3.UnitX * .05f,
-                _ => origin + direction * (distance + .2f),
-            } };
+                Point = malformed switch
+                {
+                    0 => new(float.NaN, -.2f, origin.Z),
+                    1 => hit.Point + Vector3.UnitX * .05f,
+                    _ => origin + direction * (distance + .2f),
+                }
+            };
         }
         TrailGroundVertex[] source = [V(-.2f, -.2f), V(.2f, -.2f), V(-.2f, .2f)];
         var patch = new TrailGroundPatch(Cast, () => 0); patch.Begin(1, 0);
@@ -406,14 +409,14 @@ public sealed class TrailGroundPatchTests(Xunit.ITestOutputHelper testLog)
         var dots = new List<(TrailGroundVertex A, TrailGroundVertex B, TrailGroundVertex C)>();
         var lines = new List<(TrailGroundVertex A, TrailGroundVertex B, TrailGroundVertex C)>();
         for (var dot = 0; dot < 20; dot++)
-        for (var sector = 0; sector < 12; sector++)
-        {
-            var center = new Vector2(1 + dot * 2.5f, .03f);
-            var radius = .1f + dot * .012f;
-            var angle = sector * MathF.Tau / 12; var next = (sector + 1) * MathF.Tau / 12;
-            dots.Add((V(center.X, center.Y), V(center.X + MathF.Cos(angle) * radius, center.Y + MathF.Sin(angle) * radius),
-                V(center.X + MathF.Cos(next) * radius, center.Y + MathF.Sin(next) * radius)));
-        }
+            for (var sector = 0; sector < 12; sector++)
+            {
+                var center = new Vector2(1 + dot * 2.5f, .03f);
+                var radius = .1f + dot * .012f;
+                var angle = sector * MathF.Tau / 12; var next = (sector + 1) * MathF.Tau / 12;
+                dots.Add((V(center.X, center.Y), V(center.X + MathF.Cos(angle) * radius, center.Y + MathF.Sin(angle) * radius),
+                    V(center.X + MathF.Cos(next) * radius, center.Y + MathF.Sin(next) * radius)));
+            }
         for (var segment = 0; segment < 127; segment++)
         {
             var x = .8f + segment * .25f; var half = .04f + segment * .0015f;
@@ -478,14 +481,14 @@ public sealed class TrailGroundPatchTests(Xunit.ITestOutputHelper testLog)
         // Inspect interiors, not just endpoints: a triangle whose vertices touch
         // opposite treads can still cut through the raised tread between them.
         for (var i = 0; i < mesh.Length; i += 3)
-        for (var a = 1; a < 8; a++)
-        for (var b = 1; b < 8 - a; b++)
-        {
-            var p = (mesh[i].Position * a + mesh[i + 1].Position * b + mesh[i + 2].Position * (8 - a - b)) / 8;
-            var hit = terrain.Cast(p + Vector3.UnitY * 4, -Vector3.UnitY, 8);
-            Assert.True(hit.HasValue);
-            Assert.InRange(p.Y - hit.Value.Point.Y, TrailPlacement.GroundClearance - .00002f, TrailPlacement.GroundClearance + .00002f);
-        }
+            for (var a = 1; a < 8; a++)
+                for (var b = 1; b < 8 - a; b++)
+                {
+                    var p = (mesh[i].Position * a + mesh[i + 1].Position * b + mesh[i + 2].Position * (8 - a - b)) / 8;
+                    var hit = terrain.Cast(p + Vector3.UnitY * 4, -Vector3.UnitY, 8);
+                    Assert.True(hit.HasValue);
+                    Assert.InRange(p.Y - hit.Value.Point.Y, TrailPlacement.GroundClearance - .00002f, TrailPlacement.GroundClearance + .00002f);
+                }
     }
 
     // Independent Moller-Trumbore intersections against explicit terrain triangles.

@@ -4,7 +4,7 @@ namespace XivWayfinder.Core.Tests;
 
 public sealed class CompanionRouteMotionTests
 {
-    private static readonly Vector3[] Straight = [Vector3.Zero, new(100,0,0)];
+    private static readonly Vector3[] Straight = [Vector3.Zero, new(100, 0, 0)];
     private static readonly CompanionIntentFrame Lead = new(CompanionIntentMode.Lead, 4, 1, true);
     private static readonly CompanionIntentFrame Return = new(CompanionIntentMode.Returning, 1, 0, true);
 
@@ -79,7 +79,7 @@ public sealed class CompanionRouteMotionTests
     [Fact]
     public void EveryPositionFollowsBentRouteAndItsHeightNotAStraightCornerShortcut()
     {
-        Vector3[] path = [Vector3.Zero, new(5,0,0), new(5,3,8)];
+        Vector3[] path = [Vector3.Zero, new(5, 0, 0), new(5, 3, 8)];
         var motion = new CompanionRouteMotion(); motion.Update(path, 1, Lead, 0, true);
         for (var i = 1; i <= 120; i++)
         {
@@ -93,9 +93,9 @@ public sealed class CompanionRouteMotionTests
     public void SameCorridorRepathPreservesWorldPositionRatherThanOldNumericArc()
     {
         var motion = new CompanionRouteMotion(); motion.Update(Straight, 10, Lead, 0, true);
-        Vector3[] changed = [new(5,0,0), new(100,0,0)];
+        Vector3[] changed = [new(5, 0, 0), new(100, 0, 0)];
         var next = motion.Update(changed, 5, Lead, 0, true);
-        Assert.Equal(5, next.Arc); Assert.Equal(new Vector3(10,0,0), next.Position);
+        Assert.Equal(5, next.Arc); Assert.Equal(new Vector3(10, 0, 0), next.Position);
         Assert.Same(changed, next.Route); Assert.False(next.NeedsConnection);
     }
 
@@ -118,9 +118,9 @@ public sealed class CompanionRouteMotionTests
     public void ConfirmedConnectorCanStartAtOldGuideAndContinueOnNewRoute()
     {
         var motion = new CompanionRouteMotion(); motion.Update(Straight, 10, Lead, 0, true);
-        Vector3[] disconnected = [new(10,0,10), new(100,0,10)];
+        Vector3[] disconnected = [new(10, 0, 10), new(100, 0, 10)];
         Assert.True(motion.Update(disconnected, 0, Lead, .05, true).NeedsConnection);
-        Vector3[] confirmed = [new(10,0,0), new(10,0,10), new(100,0,10)];
+        Vector3[] confirmed = [new(10, 0, 0), new(10, 0, 10), new(100, 0, 10)];
         var joined = motion.Update(confirmed, 10, Lead, .1, true);
         Assert.False(joined.NeedsConnection); Assert.Same(confirmed, joined.Route);
         Assert.InRange(joined.Arc, 0, .1f); Assert.Equal(10, joined.Position.X);
@@ -141,7 +141,7 @@ public sealed class CompanionRouteMotionTests
     [Fact]
     public void EndpointsAndInvalidInputsStayBoundedAndFinite()
     {
-        Vector3[] shortPath = [Vector3.Zero, new(1,0,0)];
+        Vector3[] shortPath = [Vector3.Zero, new(1, 0, 0)];
         var motion = new CompanionRouteMotion(); motion.Update(shortPath, 0, Lead, 0, true);
         for (var i = 1; i <= 100; i++) Assert.InRange(motion.Update(shortPath, 0, Lead, i * .05, true).Arc, 0, 1);
         var before = motion.Current;

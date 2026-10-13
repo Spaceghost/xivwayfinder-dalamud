@@ -21,8 +21,11 @@ public sealed class GuideShaderTests
         Assert.Equal(176u, U32(shader, buffer + 12));
         var expected = new Dictionary<string, (uint Offset, uint Size)>
         {
-            ["ViewProjection"] = (0, 64), ["InverseViewProjection"] = (64, 64),
-            ["Camera"] = (128, 16), ["View"] = (144, 16), ["Material"] = (160, 16),
+            ["ViewProjection"] = (0, 64),
+            ["InverseViewProjection"] = (64, 64),
+            ["Camera"] = (128, 16),
+            ["View"] = (144, 16),
+            ["Material"] = (160, 16),
         };
         var count = U32(shader, buffer + 4);
         Assert.Equal((uint)expected.Count, count);
@@ -78,8 +81,10 @@ public sealed class GuideShaderTests
         var data = Chunk(shader, "RDEF");
         var expected = new Dictionary<string, (uint Type, uint Slot)>
         {
-            ["Guide"] = (0, 0), ["ModelSampler"] = (3, 0),
-            ["SceneDepth"] = (2, 0), ["BaseColor"] = (2, 1),
+            ["Guide"] = (0, 0),
+            ["ModelSampler"] = (3, 0),
+            ["SceneDepth"] = (2, 0),
+            ["BaseColor"] = (2, 1),
         };
         var count = U32(shader, data + 8);
         Assert.Equal((uint)expected.Count, count);

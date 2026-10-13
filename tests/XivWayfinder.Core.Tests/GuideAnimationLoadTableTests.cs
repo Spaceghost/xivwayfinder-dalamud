@@ -146,13 +146,13 @@ public sealed class GuideAnimationLoadTableTests
         BinaryPrimitives.WriteUInt64LittleEndian(b.AsSpan(modelAt + 8), 1);
         BinaryPrimitives.WriteUInt64LittleEndian(b.AsSpan(modelAt + 16), 6);
         for (var group = 0; group < 3; group++)
-        for (var entry = 0; entry < 4; entry++)
-        {
-            var at = overridesAt + (group * 4 + entry) * 8;
-            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(at), sources[group].Model);
-            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(at + 4), sources[group].Variant);
-            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(at + 6), sources[group].Directory);
-        }
+            for (var entry = 0; entry < 4; entry++)
+            {
+                var at = overridesAt + (group * 4 + entry) * 8;
+                BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(at), sources[group].Model);
+                BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(at + 4), sources[group].Variant);
+                BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(at + 6), sources[group].Directory);
+            }
         return b;
     }
 

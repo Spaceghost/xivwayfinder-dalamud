@@ -36,21 +36,21 @@ public readonly record struct GuideBoardingRenderedPose(GuideMeshPoseSnapshot Lo
 
 public sealed partial record GuideMesh
 {
-    public GuideMeshPoseSnapshot BlendCapturedPoses(GuideMeshPoseSnapshot source,GuideMeshPoseSnapshot target,float blend)
+    public GuideMeshPoseSnapshot BlendCapturedPoses(GuideMeshPoseSnapshot source, GuideMeshPoseSnapshot target, float blend)
     {
-        ValidateSnapshot(source,-1,0,blend);ValidateSnapshot(target,-1,0,blend);
-        if(source.InPlace!=target.InPlace)throw new ArgumentException("Captured root-motion contracts differ.");
-        var translations=source.Translations.ToArray();var rotations=source.Rotations.ToArray();
-        var scales=source.Scales.ToArray();var weights=source.Weights.ToArray();var displacement=source.RootDisplacements.ToArray();
-        for(var i=0;i<translations.Length;i++)
+        ValidateSnapshot(source, -1, 0, blend); ValidateSnapshot(target, -1, 0, blend);
+        if (source.InPlace != target.InPlace) throw new ArgumentException("Captured root-motion contracts differ.");
+        var translations = source.Translations.ToArray(); var rotations = source.Rotations.ToArray();
+        var scales = source.Scales.ToArray(); var weights = source.Weights.ToArray(); var displacement = source.RootDisplacements.ToArray();
+        for (var i = 0; i < translations.Length; i++)
         {
-            translations[i]=Vector3.Lerp(translations[i],target.Translations[i],blend);
-            rotations[i]=Quaternion.Normalize(Quaternion.Slerp(rotations[i],target.Rotations[i],blend));
-            scales[i]=Vector3.Lerp(scales[i],target.Scales[i],blend);
-            displacement[i]=Vector3.Lerp(displacement[i],target.RootDisplacements[i],blend);
+            translations[i] = Vector3.Lerp(translations[i], target.Translations[i], blend);
+            rotations[i] = Quaternion.Normalize(Quaternion.Slerp(rotations[i], target.Rotations[i], blend));
+            scales[i] = Vector3.Lerp(scales[i], target.Scales[i], blend);
+            displacement[i] = Vector3.Lerp(displacement[i], target.RootDisplacements[i], blend);
         }
-        for(var i=0;i<weights.Length;i++)weights[i]+=(target.Weights[i]-weights[i])*blend;
-        return new(animation!,source.InPlace,translations,rotations,scales,weights,displacement);
+        for (var i = 0; i < weights.Length; i++) weights[i] += (target.Weights[i] - weights[i]) * blend;
+        return new(animation!, source.InPlace, translations, rotations, scales, weights, displacement);
     }
     public GuideMeshPoseSnapshot CapturePose(VisualAnimationFrame frame, bool loop = true, bool inPlace = false)
     {

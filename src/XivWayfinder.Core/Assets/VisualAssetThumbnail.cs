@@ -13,9 +13,11 @@ public sealed class VisualAssetThumbnailLoader : IDisposable
     private readonly HttpClient client;
     public VisualAssetThumbnailLoader() : this(new HttpClientHandler
     {
-        AllowAutoRedirect = false, UseCookies = false,
+        AllowAutoRedirect = false,
+        UseCookies = false,
         AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-    }) { }
+    })
+    { }
 
     public VisualAssetThumbnailLoader(HttpMessageHandler handler)
     {
