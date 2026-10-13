@@ -12,24 +12,25 @@
 
 **[Site](https://spacegho.st/mods/ffxiv/xivwayfinder/) · [Install](https://spacegho.st/mods/ffxiv/plugins/) · [Vote on what's next](https://spacegho.st/mods/ffxiv/xivwayfinder/vote/) · [Screenshots](https://spacegho.st/mods/ffxiv/term/gallery/?mod=xivwayfinder) · [Changelog](CHANGELOG.md)**
 
-**Which way to go, softly: a glowing bead and the classic pointing glove, in FINAL FANTASY XIV.**
+**A companion and a glowing trail to help you find your way in FINAL FANTASY XIV.**
 
-XivWayfinder is a Dalamud plugin that draws a softly pulsing bead a couple of yalms ahead of your character in the
-direction you need to head, and the game's own white pointing glove beside it, sliding to the edge of the screen
-and pointing there when the way lies behind you. It follows a target you set (`/wayfinder 11.2 14.5`), your map
-flag, or your tracked quest's next step, and names the nearest aetheryte when the target is in another zone.
-With [vnavmesh](https://github.com/awgil/ffxiv_navmesh) installed it points along the walkable path instead of
-through walls.
+XivWayfinder is a Dalamud plugin with searchable game models and imported local models for your guide.
+Preview a pointer, moogle, chocobo, character or another model while the selector stays open, then choose
+its size, animation and placement. A pulsing line or fairy lights follow the confirmed walking route,
+on the ground or floating overhead. The classic bead and flat glove remain optional styles.
 
-> **Pointing only.** XivWayfinder never moves, turns or teleports your character, and never asks vnavmesh to.
+Follow a target you set (`/wayfinder 11.2 14.5`), your map flag or a tracked quest.
+[vnavmesh](https://github.com/awgil/ffxiv_navmesh) supplies walkable paths; guidance waits when a route cannot
+be confirmed. Cross-zone travel is described in the [journey guide](docs/JOURNEYS.md).
 
-> **Status: experimental, not verified in game.** Host tests cover the direction and angle maths, the
-> screen-edge clamping, the glove's placement and mirroring, the minion glove's placement, turning and tilt, the
-> path trail's sampling along the route, the target priority, the pulse and tap timing, the command and IPC
-> parsing and the state JSON. Nothing has been observed in the game yet: not the drawing, not the minion glove's
-> client-side model, not the flag, quest and aetheryte reads, not vnavmesh. What follows is implemented intent. `/wayfinder test` puts a
-> target 20 yalms ahead of you to prove it; [docs/WAYFINDER.md](docs/WAYFINDER.md#proving-it-in-game) lists
-> what to look for.
+> **No automatic walking.** XivWayfinder never walks or turns your character. Optional automatic Teleport is
+> off by default: opt in with `/wayfinder autoteleport on` or in settings. It uses the game's spell and normal
+> gil costs, up to the configured limit, when safely idle. Interrupted/refused casts need an explicit retry.
+
+> **Development status:** native pointer, moogle, chocobo and selected character models have rendered in game.
+> Imported Fox and CesiumMan models have also rendered and animated, with saved selection and preview restoration
+> checked. Ground and overhead trails have been observed on flat ground and a gentle bevel. The complete model
+> catalog, sharp stairs and changing terrain still need live checks. See the [dated evidence and limitations](docs/WAYFINDER.md).
 
 [Install](#install-dev-plugin) · [Commands](#commands) · [Settings](#settings) · [For other plugins](#for-other-plugins) ·
 [Full guide](docs/WAYFINDER.md) · [IPC](docs/IPC.md)
@@ -42,14 +43,17 @@ through walls.
   time, never copied into this repository. Near your character while the way is on screen, clamped to the screen
   edge and pointing when it is not, with a little tap. Without that texture, XivWayfinder draws an original glove of
   its own. Choose **bead**, **glove** or **both**.
-- **The minion glove** (`/wayfinder minion`, not the default): the game's own 3D model of the *Wind-up Cursor*
-  minion, the white pointing glove, floating beside the bead and turning to point the way, tilting up and down
-  slopes. It is a client-side model only you see, found in your game data by name at run time: never a summoned
-  minion, never shipped with the plugin, nothing sent to the server. The flat glove still points from the screen
-  edge when the way is off screen. Untested in game.
-- **Path highlighting**: with vnavmesh, a trail of beads and a soft line laid along the walkable route ahead of
-  you, fixed to the ground so you walk past them, not a line as the crow flies. Without a path it is a straight
-  dotted line and says so. The distance in yalms on hover or always, a soft ring when you arrive.
+- **A model companion**: search minions, characters, creatures and other supported game models, including the
+  *Wind-up Cursor*. Click to preview without closing the selector. Choose grounded movement or floating placement;
+  verified native clips provide walking and running where available. These are local visual actors, visible only
+  to you. The full catalog has not been checked individually.
+- **Your own models**: import GLB/glTF, OBJ and ZIP model packs, preview animation clips, and save models to your
+  collection. Search external repositories from the library and open a model's source page. See
+  [supported formats and limits](docs/WAYFINDER.md#imported-models) before downloading a model.
+- **Path highlighting**: fairy lights or classic beads and a pulsing line follow vnavmesh's confirmed walkable
+  route. Choose ground placement or a floating trail overhead. Ground marks, including their glow and the arrival
+  ring, split across measured collision faces; native scene depth lets the world occlude them. Missing route or
+  floor coverage waits for confirmation. See [trail rendering and checks](docs/WAYFINDER.md#trail-terrain-and-checks).
 - For a target in another zone: *Teleport to (aetheryte)* instead of an arrow, attuned aetherytes first.
 - Steps aside in cutscenes, zone changes, group pose and with the UI hidden; in combat and duties too unless you
   say otherwise.
@@ -90,23 +94,28 @@ Dalamud's configuration. `XIVWAYFINDER_ARTIFACTS` and `XIVWAYFINDER_STAGE` overr
 | `/wayfinder X Y [zone]` | Points at map coordinates: `11.2 14.5`, `(11.2, 14.5)`, `X: 11.2 Y: 14.5`, `21.5 22.1 central shroud`. |
 | `/wayfinder clear` | Forgets that target. |
 | `/wayfinder test [yalms]` | A target 20 yalms straight ahead: the quickest way to see it work. |
+| `/wayfinder save NAME` · `go NAME` · `forget NAME` · `places` | Keep named non-housing places and point back to them. |
 | `/wayfinder auto` · `target` · `flag` · `quest` | Follow everything by priority, or one source only. |
-| `/wayfinder bead` · `glove` · `both` · `minion` | The pointer's look; `minion` is the Wind-up Cursor model. |
+| `/wayfinder bead` · `glove` · `both` · `minion` | Choose a classic pointer style or the model guide. |
+| `/wayfinder models [search]` · `localmodels` | Open the searchable game library or your local model collection. |
+| `/wayfinder preview PATH` · `preview stop` | Preview a local model file, or restore your chosen guide. |
+| `/wayfinder trail ground` · `trail overhead` | Place the trail on measured ground or above you. |
 | `/wayfinder on` · `off` · `status` | Show, hide, or say what it is doing. |
+| `/wayfinder autoteleport on` · `off` · `retry` | Opt into normal-cost Teleport for attuned guidance; disable it or explicitly retry an interrupted/refused cast. |
 
 `/xivwayfinder` is the same command under the plugin's full name.
 
 ## Settings
 
-What to follow and in which order (target, flag, quest), the aetheryte hint, bead or glove or both or the minion
-glove (and where it floats, its size, a turn correction and tilting), the game's glove or the drawn one, the bead's
-distance, height, size and colour, the glove's size, the trail (on by default) and whether it follows a path or a
-straight line, the distance readout, the arrival radius, hiding in combat and duties, and vnavmesh. The window's first line always says what
-is being pointed at and, when nothing shows, why. Details: [docs/WAYFINDER.md](docs/WAYFINDER.md).
+Choose what to follow and its priority, your guide model, size, facing and animation, grounded or floating
+placement, and how far the guide travels ahead. Preview models in the native library or local collection before
+saving them. Configure fairy lights or the classic pulsing line, ground or overhead height, color, distance
+readouts, arrival radius, and when guidance hides. The settings show the current destination and why a guide
+is waiting or hidden. Details: [docs/WAYFINDER.md](docs/WAYFINDER.md).
 
 ## For other plugins
 
-Four IPC functions, no assembly reference needed. Full rules and the JSON: [docs/IPC.md](docs/IPC.md).
+Four IPC functions and two events, no assembly reference needed. Full rules and the JSON: [docs/IPC.md](docs/IPC.md).
 
 | Name | Signature | Meaning |
 | --- | --- | --- |
@@ -117,11 +126,19 @@ Four IPC functions, no assembly reference needed. Full rules and the JSON: [docs
 
 ## Privacy and security
 
-XivWayfinder talks to nothing on the network and writes nothing but its own settings. It reads the game's own UI
-files for the glove picture, the game's sheets for zones, maps, aetherytes and the Wind-up Cursor minion, and the
+Ordinary route guidance does not contact external repositories. Choosing **Search repositories** contacts the
+selected providers (Sketchfab, Poly Haven and/or ambientCG) for asset metadata; search terms are sent where the
+provider's search API requires them. Clicking a result loads that selected preview image from the provider's
+image host. No models are downloaded or installed automatically. **Open source page** opens the provider page
+in your browser. Local imports read the model and its local resource files.
+The plugin saves its settings and, for automatic Teleport, bounded character-scoped attempt journals.
+It reads the game's own UI files for the glove picture, the game's sheets for zones, maps, aetherytes and the Wind-up Cursor minion, and the
 journal, flag and map markers from game memory; it changes none of them. With the minion glove chosen it creates
 one object of its own in the game's client-side object list (as Brio and Ktisis do for theirs), moves it, and
 deletes it again; that object exists only in your game's memory.
+If automatic Teleport is enabled, it also invokes the game's normal Teleport action, moving the character
+and spending the quoted gil after the cast. Other plugins' targets can trigger this opted-in behavior;
+`GetState.autoTeleport` reports the setting, cost limit and current status.
 
 ## Development
 
@@ -132,6 +149,6 @@ dotnet build src/XivWayfinder.Plugin/XivWayfinder.Plugin.csproj -c Release && to
 ```
 
 `XivWayfinder.Core` holds everything that can be tested without the game (BCL only); the plugin project holds the
-Dalamud glue. `master` is the only branch. Every user-visible change edits `changelog.json`
+Dalamud glue. Every user-visible change edits `changelog.json`
 (`tools/changelog.py` renders `CHANGELOG.md`); statuses mean: `new`/`fix` seen working in game, `beta` merged but
 not verified in game, `next` still being built. Releasing: [docs/RELEASING.md](docs/RELEASING.md).

@@ -3,14 +3,18 @@ using System.Numerics;
 namespace XivWayfinder.Core;
 
 /// <summary>Where the minion glove floats relative to the character, in yalms, and how it is turned.</summary>
-/// <param name="Ahead">How far ahead of the character, along the way to go.</param>
-/// <param name="Side">How far to the right of that line (negative: to the left), so it sits beside the bead.</param>
+/// <param name="Ahead">How far ahead of the character. Zero places a companion at the shoulder.</param>
+/// <param name="Side">How far to the right (negative: to the left). Beside mode uses the character's heading.</param>
 /// <param name="Height">Above the character's feet.</param>
 /// <param name="TurnDegrees">Added to the yaw, for a model whose finger does not point along its own forward.</param>
 /// <param name="MaxPitchDegrees">The steepest it tilts up or down a slope; 0 keeps it level.</param>
 public readonly record struct MinionLayout(float Ahead, float Side, float Height, float TurnDegrees, float MaxPitchDegrees)
 {
     public static MinionLayout Default => new(1.6f, 0.7f, 0.5f, 0f, 35f);
+    public static MinionLayout BesideDefault => new(0f, 2f, 0.5f, 0f, 35f);
+
+    public static float CompanionAhead(float value) => float.IsFinite(value) ? Math.Clamp(value, 0f, 3f) : BesideDefault.Ahead;
+    public static float CompanionSide(float value) => float.IsFinite(value) ? Math.Clamp(value, -2f, 2f) : BesideDefault.Side;
 }
 
 /// <summary>A pose for the minion glove: world position, yaw (character rotation convention) and pitch, radians.</summary>
@@ -60,6 +64,26 @@ public static class MinionGlove
     }
 
     /// <summary>
+    /// A companion beside the player's shoulder. Placement follows the player's heading, independently of
+    /// where the route turns. There is no forward tap; floating companions may bob vertically. Grounded
+    /// layouts (height zero) stay at feet level for the collision sampler to place on actual terrain.
+    /// </summary>
+    public static Vector3? PlaceBeside(Vector3 player, float playerRotation, MinionLayout layout, double t)
+    {
+        if (!float.IsFinite(playerRotation) || !float.IsFinite(player.X) || !float.IsFinite(player.Y) || !float.IsFinite(player.Z))
+            return null;
+        var forward = Heading.Forward(playerRotation);
+        var side = Right(forward);
+        var ahead = MinionLayout.CompanionAhead(layout.Ahead);
+        var distance = MinionLayout.CompanionSide(layout.Side);
+        var height = float.IsFinite(layout.Height) ? Math.Clamp(layout.Height, 0f, 12f) : MinionLayout.BesideDefault.Height;
+        var bob = height > 0 ? Pulse.Bob(t, 2.2f, MathF.Min(.08f, height)) : 0;
+        return new Vector3(player.X + forward.X * ahead + side.X * distance,
+            player.Y + height + bob,
+            player.Z + forward.Y * ahead + side.Y * distance);
+    }
+
+    /// <summary>
     /// Leading the way: the glove floats <paramref name="lead"/> yalms ahead of the character along the walkable
     /// route (<paramref name="path"/>, from vnavmesh), at the layout's height with a gentle bob, pointing on along the
     /// route from there, so following it is following the path. Near the end of the route it waits at the end. With
@@ -67,7 +91,7 @@ public static class MinionGlove
     /// or null with no direction.
     /// </summary>
     /// <param name="eager">The Main Scenario: it leads a little further ahead and bounces, beckoning.</param>
-    public static (Vector3 At, Vector2 Dir)? Lead(Vector3 player, ReadOnlySpan<Vector3> path, Vector2 dir, float lead, MinionLayout layout, double t, bool eager = false)
+    public static (Vector3 At, Vector2 Dir)? Lead(Vector3 player, ReadOnlySpan<Vector3> path, Vector2 dir, float lead, MinionLayout layout, double t, bool eager = false, float? progressArc = null)
     {
         lead = float.IsFinite(lead) ? Math.Clamp(lead, 1f, 12f) : 4f;
         if (eager)
@@ -75,7 +99,8 @@ public static class MinionGlove
         var bob = layout.Height + (eager ? Pulse.Bob(t, 1.1f, 0.16f) : Pulse.Bob(t, 2.2f, 0.08f));
         if (path.Length >= 2)
         {
-            var arc = PathTrail.Project(path, player, out _);
+            var arc = progressArc is { } tracked && float.IsFinite(tracked)
+                ? Math.Clamp(tracked, 0, PathTrail.Length(path)) : PathTrail.Project(path, player, out _);
             var at = PathTrail.LookAhead(path, arc, lead);
             var on = PathTrail.LookAhead(path, arc, lead + 1.5f);
             var way = Heading.DirectionTo(at, on);
@@ -178,9 +203,12 @@ public sealed class MinionPresence
 {
     public const double Linger = 1.0;
     public const int MaxAttempts = 3;
+    public const double LoadTimeout = 10;
 
     private double lastWanted = double.NegativeInfinity;
     private double nextTry = double.NegativeInfinity;
+    private double loadingSince;
+    public bool Loading { get; private set; }
 
     public int Failures { get; private set; }
 
@@ -208,16 +236,43 @@ public sealed class MinionPresence
 
     public void Failed(double now)
     {
+        Loading = false;
         Failures++;
         nextTry = now + 2.0 * Math.Pow(2, Math.Min(Failures - 1, 4));
     }
 
-    public void Created() => Failures = 0;
+    /// <summary>Allocation starts an attempt; it does not prove the model loaded.</summary>
+    public void BeginLoading(double now)
+    {
+        loadingSince = now;
+        Loading = true;
+    }
+
+    /// <summary>Checks the initial model load, charging a timeout once. Readiness
+    /// means loaded resources or actual visibility, never visibility alone being false.
+    /// Once loaded, this actor may be hidden indefinitely without being recreated.</summary>
+    public bool CheckLoadTimeout(bool resourcesReady, double now)
+    {
+        if (!Loading) return false;
+        if (resourcesReady) { Created(); return false; }
+        if (!double.IsFinite(now) || now - loadingSince <= LoadTimeout) return false;
+        Failed(now);
+        return true;
+    }
+
+    /// <summary>A successful model load, not merely an allocated actor.</summary>
+    public void Created()
+    {
+        Loading = false;
+        Failures = 0;
+        nextTry = double.NegativeInfinity;
+    }
 
     /// <summary>Starts over: after a settings change, or a new zone.</summary>
     public void Reset()
     {
         Failures = 0;
+        Loading = false;
         nextTry = double.NegativeInfinity;
         lastWanted = double.NegativeInfinity;
     }

@@ -9,6 +9,23 @@ public sealed class ScreenAndGloveTests
     private static readonly Vector2 Max = new(1880, 1040);
 
     [Fact]
+    public void ColourApproachIsFrameRateIndependent()
+    {
+        var start = new Vector4(1f, 0f, 0.25f, 1f);
+        var target = new Vector4(0f, 1f, 0.75f, 0.5f);
+        var oneStep = Pulse.Approach(start, target, 0.4f, 0.1f);
+        var fourSteps = start;
+        for (var i = 0; i < 4; i++)
+            fourSteps = Pulse.Approach(fourSteps, target, 0.1f, 0.1f);
+
+        Assert.Equal(oneStep.X, fourSteps.X, 5);
+        Assert.Equal(oneStep.Y, fourSteps.Y, 5);
+        Assert.Equal(oneStep.Z, fourSteps.Z, 5);
+        Assert.Equal(oneStep.W, fourSteps.W, 5);
+        Assert.InRange(Vector4.Distance(oneStep, target), 0f, Vector4.Distance(start, target) * 0.07f);
+    }
+
+    [Fact]
     public void RayFromTheCentreMeetsTheRightEdge()
     {
         var p = ScreenEdge.RayToEdge(new Vector2(960, 540), new Vector2(1, 0), Min, Max);

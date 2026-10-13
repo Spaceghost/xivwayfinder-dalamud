@@ -1,0 +1,14 @@
+The license references below accompany the attribution and modification notice
+in ATTRIBUTION.txt; keep both notices with these model files when redistributing.
+
+CC0 1.0 Universal — PixelMannen's base model
+License/deed: https://creativecommons.org/publicdomain/zero/1.0/
+Legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+Creative Commons Attribution 4.0 International — tomkranis's rig/animations,
+the AsoboStudio/scurest glTF conversion, and this project's added animation work
+License/deed: https://creativecommons.org/licenses/by/4.0/
+Legal text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+This pack does not replace the original authors' notices or imply their endorsement.
+The plugin's source-code license is separate from these art assets' licenses.

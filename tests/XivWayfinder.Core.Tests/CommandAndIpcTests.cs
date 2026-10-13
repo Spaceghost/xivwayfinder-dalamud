@@ -58,6 +58,18 @@ public sealed class CommandAndIpcTests
     }
 
     [Theory]
+    [InlineData("save forge", Verb.SavePlace, "forge")]
+    [InlineData("go Café Meetup", Verb.GoPlace, "Café Meetup")]
+    [InlineData("forget old spot", Verb.ForgetPlace, "old spot")]
+    [InlineData("places", Verb.ListPlaces, "")]
+    public void NamedPlaceCommandsComeBeforeFreeTextZones(string text, Verb verb, string name)
+    {
+        var request = WayfinderCommands.Parse(text);
+        Assert.Equal(verb, request.Verb);
+        Assert.Equal(name, request.Name);
+    }
+
+    [Theory]
     [InlineData("11.2")]
     [InlineData("1 2 3")]
     [InlineData("0 14")]
@@ -202,18 +214,33 @@ public sealed class CommandAndIpcTests
             Mode = SourceMode.Auto,
             Guide = new Guide(GuideKind.Walk, target, 19.6f, new Vector2(1, 0), null),
         });
-        Assert.Equal("pointing at target \"test: 20 yalms ahead\": 20 yalms away · following auto · showing", line);
+        Assert.Equal("pointing at target \"test: 20 yalms ahead\": 20 yalms away, waiting for a walkable route · following auto · showing", line);
     }
 
     [Fact]
-    public void StatusLineSaysWhetherItFollowsAPathOrAStraightLine()
+    public void StatusLineSaysWhetherItFollowsAPathOrWaitsForOne()
     {
         var target = new Target(TargetSource.Flag, 132, 0, 0, null, "map flag");
         var walk = new Guide(GuideKind.Walk, target, 55f, new Vector2(1, 0), null);
         var path = WayfinderIpc.StatusLine(new WayfinderState { Visible = true, Guide = walk, Navmesh = true, RouteNote = "following a 6-corner path" });
         Assert.Contains("55 yalms away, along vnavmesh's path ·", path);
         var straight = WayfinderIpc.StatusLine(new WayfinderState { Visible = true, Guide = walk, RouteNote = "not installed" });
-        Assert.Contains("55 yalms away, in a straight line (vnavmesh: not installed) ·", straight);
+        Assert.Contains("55 yalms away, waiting for a walkable route (vnavmesh: not installed) ·", straight);
+        Assert.DoesNotContain("straight line", straight);
+    }
+
+    [Fact]
+    public void StateChangeKeyDebouncesDistanceOnlyChanges()
+    {
+        var target = new Target(TargetSource.Flag, 132, 10, 20, null, "flag");
+        var first = new WayfinderState { Guide = new Guide(GuideKind.Walk, target, 50, Vector2.UnitX, null) };
+        var nearer = new WayfinderState { Guide = new Guide(GuideKind.Walk, target, 12, Vector2.UnitX, null) };
+        var arrived = new WayfinderState { Guide = new Guide(GuideKind.Arrived, target, 3, Vector2.Zero, null) };
+        var other = new WayfinderState { Guide = new Guide(GuideKind.Walk, target with { Label = "other" }, 50, Vector2.UnitX, null) };
+
+        Assert.Equal(StateChangeKey.From(first), StateChangeKey.From(nearer));
+        Assert.NotEqual(StateChangeKey.From(first), StateChangeKey.From(arrived));
+        Assert.NotEqual(StateChangeKey.From(first), StateChangeKey.From(other));
     }
 
     [Fact]
@@ -223,11 +250,13 @@ public sealed class CommandAndIpcTests
         Assert.Equal("XivWayfinder.v1.SetMapTarget", IpcContract.SetMapTarget);
         Assert.Equal("XivWayfinder.v1.Clear", IpcContract.Clear);
         Assert.Equal("XivWayfinder.v1.GetState", IpcContract.GetState);
+        Assert.Equal("XivWayfinder.v1.Arrived", IpcContract.Arrived);
+        Assert.Equal("XivWayfinder.v1.StateChanged", IpcContract.StateChanged);
         // vnavmesh's, from its IPCProvider.cs; none of the ones that move the character
         Assert.All(new[] { IpcContract.NavIsReady, IpcContract.NavPathfindCancelable, IpcContract.NavNearestPoint },
             n => Assert.DoesNotMatch(@"\.(Path|SimpleMove)\.", n));
         var doc = File.ReadAllText(Path.Combine(RepoRoot(), "docs", "IPC.md"));
-        foreach (var name in new[] { IpcContract.SetTarget, IpcContract.SetMapTarget, IpcContract.Clear, IpcContract.GetState })
+        foreach (var name in new[] { IpcContract.SetTarget, IpcContract.SetMapTarget, IpcContract.Clear, IpcContract.GetState, IpcContract.Arrived, IpcContract.StateChanged })
             Assert.Contains("`" + name + "`", doc);
     }
 

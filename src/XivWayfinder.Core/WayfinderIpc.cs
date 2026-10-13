@@ -16,9 +16,28 @@ public sealed record WayfinderState
     public Guide Guide { get; init; } = Guide.Nothing;
     public string ZoneName { get; init; } = "";
     public bool Navmesh { get; init; }
+    public int JourneyIndex { get; init; }
+    public int JourneyCount { get; init; }
+    public bool JourneyRunning { get; init; }
+    public bool AutoTeleportEnabled { get; init; }
+    public uint AutoTeleportMaxGil { get; init; }
+    public string AutoTeleportStatus { get; init; } = "Automatic teleport is off.";
 
     /// <summary>When not following a path, why: vnavmesh's state ("not installed", "no path found", ...).</summary>
     public string RouteNote { get; init; } = "";
+}
+
+/// <summary>
+/// The stable part of a state used to gate <c>StateChanged</c>: distance and animation updates do not make noise,
+/// but moving to another target or another kind of guidance does.
+/// </summary>
+public readonly record struct StateChangeKey(GuideKind Guide, Target? Target,
+    int JourneyIndex = 0, int JourneyCount = 0, bool JourneyRunning = false,
+    bool AutoTeleportEnabled = false, uint AutoTeleportMaxGil = 0, string AutoTeleportStatus = "")
+{
+    public static StateChangeKey From(WayfinderState state) => new(state.Guide.Kind, state.Guide.Target,
+        state.JourneyIndex, state.JourneyCount, state.JourneyRunning,
+        state.AutoTeleportEnabled, state.AutoTeleportMaxGil, state.AutoTeleportStatus);
 }
 
 /// <summary>
@@ -106,6 +125,20 @@ public static class WayfinderIpc
             w.WriteString("guide", state.Guide.Kind.ToString().ToLowerInvariant());
             w.WriteBoolean("navmesh", state.Navmesh);
             w.WriteString("routeNote", CleanLabel(state.RouteNote));
+            w.WriteStartObject("autoTeleport");
+            w.WriteBoolean("enabled", state.AutoTeleportEnabled);
+            w.WriteNumber("maxGil", state.AutoTeleportMaxGil);
+            w.WriteString("status", CleanLabel(state.AutoTeleportStatus));
+            w.WriteEndObject();
+            var cue = JourneyCue.From(state.Guide, state.ZoneName, state.Navmesh, state.RouteNote);
+            w.WriteStartObject("journey");
+            w.WriteString("action", cue.Action);
+            w.WriteString("next", cue.Next);
+            w.WriteBoolean("hasWalkablePath", cue.HasWalkablePath);
+            w.WriteNumber("index", state.JourneyIndex);
+            w.WriteNumber("count", state.JourneyCount);
+            w.WriteBoolean("running", state.JourneyRunning);
+            w.WriteEndObject();
             if (state.Guide.Target is { } t)
             {
                 w.WriteStartObject("target");
@@ -159,7 +192,8 @@ public static class WayfinderIpc
         {
             GuideKind.Walk => string.Create(CultureInfo.InvariantCulture, $"{g.Distance:0} yalms away{Route(state)}"),
             GuideKind.Arrived => "you are there",
-            GuideKind.Teleport => $"in {state.ZoneName}: teleport to {g.Aetheryte!.Name}{(g.Aetheryte.Unlocked ? "" : " (not attuned yet)")}",
+            GuideKind.Teleport => JourneyCue.From(g, state.ZoneName, state.Navmesh, state.RouteNote).Action
+                + " · " + JourneyCue.From(g, state.ZoneName, state.Navmesh, state.RouteNote).Next,
             GuideKind.Elsewhere => $"in {state.ZoneName}, which has no aetheryte",
             _ => "no target",
         };
@@ -168,8 +202,8 @@ public static class WayfinderIpc
 
     private static string Route(WayfinderState state) =>
         state.Navmesh ? ", along vnavmesh's path"
-        : state.RouteNote.Length > 0 ? $", in a straight line (vnavmesh: {state.RouteNote})"
-        : "";
+        : state.RouteNote.Length > 0 ? $", waiting for a walkable route (vnavmesh: {state.RouteNote})"
+        : ", waiting for a walkable route";
 
     public static string Name(SourceMode mode) => mode switch
     {

@@ -10,7 +10,7 @@ namespace XivWayfinder.Plugin;
 
 /// <summary>
 /// Asks vnavmesh, when it is installed and has a mesh for the zone, for the walkable path to the target, and says
-/// which corner of it to point at. Queries only: the gates that move the character (<c>vnavmesh.Path.*</c>,
+/// where ahead of the player's continuous progress to point. Queries only: the gates that move the character (<c>vnavmesh.Path.*</c>,
 /// <c>vnavmesh.SimpleMove.*</c>) are never touched. One request at a time, at most one every two seconds, and a
 /// fresh one only when the target moves or the player strays from the path.
 /// </summary>
@@ -18,7 +18,8 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
 {
     private const double MinInterval = 2.0;
     private const float OffPath = 6f;
-    private const float CornerReach = 1.5f;
+    private const float LookAhead = 4f;
+    private readonly PathProgressTracker progress = new();
 
     private readonly ICallGateSubscriber<bool> isReady = pluginInterface.GetIpcSubscriber<bool>(IpcContract.NavIsReady);
     private readonly ICallGateSubscriber<Vector3, Vector3, bool, CancellationToken, Task<List<Vector3>>> pathfind =
@@ -30,6 +31,7 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
     private Task<List<Vector3>>? inFlight;
     private Vector3[] path = [];
     private Vector3 pathGoal;
+    private bool pathGoalHasHeight;
     private uint territory;
     private double lastRequest = double.NegativeInfinity;
     private double lastInstallCheck = double.NegativeInfinity;
@@ -45,6 +47,9 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
     /// </summary>
     public Vector3[] Path => path;
 
+    /// <summary>One frame's shared route progress for the pointer, guide, trail and rug export.</summary>
+    public float ProgressArc => progress.Current.Arc;
+
     /// <summary>Which corner of <see cref="Path"/> the pointer aims at, or -1.</summary>
     public int Corner { get; private set; } = -1;
 
@@ -52,7 +57,7 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
     public bool Following => Corner >= 0 && path.Length >= 2;
 
     /// <summary>
-    /// The point to aim at this frame: the next corner of the walkable path, or null to point straight at
+    /// The point to aim at this frame: a continuous lookahead on the walkable path, or null to point straight at
     /// <paramref name="goal"/> (no vnavmesh, no mesh yet, no path found, or still waiting for one).
     /// </summary>
     public Vector3? Aim(uint zone, Vector3 player, Vector3 goal, bool goalHasHeight, double now)
@@ -77,25 +82,33 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
             territory = zone;
         }
 
+        if ((path.Length > 0 || inFlight is not null) && (goalHasHeight != pathGoalHasHeight
+            || (goalHasHeight && MathF.Abs(pathGoal.Y - goal.Y) > 1f)))
+            Idle(); // an explicitly different floor cannot reuse the old path
+
         if (inFlight is { IsCompleted: true } done)
         {
             path = done.IsCompletedSuccessfully && done.Result is { Count: > 1 } corners ? [.. corners] : [];
+            progress.Reset();
             Status = path.Length > 0 ? $"following a {path.Length}-corner path" : "no path found";
             inFlight = null;
         }
 
-        var away = PathFollow.DistanceFromPath(path, player);
+        var tracked = progress.Update(path, player);
+        var away = tracked.Relocated ? float.PositiveInfinity : tracked.Away;
+        if (path.Length > 0 && away > OffPath) Status = "recalculating from your current position";
         if (PathFollow.ShouldRequery(path.Length > 0, inFlight is not null, now - lastRequest, MinInterval, pathGoal, goal, away, OffPath))
             Request(player, goal, goalHasHeight, now);
 
-        if (path.Length == 0 || Heading.FlatDistance(pathGoal, goal) > 1f)
+        if (path.Length == 0 || Heading.FlatDistance(pathGoal, goal) > 1f || !tracked.Valid || away > OffPath)
         {
             Corner = -1;
             return null;
         }
 
-        Corner = PathFollow.NextCorner(path, player, CornerReach);
-        return Corner >= 0 ? path[Corner] : null;
+        Corner = tracked.NextCorner;
+        if (Status == "recalculating from your current position") Status = $"following a {path.Length}-corner path";
+        return GuideChaseLayout.CornerLimitedLookAhead(path, tracked.Arc, LookAhead);
     }
 
     /// <summary>Forget the path (no target, another zone, navmesh switched off).</summary>
@@ -106,12 +119,18 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
         cancel = null;
         inFlight = null;
         path = [];
+        progress.Reset();
         Corner = -1;
     }
 
     private void Request(Vector3 player, Vector3 goal, bool goalHasHeight, double now)
     {
         lastRequest = now;
+        // The old path belongs to the old request. Updating pathGoal while
+        // keeping it would briefly label the old route as the new destination.
+        path = [];
+        progress.Reset();
+        Corner = -1;
         try
         {
             if (!isReady.InvokeFunc())
@@ -133,6 +152,7 @@ internal sealed class Navmesh(IDalamudPluginInterface pluginInterface, IPluginLo
             cancel = new CancellationTokenSource();
             inFlight = pathfind.InvokeFunc(player, to, false, cancel.Token);
             pathGoal = goal;
+            pathGoalHasHeight = goalHasHeight;
             Status = "asking for a path";
         }
         catch (IpcNotReadyError)

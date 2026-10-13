@@ -8,6 +8,12 @@ public static class Colors
     /// <summary>Soft gold, the bead's default: the family's dark-ink, gold and glass look.</summary>
     public static readonly Vector4 Gold = new(1f, 0.82f, 0.42f, 1f);
 
+    /// <summary>Sky blue for a map flag; distinct from gold under common colour-vision deficiencies.</summary>
+    public static readonly Vector4 Flag = new(0.34f, 0.71f, 0.91f, 1f);
+
+    /// <summary>Reddish purple for a quest; distinct from gold and sky blue in both hue and lightness.</summary>
+    public static readonly Vector4 Quest = new(0.80f, 0.47f, 0.65f, 1f);
+
     /// <summary>The glove's white, a little warm.</summary>
     public static readonly Vector4 Ivory = new(1f, 0.98f, 0.94f, 1f);
 
@@ -17,9 +23,29 @@ public static class Colors
     /// <summary>The Main Scenario's amber, like the flame of the game's own Main Scenario quest icon.</summary>
     public static readonly Vector4 MainScenario = new(1f, 0.56f, 0.16f, 1f);
 
-    /// <summary>The bead's colour for a target: the Main Scenario's when it is on (<paramref name="mainScenarioStyle"/>), else the chosen one.</summary>
-    public static Vector4 For(Target? target, Vector4 bead, bool mainScenarioStyle) =>
-        mainScenarioStyle && target is { MainScenario: true } ? MainScenario : bead;
+    /// <summary>
+    /// The bead's colour for a target: Main Scenario amber when enabled, one shared colour when requested,
+    /// otherwise a colour chosen by the target's source.
+    /// </summary>
+    public static Vector4 For(
+        Target? target,
+        Vector4 explicitColor,
+        Vector4 flagColor,
+        Vector4 questColor,
+        bool oneColorForAll,
+        bool mainScenarioStyle)
+    {
+        if (mainScenarioStyle && target is { MainScenario: true })
+            return MainScenario;
+        if (oneColorForAll || target is null)
+            return explicitColor;
+        return target.Source switch
+        {
+            TargetSource.Flag => flagColor,
+            TargetSource.Quest => questColor,
+            _ => explicitColor,
+        };
+    }
 
     /// <summary>Packs an RGBA colour with an extra opacity factor; components are clamped to 0..1.</summary>
     public static uint Pack(Vector4 rgba, float alpha = 1f)

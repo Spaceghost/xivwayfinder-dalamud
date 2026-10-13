@@ -1,14 +1,142 @@
 {
   "_comment": "The changelog. tools/changelog.py renders CHANGELOG.md from this file, and release notes and the installer's changelog are written from it. Every user-visible change edits this file in the same commit. Statuses: new/fix (in a release, seen working in game), beta (merged, not yet verified in game), next (still being built, not merged).",
   "project": "XivWayfinder",
-  "intro": "Every change to XivWayfinder a player can see, newest first.\n\nWayfinder has not yet been observed running in the game: host tests cover the direction and screen maths, the glove's placement, the target priority, the animation timing and the command and IPC parsing, and nothing below about in-game behaviour has been seen working. Treat it as the design, not as a result — the README says the same thing.",
+  "intro": "Every player-visible change to XivWayfinder, newest first. Native cursor, moogle and chocobo rendering and live model selection have been observed in game. Feature-specific notes distinguish host tests, live checks and remaining limitations.",
   "releases": [
     {
       "version": "next",
       "title": "In the workshop",
       "date": "",
-      "blurb": "Merged, not in a release yet.",
+      "blurb": "Development work; not a stable release. Individual entries identify verification status.",
       "items": [
+        {
+          "status": "beta",
+          "text": "Experimental guide and journey build: local model-pack import, guide rendering components, route/companion policies, terrain checks and recovery diagnostics. Includes model-pack validation and compiled shader checksums. Offline tests do not verify live rendering, collision, boarding, teleport or cross-zone behavior; these remain development features."
+        },
+        {
+          "status": "next",
+          "text": "Imported guides and XivRug now share optional plugin-owned world depth through XivWayfinder.v1.AcquireWorldDepth, fixing the observed cloth-over-Fox error caused by separate buffers and hook order. The provider clears once per UI-armed render frame; consumers restore their pipeline and release each COM lease, retain private-depth fallback when unavailable, and never write game depth. Seven focused frame tests pass and both matched builds have no warnings or errors. On 2026-10-03 at 11:41 UTC, with Wayfinder loaded last, the full opaque Fox remained visible over the rug in Survey, Walk and Run with distinct limb poses. Loading XivRug last at 11:43 preserved Survey and Run visibility; both renderers logged shared-depth submissions, and warning logs stayed empty during seven minutes of checks. Stopping the preview restored the saved companion. At 11:46, unloading Wayfinder while XivRug stayed loaded kept the rug intact without a stale guide silhouette; reloading restored Fox and the player\u2019s deep squat with saved guide, trail and rug settings unchanged. Transparent BLEND ordering remains approximate. Resize/device replacement is host-tested only; sharp stairs and the earlier tight-room placement remain unverified live."
+        },
+        {
+          "status": "next",
+          "text": "Preview floor checks now compare the footprint against the measured center plane within 0.02 yalms and aligned normals. Low clearance-ray endpoints stay above that plane without skipping a first collision hit, adding rays or lifting the requested model pose. A host fixture reproduces the measured 0.1875 slope; raised treads, farther uphill walls and low ceilings remain rejected. Possible height from the imported renderer's existing finite-triangle support correction is included in clearance. All 25 focused preview tests pass and the combined build has no warnings or errors. Tight-room and broader live slope checks remain pending. The separate rug-over-Fox composition error is now fixed for the selected opaque Fox in both plugin load orders; see the shared-depth entry."
+        },
+        {
+          "status": "next",
+          "text": "Refresh the README and plugin manifest summary, description and tags to describe native model companions, local model imports and configurable world trails. Verification limits and the optional Teleport policy and costs remain explicit."
+        },
+        {
+          "status": "next",
+          "text": "Native and local-model previews now search 22 nearby collision-checked spots using observed body bounds, alternate sides, compact positions and both sides relative to the camera. Candidate and movement positions keep the guide radius plus a 0.35-yalm player-clearance fallback; the actual player skeleton is not measured. Floor, body, overhead and sight-line checks reject unsuitable positions. Movement previews render the exact checked steps and turn back at obstacles; relocation avoids unchecked interpolation. All 25 focused preview tests pass, covering geometry, floating-model lower bounds, exact movement, player clearance, selector avoidance and measured-slope checks. On 2026-10-03 at 10:52\u201310:53 UTC, Gairhard remained fully visible to the right of the open left-hand selector through rest, walking and return to rest outside a Limsa arch. Momodi also stayed fully visible beside the selector at size 0.917 during rest, walk and run, with obstacle turnbacks observed. The player had independently left the earlier tight room, so compact placement there has not been rechecked live. Other collision layouts remain to be checked. The imported Fox now remains fully visible over XivRug in both plugin load orders; the separate shared-depth entry records that live check and its limits. The latest combined build passes without warnings or errors; the 1,261-test full-suite result predates the selector additions."
+        },
+        {
+          "status": "next",
+          "text": "Native guide loading now preserves retry failures across actor allocation and clears them only when the actor becomes visible or its draw resources finish loading. An initial ten-second timeout is counted once; two- and four-second backoff precede a stop after three failed attempts until retry or model change. Loaded actors that become hidden or culled are kept, while selector readiness still requires visibility. Cleanup preserves the loading-failure explanation. Eight host tests pass, including three never-ready allocations and hidden loaded actors. The combined build passed 1,261 host tests and loaded on 2026-10-03 at 10:30 UTC without warnings during the next two minutes; Gairhard reached ready. The three-failure stop remains host-tested only."
+        },
+        {
+          "status": "next",
+          "text": "The development curb search now follows its exhausted 1,220-cell coarse pass with 3,660 additional quarter-yalm samples, keeping the same four-ray, roughly one-millisecond per-frame budget and 75-second expiry. Three host tests cover the bounded grid and thin raised caps missed by the half-yalm grid along either horizontal axis. On 2026-10-03 at 10:09 UTC, a live interior scan in territory 129 completed all 4,880 distinct cells in about 16 seconds, with 2,002 visible cells and 1,038 accepted floor hits. No neighboring pair met the unchanged curb criteria, so no riser or route was tested. The scan ended normally with the saved overhead fairy trail unchanged. Bounded refinement is verified in game; sharp steps and stairs remain unverified live."
+        },
+        {
+          "status": "next",
+          "text": "Native resident animation lookup now follows the game's exact body/variant mappings in papLoadTable.plt and still verifies clip names in the resolved PAP. This recovers shared idle and movement for male Highlander and female Lalafell guides without assigning guessed timelines. Installed-data checks covered 357 model/variant records and 2,142 mappings: Gairhard's c0301 idle/walk/run IDs change from 0/13/22 to 3/13/22, and Momodi's c1201 from 0/0/0 to 3/13/22. Nine new tests cover rest-to-walk-to-rest, exact source variants, sparse mapping ranks, malformed metadata, absent clips and optional table-read failures; all 15 native-animation tests and the combined Release build pass. A table-read exception now caches the direct-pack fallback instead of poisoning all later animation lookups, while resident PAP errors retain their normal diagnostics. At 10:52\u201310:53 UTC on 2026-10-03, Gairhard\u2019s full body stayed visible beside the open selector while walking changed his position, facing and leg poses; returning to rest produced a balanced idle. Momodi NPC 1001353 was also fully visible outdoors at size 0.917, with rest, walking, running and return-to-idle poses observed. Run included obstacle turnbacks and a transient Walking state; a separate frame explicitly reported Running with a running pose. An uninterrupted running orbit was not established. This change does not claim inherited emote or jump support."
+        },
+        {
+          "status": "next",
+          "text": "Native NPC appearances now honor the explicit-empty equipment sentinel found on Gairhard. Matching the installed SetupEventNpc behavior, zero ENpc overrides retain inherited NpcEquip items, while 0xFFFFFFFF clears an equipment slot and dyes; the same 32-bit sentinel in a weapon's 64-bit field clears that weapon. Fresh actor-buffer checks passed for 3,540 installed NPC appearances and 4,536 explicit-empty fields, with Momodi and Fufucha as ordinary-outfit controls, preserving ordinary direct/inherited model IDs, variants and weapon types. The matched-API Release build passes. After the 2026-10-03 10:30 UTC reload, Gairhard NPC 1000125 became ready at rest within four seconds at fitted size 0.639. The selector initially obscured most of him. A later 10:52\u201310:53 UTC check outside a Limsa arch showed his full outfit clear of the open selector, distinct walking strides and a return to balanced rest at the same size. No current warnings or preview-search exhaustion diagnostics were observed. This verifies that appearance and preview sequence, not the full NPC catalog or autonomous route movement."
+        },
+        {
+          "status": "next",
+          "text": "Import GLB/glTF models requiring EXT_meshopt_compression or KHR_meshopt_compression through a managed decoder, including attribute versions 0/1, triangle and index streams, and all defined filters. Decoded views share a 32 MB budget and are cached by view; compressed bounds, stream consumption and placeholder/fallback buffers are validated. All 37 new meshopt tests and 203 importer regression tests pass. The official required-compression MeshoptCubeTest matches its uncompressed reference for geometry, colors, normals and 31 animation samples. An independent upstream encoder/decoder comparison passes 645 cases under the specification: 640 byte-exact and five filtered cases within one permitted component unit; exponential decoding is exact. The pinned upstream MIT license is embedded in Core without a new native dependency. On 2026-10-03 the official required-KHR MeshoptCubeTest rendered its colored grid and textured red labels at size 1.5 with active scene rendering. Its authored RotateCubes clip changed visible cube orientations between frames one second apart while preview pace remained Rest. The selector covered part of the grid, so this does not verify every cube or broader occlusion. Moving preview reached room scenery and waited for confirmed ground; autonomous route movement was not established. Stopping the preview restored Fox with its saved path unchanged, and no warning entries were observed after reload. This required-compression check is separate from the earlier ordinary-fallback preview. Required Draco/Basis decoding and FBX remain unsupported."
+        },
+        {
+          "status": "next",
+          "text": "Open downloaded ZIP model packs in the local model selector, or with /wayfinder preview PACK.zip or /wayfinder import PACK.zip. Every supported GLB, glTF and OBJ entry is listed for an explicit click, and the selector stays open while trying candidates. Use this guide retains its local copy and sidecars; closing or canceling an uncommitted pack retires model readers before deleting the temporary copy and restores the chosen guide. Packs are limited to 512 entries and 32 MB unpacked. All 30 focused pack tests pass, including the unchanged public ambientCG 3DApple002_LQ-1K-JPG.zip fixture (SHA256 aa9335b8cf667f2fe5093d2b1ebfd56697974a7aa68f170058230da976653595), whose original 998-triangle OBJ and MTL/JPEG base color load through the normal importer. CC0 provenance accompanies the fixture. On 2026-10-03 /wayfinder import opened its explicit entry list without changing the saved Fox path; clicking the OBJ rendered the textured apple beside the player at size 1.5 while the selector stayed open and reported an active scene renderer. Live cancellation removed the temporary directory while preserving the source ZIP and saved Fox. Reopening the pack and using alternate Windows path casing and separators kept the preview textured and ready. Use this guide saved the canonical extracted path; the OBJ remained after closing the selector, and reopening the saved model rendered the textured apple with both Apple and Fox in the collection."
+        },
+        {
+          "status": "next",
+          "text": "Idle guides can walk to a clear spot on the preferred side instead of waiting one yalm ahead. Captured heading keeps the spot stable while turning; retained measured body radii set clearance, and a queried route must reach an acceptable endpoint. Movement cancels the idle request and rejoining uses a walking connector. Thirty spacing tests and 36 idle request/integration tests pass. On 2026-10-03 the saved Fox arrived visibly clear beside the squatting player, facing them, about 2 yalms away on a three-corner path with a 1.85-yalm minimum clearance. Moving-player cancellation and rejoining still need live checks; measured bounds do not cover every possible animation."
+        },
+        {
+          "status": "next",
+          "text": "Indexed glTF imports discard unused accessor vertices and remap associated appearance, skin and morph data together, preventing unused geometry from distorting size, ground bounds and in-place root selection. The retained geometry determines the vertex limit. Skins also accept the joint-count prefix of a longer shared inverse-bind matrix accessor. All 139 focused importer tests pass, including eight new cases. On 2026-10-03 an IndexedUnusedVertex fixture with unchanged geometry and a temporary double-sided material rendered a large grounded teal triangle at size 1.5 in the local-model preview. The inverse-bind matrix-prefix fix remains host-tested only."
+        },
+        {
+          "status": "next",
+          "text": "Development-only /wayfinder terraincheck curb|slope|off previews a bounded nearby collision and queried-route check without replacing the destination, journey or saved settings or moving the player. It expires after 75 seconds and also stops on player movement, hidden guidance or a zone change. On 2026-10-03 a real 0.2-yalm beveled curb produced a three-corner, 4.75-yalm path with 39 collision samples. Ground fairy dots were visible at its top and the glowing ground ribbon visibly climbed the bevel. Ground-line preparation had no projection failures or budget stops. Overhead line and fairy dots were also visible floating at the 2.5-yalm height setting. Automatic expiry restored ordinary guidance. A later live check confirmed six narrow curb-cap endpoints without the previous overshoot, but all queried paths failed the strict step-crossing check and the probe stopped after six attempts. The endpoint correction was exercised; vertical stairs and moving terrain remain unverified live."
+        },
+        {
+          "status": "next",
+          "text": "Click external model search results to preview their repository images inside the open selector. Only the selected image is loaded with bounded size and dimensions. Direct provider checks covered Poly Haven, Sketchfab and ambientCG; a local live check on 2026-10-03 rendered the Antique Chair and Fox images. Results and the selected image now occupy separate scrolling panes, with longer help and compatibility details folded away. Model archives are still downloaded through the provider and previewed from a supported local file."
+        },
+        {
+          "status": "next",
+          "text": "Ground-trail projection now invalidates overlapping cached geometry when a higher face is discovered and rejects an entire glow or ribbon primitive across conflicting partial higher surfaces. Refreshed downward rays also retire cached support contradicted by their confirmed clear segment, with a 0.001-yalm endpoint margin; misses affect only the tested range, and valid lower hits revoke only above the hit. Unrelated faces and probe expiry times are preserved, while actual retirement clears retained projections and rebuilds the face index. All 67 focused terrain tests pass: the original 60 plus seven cache tests, including removed, raised and lowered platforms that reproduced stale support at 0.31 seconds before the fix. The final build loaded live on 2026-10-03; a subsequent gentle-slope check showed the ground ribbon climbing the bevel, with no projection failures or budget stops and the idle Fox and player squat intact. Discovery remains bounded by sampling cadence. Changing-platform behavior remains host-tested only, and vertical stairs remain unverified live."
+        },
+        {
+          "status": "next",
+          "text": "Imported guides gain a minimal upward correction when their full rendered footprint lies inside one confirmed walkable collision triangle, keeping geometry above that plane with 0.03 yalm clearance without flattening authored bounce. Eighteen helper tests and 363 Fox animation samples pass. Adjacent triangles and live slope behavior still need further coverage."
+        },
+        {
+          "status": "next",
+          "text": "Human hunt appearances Albin the Ashen (battle NPC 3182, model 0) and Omni (battle NPC 4538, model 1283) now appear under Characters. Valid authored customization allows Albin's model-zero identity without selecting the default pointer. Installed-data smoke checks verify their distinct identities, all 26 customization bytes and outfits in isolated actor buffers; the catalog now contains 37,053 entries. The build passes with no warnings or errors. Live previews on 2026-10-03 showed Albin at fitted size 0.702 in dark chainmail, at rest and walking, and Omni at size 0.698 in gray/black armor with red accents, at rest and running. Their weapons were visible and the selector stayed open with grounded placement selected. These appearance and preview-gait checks do not verify autonomous route movement or the full catalog."
+        },
+        {
+          "status": "next",
+          "text": "Named hunt guides now retain their authored battle-NPC outfits, with separate appearance IDs and saved profiles from event NPCs sharing the same model. An installed-data smoke check covered all 15 named demihuman hunts and their equipment, within a catalog of 37,051 entries including 3,450 named event-NPC demihuman appearances. Build and host checks pass. A local live check on 2026-10-03 showed Dark Helmet (battle NPC 3187, model 722) ready in the open selector with its metal helmet and crab legs visible. Other demihuman hunt appearances and their movement remain unverified live."
+        },
+        {
+          "status": "next",
+          "text": "Temporary native and local-model previews now hide the legacy flat cursor and paired bead while guidance is visible. The saved pointer style, destination, route trail and travel cue are preserved, and stopping the preview restores the selected style. A local live before/after check on 2026-10-03 confirmed that Both mode\u2019s glove and paired bead disappear during a native Dark Helmet preview. A separate imported Fox check that day verified the cursor and bead visible before preview, hidden during loading and active Survey rendering at size 1.5, and restored in Both mode after closing the preview."
+        },
+        {
+          "status": "next",
+          "text": "Teleport companion staging: attuned teleport cues request walkable stop/corral rendezvous, preserve owned jumps and accepted positions, and face the nearby visible player at arrival. Verified model gestures include authored ground-sit entry/loop/stand-up without seated sliding; unsupported rigs retain their supported idle. Actual Teleport casts request a joining spot, distinct from Return or opening its menu. Source work awaiting combined live validation; teleport/arms boarding remains unfinished."
+        },
+        {
+          "status": "next",
+          "text": "Native companion jump-clearance bounds now apply draw scale and both native model scale factors, preserving the actual draw origin and below-foot geometry. Grounded route companions stay upright instead of retaining a previous floating tilt. Shared bounds and preview-fit tests pass, including asymmetric models and invalid scaling. These are padded resource bounds, not a verified envelope for every animated pose; live obstacle/model verification remains pending."
+        },
+        {
+          "status": "next",
+          "text": "Deliberate facing selection: /wayfinder face and the Journey tab's Follow the quest I'm facing choose a known local quest step within 25 degrees ahead of the character, prioritizing alignment over proximity. Ordinary turns never change the destination. The selection is resolved on the framework thread, ignores transitions/hidden or malformed objectives, pauses a running journey, and still waits for a valid walking route. Host tests and build pass; live quest selection remains to be checked."
+        },
+        {
+          "status": "next",
+          "text": "Independent route companions own their motion along navmesh paths, return through queried connectors, and use exact-arc handoffs at re-paths instead of shoulder-locking or corner shortcuts. Rejected native placements roll motion back rather than accumulating a later snap. Fairy glow and falling dust stay ahead of the actual guide; classic lines remain optional. Shared route metadata places the same guiding color and progress on XivRug. Settings and status now describe waiting for a walkable route rather than promising a removed straight-line fallback. Host regression coverage passes; full terrain/model/live journey verification remains incomplete."
+        },
+        {
+          "status": "next",
+          "text": "Native world guides now initialize a complete local character before drawing. Pointer, moogle and chocobo rendering has been observed in game. A searchable model library includes minions, mounts, creatures and model IDs with persistent live previews, size and rotation controls, per-model ground/float profiles, and adjustable route lead. The legacy /wayfinder beside command now chooses a closer two-yalm route lead while the trail is on; guides stay autonomous on the walking route rather than being locked beside the player's shoulder. Grounded models use ground collision and idle/walk/run timelines; animation compatibility across the full catalog remains unverified. Model mode no longer draws the old flat cursor fallback. Guide, trail, journey and interface settings are grouped into tabs; trails offer ground/overhead placement, glow, pulse, colors and reduced motion. OBJ imports now retain UVs, vertex colors and local MTL diffuse textures; GLB imports retain embedded textures, skeletal animation, morphs and named clips. Optional in-place animation removes horizontal root travel while preserving child motion and vertical bounce. Host fixtures and Khronos Fox/RiggedSimple poses pass; native scene rendering is undergoing separate live verification."
+        },
+        {
+          "status": "next",
+          "text": "Opt-in automatic Teleport: when guidance names an attuned destination, Wayfinder can cast the normal Teleport spell after two seconds safely still. Normal gil costs apply, limited per trip in settings (2,000 gil by default; zero permits only free trips). Combat, busy states, duties, PvP, loading and hidden guidance block casts. An attempt is consumed before calling the game, preventing repeat spending or interrupted-cast loops; explicit Retry honors the 30-second global cooldown. Toggle and retry in settings or with /wayfinder autoteleport on|off|retry. GetState reports the opted-in policy and status for sibling mods. Host-tested; automatic casts not verified live."
+        },
+        {
+          "status": "next",
+          "text": "Automatic Teleport reservations now survive plugin reloads in bounded, character-scoped journals. Atomic save and readback must succeed before a cast; corrupt history, storage failures or conflicting writers block spending. Retry persists and retains the cooldown. Upgrading an already-enabled installation without saved history conservatively holds its first valid offer for explicit Retry, because old in-memory attempts cannot be reconstructed. Host persistence tests and build pass; no live cast was performed for validation."
+        },
+        {
+          "status": "next",
+          "text": "Cross-zone objectives show a short travel cue near the screen edge instead of a dark rectangular window over your character. An attuned destination aetheryte is named when available; otherwise the cue names the zone. A directional pointer appears when there is a target in the current zone."
+        },
+        {
+          "status": "beta",
+          "text": "Places you keep: `/wayfinder save NAME` records where you stand, `/wayfinder go NAME` points back there (including its height), `/wayfinder forget NAME` removes it, and `/wayfinder places` lists the book. Names ignore case, accents and punctuation, duplicates update in place, corrupt saved rows are discarded, and the book is capped at 100. Housing is explicitly refused until ward, plot and room identity can be stored safely. Host tests cover parsing, normalized lookup, replacement, removal and persisted-data validation; not tried in game."
+        },
+        {
+          "status": "beta",
+          "text": "The glove warns of a turn on vnavmesh routes: inside three yalms of a real corner it smoothly leans towards the next leg and taps twice quickly for one ordinary tap period. Bends under 30 degrees, endpoints and malformed short segments are ignored so town paths do not make it fidget. The bead and trail continue to show the current leg. Host tests cover distance, turn angle, endpoints and height-independent detection; not tried in game."
+        },
+        {
+          "status": "beta",
+          "text": "Arrival and change events for other plugins: `XivWayfinder.v1.Arrived` reports a reached target once after the arrival hold, and `XivWayfinder.v1.StateChanged` carries the same JSON as `GetState` whenever the target or guide kind changes. Distance-only movement is debounced, subscriber failures cannot interrupt the pointer, and the IPC guide documents subscription lifetime and framework-thread rules. Host tests cover one-shot arrival, debouncing and every documented contract name; not tried in game."
+        },
+        {
+          "status": "beta",
+          "text": "A colour for every source: ordinary targets keep the chosen gold, map flags use sky blue, and quest steps use reddish purple, with colour-blind-distinguishable defaults and a smooth transition when the source changes. Each colour has its own picker, while *One colour for all targets* restores the previous shared-colour look; Main Scenario amber still takes precedence. Host tests cover source selection and frame-rate-independent colour easing; not tried in game."
+        },
         {
           "status": "beta",
           "text": "The nearest quest, and the Main Scenario standing out: quests are now followed by the next step nearest you of every quest you have accepted (in your zone; elsewhere only when none is here), so the glove always leads to the closest thing to do; *The tracked one first* in the settings brings back the old order. When that step is part of your current Main Scenario quest (the game's own scenario guide says which), the bead and trail turn the Main Scenario's amber, a *Main Scenario* label floats over the bead (and heads the note for another zone), and the glove minion leads a little further ahead with an eager bounce. Host tests cover the choice, the Main Scenario check, the colours and the lead; not tried in game."

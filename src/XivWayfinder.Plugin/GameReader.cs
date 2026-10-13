@@ -45,9 +45,27 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
     {
         try
         {
+            var found = QuestCandidates(playerTerritory, player, prefer, choice == QuestChoice.Tracked);
+            if (QuestPick.Choose(found, choice, prefer, playerTerritory, player) is { } pick)
+            {
+                var msq = QuestPick.IsMainScenario(pick.Lead.QuestId, MainScenarioQuests());
+                var p = pick.Place;
+                return new Target(TargetSource.Quest, p.TerritoryId, p.X, p.Z, p.Y, p.Label, msq);
+            }
+        }
+        catch (Exception ex) { WarnQuest(ex); }
+        return null;
+    }
+
+    /// <summary>Value-only snapshots for explicit facing selection; no native pointers escape the game thread.</summary>
+    public IReadOnlyList<QuestFound> QuestCandidates(uint playerTerritory, Vector3 player,
+        ushort prefer = 0, bool firstOnly = false)
+    {
+        try
+        {
             var qm = QuestManager.Instance();
             if (qm == null)
-                return null;
+                return [];
             var normal = qm->NormalQuests;
             var tracked = qm->TrackedQuests;
             var leads = new List<QuestLead>(normal.Length);
@@ -79,26 +97,21 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
                 if (place is { } p)
                 {
                     found.Add(new QuestFound(lead, p));
-                    if (choice == QuestChoice.Tracked || lead.QuestId == prefer)
+                    if (firstOnly || lead.QuestId == prefer)
                         break;
                 }
             }
 
-            if (QuestPick.Choose(found, choice, prefer, playerTerritory, player) is { } pick)
-            {
-                var msq = QuestPick.IsMainScenario(pick.Lead.QuestId, MainScenarioQuests());
-                var p = pick.Place;
-                return new Target(TargetSource.Quest, p.TerritoryId, p.X, p.Z, p.Y, p.Label, msq);
-            }
+            return found;
         }
-        catch (Exception ex)
-        {
-            if (!warnedQuest)
-                log.Warning(ex, "XivWayfinder: reading the journal failed; quest targets are off until the plugin reloads");
-            warnedQuest = true;
-        }
+        catch (Exception ex) { WarnQuest(ex); }
+        return [];
+    }
 
-        return null;
+    private void WarnQuest(Exception error)
+    {
+        if (!warnedQuest) log.Warning(error, "XivWayfinder: reading the journal failed; no quest snapshot published");
+        warnedQuest = true;
     }
 
     /// <summary>Your current Main Scenario quests, as the game's scenario guide has them (<c>AgentScenarioTree</c>).</summary>
@@ -218,6 +231,10 @@ internal sealed unsafe class GameReader(IDataManager data, IAetheryteList attune
             return null;
         return new MapInfo(mapId, map.SizeFactor, map.OffsetX, map.OffsetY);
     }
+
+    /// <summary>Residential districts and interiors need ward/plot/room identity, which a territory id does not preserve.</summary>
+    public bool IsHousing(uint territory) =>
+        data.GetExcelSheet<TerritoryType>().TryGetRow(territory, out var t) && t.TerritoryIntendedUse.RowId is 13 or 14;
 
     public string ZoneName(uint territory)
     {

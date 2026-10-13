@@ -38,7 +38,13 @@ public enum Verb
     Off,
     Toggle,
     Status,
+    SavePlace,
+    GoPlace,
+    ForgetPlace,
+    ListPlaces,
+    AutoTeleport,
     Invalid,
+    FaceQuest,
 }
 
 /// <summary>One <c>/wayfinder</c> command, parsed.</summary>
@@ -51,6 +57,7 @@ public sealed record WayfinderRequest(Verb Verb)
     public PointerStyle Style { get; init; }
     public float Distance { get; init; } = WayfinderCommands.TestDistance;
     public string Error { get; init; } = "";
+    public string Name { get; init; } = "";
 }
 
 /// <summary>
@@ -65,6 +72,10 @@ public static class WayfinderCommands
     public const string Help =
         "/wayfinder X Y [zone] points at map coordinates (the zone defaults to where you are) · /wayfinder clear · " +
         "/wayfinder test (a target 20 yalms ahead) · /wayfinder auto|target|flag|quest chooses what to follow · " +
+        "/wayfinder save|go|forget NAME and /wayfinder places keep named places · " +
+        "/wayfinder face selects a local quest ahead of your character · " +
+        "/wayfinder models [name or ID] browses game models · /wayfinder assets [search] opens model repositories · /wayfinder localmodels previews your collection · /wayfinder preview PATH|stop · " +
+        "/wayfinder autoteleport on|off|retry (optional, spends gil) · " +
         "/wayfinder bead|glove|both|minion · /wayfinder on|off · /wayfinder status · /wayfinder opens the settings. /xivwayfinder works the same.";
 
     public static WayfinderRequest Parse(string? arguments)
@@ -75,6 +86,33 @@ public static class WayfinderCommands
             return new WayfinderRequest(Verb.Open);
 
         var first = tokens[0].ToLowerInvariant();
+        if (first == "autoteleport")
+            return tokens.Length == 2 && tokens[1].ToLowerInvariant() is "on" or "off" or "retry"
+                ? new WayfinderRequest(Verb.AutoTeleport) { Name = tokens[1].ToLowerInvariant() }
+                : Invalid("/wayfinder autoteleport on|off|retry (normal Teleport gil costs apply)");
+        if (first is "save" or "go" or "forget")
+        {
+            if (tokens.Length < 2)
+                return Invalid($"/wayfinder {first} NAME: give the place a name");
+            var verb = first switch
+            {
+                "save" => Verb.SavePlace,
+                "go" => Verb.GoPlace,
+                _ => Verb.ForgetPlace,
+            };
+            return new WayfinderRequest(verb) { Name = string.Join(' ', tokens[1..]) };
+        }
+
+        if (first == "places")
+            return tokens.Length == 1
+                ? new WayfinderRequest(Verb.ListPlaces)
+                : Invalid("/wayfinder places takes no other words");
+
+        if (first == "face")
+            return tokens.Length == 1
+                ? new WayfinderRequest(Verb.FaceQuest)
+                : Invalid("/wayfinder face takes no other words; face a local quest's destination first");
+
         if (tokens.Length == 1 || first == "test")
         {
             switch (first)

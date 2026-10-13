@@ -72,6 +72,10 @@ public enum GuideKind
 /// <summary>The plan for this moment: what kind of hint, towards what, how far (yalms, same zone only).</summary>
 public sealed record Guide(GuideKind Kind, Target? Target, float Distance, Vector2 Direction, AetheryteSpot? Aetheryte)
 {
+    public Target? FinalTarget { get; init; }
+    public string TransitAction { get; init; } = "";
+    public uint TransitTerritory { get; init; }
+
     public static readonly Guide Nothing = new(GuideKind.None, null, 0f, Vector2.Zero, null);
 }
 
@@ -151,6 +155,7 @@ public static class TargetPicker
 public sealed class ArrivalTimer
 {
     private double insideSince = double.NaN;
+    private bool fired;
 
     /// <summary>True once the player has been within the radius for <paramref name="hold"/> seconds.</summary>
     public bool Update(bool inside, double now, double hold)
@@ -158,13 +163,21 @@ public sealed class ArrivalTimer
         if (!inside)
         {
             insideSince = double.NaN;
+            fired = false;
             return false;
         }
 
         if (double.IsNaN(insideSince))
             insideSince = now;
-        return now - insideSince >= hold;
+        if (fired || now - insideSince < hold)
+            return false;
+        fired = true;
+        return true;
     }
 
-    public void Reset() => insideSince = double.NaN;
+    public void Reset()
+    {
+        insideSince = double.NaN;
+        fired = false;
+    }
 }

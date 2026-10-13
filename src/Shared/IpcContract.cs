@@ -25,6 +25,33 @@ public static class IpcContract
 
     /// <summary>() → string. What XivWayfinder is pointing at, as JSON (see docs/IPC.md).</summary>
     public const string GetState = "XivWayfinder.v1.GetState";
+    public const string GetRoute = "XivWayfinder.v1.GetRoute";
+    public const string GetJourney = "XivWayfinder.v1.GetJourney";
+    public const string AppendJourney = "XivWayfinder.v1.AppendJourney";
+    public const string ControlJourney = "XivWayfinder.v1.ControlJourney";
+
+    /// <summary>
+    /// (nint device, uint width, uint height) → nint owned ID3D11DepthStencilView.
+    /// Native/pre-Present fallback immediate-context passes on the actual backbuffer only.
+    /// Zero means unavailable. A nonzero result owns one COM reference: restore
+    /// targets then Release it. Never clear it. D32_FLOAT, LESS_EQUAL, and pixel
+    /// depth cameraDistance/(1+cameraDistance); keep game depth read-only/separate.
+    /// The provider clears once per actual swapchain last-present count, shared
+    /// by native drawing and UiBuilder.Draw fallback callbacks in either order.
+    /// </summary>
+    public const string AcquireWorldDepth = "XivWayfinder.v1.AcquireWorldDepth";
+
+    /// <summary>
+    /// Event (string label, uint territoryId). Raised once after the player has remained inside a target's arrival
+    /// radius; subscribers should return quickly because delivery is on the framework thread.
+    /// </summary>
+    public const string Arrived = "XivWayfinder.v1.Arrived";
+
+    /// <summary>
+    /// Event (string stateJson). Raised when the guide kind or target changes, with the same JSON as
+    /// <see cref="GetState"/>. Distance-only changes are deliberately debounced.
+    /// </summary>
+    public const string StateChanged = "XivWayfinder.v1.StateChanged";
 
     // vnavmesh (github.com/awgil/ffxiv_navmesh, vnavmesh/IPCProvider.cs). Only queries: XivWayfinder never calls the
     // Path.* or SimpleMove.* gates, which move the character.

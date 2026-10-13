@@ -1,0 +1,131 @@
+{
+  "provider": "ambientCG",
+  "downloaded_utc": "2026-10-03T08:51:40.440619+00:00",
+  "source_url": "https://ambientcg.com/a/3DApple002",
+  "license": "CC0-1.0",
+  "license_url": "https://docs.ambientcg.com/license/",
+  "selected_download": {
+    "attributes": "LQ-1K-JPG",
+    "extension": "zip",
+    "url": "https://ambientcg.com/get?file=3DApple002_LQ-1K-JPG.zip",
+    "size": 3108778
+  },
+  "archive_sha256": "aa9335b8cf667f2fe5093d2b1ebfd56697974a7aa68f170058230da976653595",
+  "archive_bytes": 3108778,
+  "expanded_bytes": 3107112,
+  "entries": [
+    {
+      "name": "3DApple002_LQ-1K-JPG.usdc",
+      "size": 72754,
+      "compressed_size": 72754,
+      "crc32": "b23af400",
+      "sha256": "be1936faa53d0de5cdae72af3429aa4817126fc19598531c4d83c7c1d7544d58"
+    },
+    {
+      "name": "3DApple002_LQ-1K-JPG_AmbientOcclusion.jpg",
+      "size": 284819,
+      "compressed_size": 284819,
+      "crc32": "1704f71a",
+      "sha256": "6792ba619ec2aa89e262bc3109319006a15812eeee282d031b267fafdde8aa93",
+      "image": {
+        "format": "JPEG",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    {
+      "name": "3DApple002_LQ-1K-JPG_Color.jpg",
+      "size": 761661,
+      "compressed_size": 761661,
+      "crc32": "8548adf9",
+      "sha256": "6c69cab00b2d17bb1fddbf2422e9ba29d16aa2031e19779e5199c4f36db24c23",
+      "image": {
+        "format": "JPEG",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    {
+      "name": "3DApple002_LQ-1K-JPG_NormalDX.jpg",
+      "size": 786938,
+      "compressed_size": 786938,
+      "crc32": "f58209ee",
+      "sha256": "7243ec86a783e6b76cf9e4ffa4f3986ff03d0259ba3ec75f274b964c15add433",
+      "image": {
+        "format": "JPEG",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    {
+      "name": "3DApple002_LQ-1K-JPG_NormalGL.jpg",
+      "size": 788172,
+      "compressed_size": 788172,
+      "crc32": "f12bfce5",
+      "sha256": "93f3f83c6dcb753acb748402bf9d2e68e1b3b24832f91e0252fbb77795fa3bc0",
+      "image": {
+        "format": "JPEG",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    {
+      "name": "3DApple002_LQ-1K-JPG_Roughness.jpg",
+      "size": 166000,
+      "compressed_size": 166000,
+      "crc32": "46d4a6cc",
+      "sha256": "7e69b623b00481c7de72a93510df8b5a5c42f64517096632530cf731acca3f77",
+      "image": {
+        "format": "JPEG",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    {
+      "name": "3DApple002_LQ-1K-JPG.mtl",
+      "size": 297,
+      "compressed_size": 297,
+      "crc32": "0acb1d5b",
+      "sha256": "6ce002cb7acc3ce05522a4c2c20ac2cc10a4391bf77bbb2382223c3180ea9fe6"
+    },
+    {
+      "name": "3DApple002_LQ-1K-JPG.obj",
+      "size": 76273,
+      "compressed_size": 76273,
+      "crc32": "d263a8b0",
+      "sha256": "87d9010333acfccb99118e2c0fb5bf345e38b9ca4d427cc1cf2a622218c384ed"
+    },
+    {
+      "name": "3DApple002.png",
+      "size": 170198,
+      "compressed_size": 170198,
+      "crc32": "62125f85",
+      "sha256": "1b676d21ae02afe358710c090bec9ce7ec066d165f02d71cee510e86b862c9f0",
+      "image": {
+        "format": "PNG",
+        "width": 512,
+        "height": 512
+      }
+    }
+  ],
+  "unchanged": true,
+  "selected_model": {
+    "entry": "3DApple002_LQ-1K-JPG.obj",
+    "triangles": 998,
+    "positions": 501,
+    "texture_coordinates": 587,
+    "authored_normals": 501,
+    "bounds_min": [
+      -0.03512,
+      2.9e-05,
+      -0.032369
+    ],
+    "bounds_max": [
+      0.034721,
+      0.067905,
+      0.037146
+    ],
+    "material_file": "3DApple002_LQ-1K-JPG.mtl",
+    "base_color": "3DApple002_LQ-1K-JPG_Color.jpg"
+  }
+}

@@ -2,6 +2,9 @@ using System.Numerics;
 
 namespace XivWayfinder.Core;
 
+/// <summary>The next leg of a real turn and how strongly the glove should lean into it.</summary>
+public readonly record struct CornerWarning(Vector2 Direction, float Blend);
+
 /// <summary>
 /// Following a walkable path (vnavmesh's corners) without walking it: which corner to point at from where the
 /// player stands now, and when the path has gone stale and should be asked for again. Only the ground plane
@@ -9,6 +12,36 @@ namespace XivWayfinder.Core;
 /// </summary>
 public static class PathFollow
 {
+    /// <summary>
+    /// A warning when <paramref name="player"/> is close to a genuine interior corner. Short or malformed paths,
+    /// the final point, gentle bends below <paramref name="minTurnDegrees"/>, and points further than
+    /// <paramref name="distance"/> return null. Height is deliberately ignored.
+    /// </summary>
+    public static CornerWarning? ApproachingCorner(
+        ReadOnlySpan<Vector3> corners,
+        int corner,
+        Vector3 player,
+        float distance = 3f,
+        float minTurnDegrees = 30f)
+    {
+        if (corner <= 0 || corner + 1 >= corners.Length || !(distance > 0f))
+            return null;
+        var at = Flat(corners[corner]);
+        var away = Vector2.Distance(Flat(player), at);
+        if (away > distance)
+            return null;
+        var incoming = at - Flat(corners[corner - 1]);
+        var outgoing = Flat(corners[corner + 1]) - at;
+        if (incoming.LengthSquared() < 1e-6f || outgoing.LengthSquared() < 1e-6f)
+            return null;
+        incoming = Vector2.Normalize(incoming);
+        outgoing = Vector2.Normalize(outgoing);
+        var turn = MathF.Acos(Math.Clamp(Vector2.Dot(incoming, outgoing), -1f, 1f)) * 180f / MathF.PI;
+        if (turn < Math.Clamp(minTurnDegrees, 0f, 180f))
+            return null;
+        return new CornerWarning(outgoing, 1f - Pulse.SmoothStep(0f, distance, away));
+    }
+
     /// <summary>
     /// The index of the corner to point at. The player is placed on the nearest segment of the path (so cutting a
     /// corner or wandering back never points backwards), and the pointer aims at that segment's end, or the one
