@@ -58,8 +58,10 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>The glove picture's edge in pixels.</summary>
     public float GloveSize { get; set; } = 44f;
 
-    /// <summary>A downward 3D cursor above a visible destination, independent of the trail.</summary>
+    /// <summary>Let the cursor rush to and hover over a visible destination, independent of the trail.</summary>
     public bool DestinationPointer { get; set; } = true;
+    public bool PointerSound { get; set; } = true;
+    public float PointerSoundVolume { get; set; } = .35f;
 
     /// <summary>With the minion glove, also show the bead.</summary>
     public bool MinionWithBead { get; set; } = false;
@@ -163,6 +165,7 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Keeps hand-edited or old values inside what the overlay can draw.</summary>
     public void Clamp()
     {
+        PointerSoundVolume = float.IsFinite(PointerSoundVolume) ? Math.Clamp(PointerSoundVolume, 0, 1) : .35f;
         AutoTeleportMaxGil = Math.Min(AutoTeleportMaxGil, 100_000);
         GuideModelPath ??= "";
         GuideAnimation ??= "";

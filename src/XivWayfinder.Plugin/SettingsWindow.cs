@@ -228,12 +228,18 @@ internal sealed class SettingsWindow : Window
     }
 
     /// <summary>Where the minion glove floats and how it turns; shown only when it is the chosen pointer.</summary>
+    public Action? PreviewPointerSound { get; set; }
+
     private bool MinionSettings()
     {
         var changed = false;
         ImGui.Indent();
-        changed |= Check("Downward pointer over visible destinations", config.DestinationPointer, v => config.DestinationPointer = v);
-        ImGui.TextWrapped("The default cursor floats above and ahead even without a route or line. Visible destinations get a slowly bouncing downward cursor; Reduced motion keeps both still.");
+        changed |= Check("Rush to visible destinations", config.DestinationPointer, v => config.DestinationPointer = v);
+        changed |= Check("Gentle approach hum and arrival bell", config.PointerSound, v => config.PointerSound = v);
+        if (config.PointerSound && ImGui.Button("Preview hum and arrival bell")) PreviewPointerSound?.Invoke();
+        var pointerVolume = config.PointerSoundVolume;
+        if (ImGui.SliderFloat("Pointer sound volume", ref pointerVolume, 0, 1, "%.2f")) { config.PointerSoundVolume = pointerVolume; changed = true; }
+        ImGui.TextWrapped("One cursor floats above and ahead even without a route or line. When it sees the destination, it rushes over and hovers above it, pointing down. Reduced motion removes travel and bouncing.");
         if (ImGui.Button("Browse and preview models…", new Vector2(280, 34))) OpenModels?.Invoke();
         if (ImGui.Button("Your uploaded model collection…", new Vector2(280, 34))) OpenLocalModels?.Invoke();
         changed |= Check("Guide walks on the ground", config.GuideGrounded, v => config.GuideGrounded = v);

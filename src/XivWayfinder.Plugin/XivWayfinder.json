@@ -2,7 +2,7 @@
   "Author": "Johnneylee Jack Rollins",
   "Name": "XivWayfinder",
   "InternalName": "XivWayfinder",
-  "AssemblyVersion": "0.1.1.3",
+  "AssemblyVersion": "0.1.1.4",
   "Punchline": "A companion and a glowing trail to help you find your way.",
   "Description": "XivWayfinder helps you find your way in FINAL FANTASY XIV with a model companion and a pulsing line or fairy lights. Search game models, preview choices while the selector stays open, or import local GLB/glTF, OBJ and ZIP model packs. Choose grounded or floating guides and place the trail on measured ground or overhead. Follow a chosen target, map flag or tracked quest with walkable paths supplied by vnavmesh. Classic bead and glove styles are also available. It never walks your character. Optional automatic Teleport (off by default) uses normal gil costs when safely idle, with a configurable cost limit. Selected native and imported models and flat/gentle-slope trails have been checked in game; the full catalog, sharp stairs and automatic Teleport remain under verification.",
   "ApplicableVersion": "any",

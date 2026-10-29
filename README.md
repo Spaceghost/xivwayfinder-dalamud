@@ -1,6 +1,6 @@
 # XivWayfinder
 
-The default guide is the game’s 3D Wind-up Cursor, floating above and just ahead of you even without the route line or an active destination. Visible destinations get a separate downward pointer with a slow bounce. Reduced motion keeps the pointers still.
+The default guide is the game’s 3D Wind-up Cursor, floating above and just ahead of you even without the route line or an active destination. When it sees the destination, that same cursor rushes over and hovers above it, pointing down with a slow bounce. A gentle hum builds as you approach and resolves into a resonant bell on arrival. Sound has mute, volume and preview controls in Guide settings; `/wayfinder soundtest` previews the sound. Reduced motion removes travel and bouncing.
 
 <p align="center">
   <picture>
