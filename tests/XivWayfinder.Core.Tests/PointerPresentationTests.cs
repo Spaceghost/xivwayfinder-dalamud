@@ -24,7 +24,7 @@ public sealed class PointerPresentationTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void ReducedMotionKeepsBothPointersStill(bool destination)
+    public void ReducedMotionKeepsBothRolesStill(bool destination)
     {
         MinionPose? Pose(double t) => destination ? PointerPresentation.Destination(Vector3.Zero, true, t, true)
             : PointerPresentation.Companion(Vector3.Zero, 1, Vector2.UnitX, MinionLayout.Default, t, true);

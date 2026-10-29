@@ -1,7 +1,7 @@
 using System.Numerics;
 namespace XivWayfinder.Core;
 
-/// <summary>The local cursor companion and the independent, downward destination marker.</summary>
+/// <summary>Companion and downward destination poses for one local cursor.</summary>
 public static class PointerPresentation
 {
     public const float Period = 3.6f;
