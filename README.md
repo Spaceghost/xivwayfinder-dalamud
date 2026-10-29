@@ -1,5 +1,7 @@
 # XivWayfinder
 
+The default guide is the game’s 3D Wind-up Cursor, floating above and just ahead of you even without the route line or an active destination. Visible destinations get a separate downward pointer with a slow bounce. Reduced motion keeps the pointers still.
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="images/readme/hero-dark.png">

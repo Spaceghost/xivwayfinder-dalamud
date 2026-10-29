@@ -17,6 +17,7 @@ Development work; not a stable release. Individual entries identify verification
 
 ### Merged, not yet verified in game
 
+* The default 3D Wind-up Cursor now floats above and just ahead of the character, including when the route line is hidden or no destination is selected. A separate cursor points down over an on-screen destination with known height and a clear camera sight line, bouncing gently every 3.6 seconds. Reduced motion stops both bounces. Custom grounded and imported companions retain their existing route behavior.
 * Experimental guide and journey build: local model-pack import, guide rendering components, route/companion policies, terrain checks and recovery diagnostics. Includes model-pack validation and compiled shader checksums. Offline tests do not verify live rendering, collision, boarding, teleport or cross-zone behavior; these remain development features.
 
 ### Being built

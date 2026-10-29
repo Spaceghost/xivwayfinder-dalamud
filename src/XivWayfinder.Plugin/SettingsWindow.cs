@@ -232,6 +232,8 @@ internal sealed class SettingsWindow : Window
     {
         var changed = false;
         ImGui.Indent();
+        changed |= Check("Downward pointer over visible destinations", config.DestinationPointer, v => config.DestinationPointer = v);
+        ImGui.TextWrapped("The default cursor floats above and ahead even without a route or line. Visible destinations get a slowly bouncing downward cursor; Reduced motion keeps both still.");
         if (ImGui.Button("Browse and preview models…", new Vector2(280, 34))) OpenModels?.Invoke();
         if (ImGui.Button("Your uploaded model collection…", new Vector2(280, 34))) OpenLocalModels?.Invoke();
         changed |= Check("Guide walks on the ground", config.GuideGrounded, v => config.GuideGrounded = v);

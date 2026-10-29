@@ -33,7 +33,7 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Maximum quoted gil for one automatic Teleport (zero permits only free destinations).</summary>
     public uint AutoTeleportMaxGil { get; set; } = 2000;
 
-    public PointerStyle Style { get; set; } = PointerStyle.Both;
+    public PointerStyle Style { get; set; } = PointerStyle.Minion;
 
     /// <summary>The game's own glove cursor when it can be read; off draws the vector glove.</summary>
     public bool UseGameGlove { get; set; } = true;
@@ -58,17 +58,20 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>The glove picture's edge in pixels.</summary>
     public float GloveSize { get; set; } = 44f;
 
+    /// <summary>A downward 3D cursor above a visible destination, independent of the trail.</summary>
+    public bool DestinationPointer { get; set; } = true;
+
     /// <summary>With the minion glove, also show the bead.</summary>
-    public bool MinionWithBead { get; set; } = true;
+    public bool MinionWithBead { get; set; } = false;
 
     /// <summary>How far ahead of the character a beside companion stands, yalms; zero is at the shoulder.</summary>
-    public float MinionAhead { get; set; } = MinionLayout.Default.Ahead;
+    public float MinionAhead { get; set; } = 1.6f;
 
     /// <summary>How far to the character's right (negative: left) a beside companion stands, yalms.</summary>
-    public float MinionSide { get; set; } = MinionLayout.Default.Side;
+    public float MinionSide { get; set; } = 0f;
 
     /// <summary>Its height above the character's feet, yalms.</summary>
-    public float MinionHeight { get; set; } = MinionLayout.Default.Height;
+    public float MinionHeight { get; set; } = 2.4f;
 
     /// <summary>The model's size, 1 as the game makes it.</summary>
     public float MinionSize { get; set; } = 1f;
@@ -196,7 +199,7 @@ public sealed class Configuration : IPluginConfiguration
         if (!Enum.IsDefined(Mode))
             Mode = SourceMode.Auto;
         if (!Enum.IsDefined(Style))
-            Style = PointerStyle.Both;
+            Style = PointerStyle.Minion;
         if (!Enum.IsDefined(QuestChoice))
             QuestChoice = QuestChoice.Nearest;
         if (!Enum.IsDefined(Distance))

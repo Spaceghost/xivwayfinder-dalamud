@@ -42,6 +42,8 @@ internal sealed unsafe class GloveMinion(IDataManager data, IObjectTable objects
         .OrderBy(row => MinionGlove.IsWindUpCursor(row.Name) ? 0 : row.Name.Contains("moogle", StringComparison.OrdinalIgnoreCase) ? 1 : row.Name.Contains("chocobo", StringComparison.OrdinalIgnoreCase) ? 2 : 3)
         .ThenBy(row => row.Name).ToArray();
 
+    public bool IsCursor => selection == 0 || Choices.Any(c => c.Model == selection && MinionGlove.IsWindUpCursor(c.Name));
+
     public void Select(uint id,uint npcId=0,uint bnpcId=0)
     {
         if (selection == id && npcSelection==npcId && bnpcSelection==bnpcId) return;
