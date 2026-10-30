@@ -553,6 +553,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             companionTerritory = clientState.TerritoryType;
             companionVisualIdentity = identity;
             ResetCompanionRoute(removeVisual: true);
+            minion.Retry();
         }
         if (localModels.Previewing && visible)
         {
@@ -964,6 +965,12 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 frame = frame with { Player = player.Position, Rotation = player.Rotation };
             var modelPreview = frame.Visible && (localModels.Previewing || modelLibrary.IsOpen && modelLibrary.Preview is not null);
             overlay.Draw(frame, modelPreview);
+            if (frame.Visible && !modelPreview && pointerFrame.Pose is not null && minion.CursorNeedsLoadingFallback)
+            {
+                var fallback = PointerPresentation.Companion(frame.Player, frame.Rotation, frame.Guide.Direction,
+                    config.MinionPlacement(), Now, config.ReducedMotion);
+                if (fallback is { } pose) overlay.DrawLoadingPointer(pose);
+            }
             imported.Queue(config.MinionSize, config.GuideAnimate, config.GuideAnimation, config.GuideInPlace);
         }
         importedPreview.Queue(localModels.PreviewScale, localModels.PreviewAnimate,

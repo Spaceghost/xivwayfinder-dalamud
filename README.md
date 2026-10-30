@@ -17,6 +17,7 @@ The default guide is the game’s 3D Wind-up Cursor, floating above and just ahe
 **A companion and a glowing trail to help you find your way in FINAL FANTASY XIV.**
 
 XivWayfinder is a Dalamud plugin with searchable game models and imported local models for your guide.
+The floating Wind-up Cursor is enabled by default, including without a destination. If its native model is still loading, a flat glove stays beside you while it recovers.
 Preview a pointer, moogle, chocobo, character or another model while the selector stays open, then choose
 its size, animation and placement. A pulsing line or fairy lights follow the confirmed walking route,
 on the ground or floating overhead. The classic bead and flat glove remain optional styles.

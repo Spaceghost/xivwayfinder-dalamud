@@ -341,4 +341,33 @@ public sealed class MinionPresenceTests
         Assert.Equal(1, p.Failures);
         p.Reset(); Assert.False(p.Loading); Assert.True(p.MayCreate(31));
     }
+    [Fact]
+    public void DefaultCursorRecoversOnlyAfterTheExhaustedBurstCooldown()
+    {
+        var p = new MinionPresence();
+        p.Failed(0); p.Failed(2); p.Failed(6);
+        Assert.True(p.GaveUp);
+        Assert.False(p.RecoverAfterCooldown(43.99));
+        Assert.False(p.RecoverAfterCooldown(double.NaN));
+        Assert.False(p.RecoverAfterCooldown(double.PositiveInfinity));
+        Assert.True(p.RecoverAfterCooldown(44));
+        Assert.False(p.GaveUp);
+        Assert.True(p.MayCreate(44));
+        p.BeginLoading(44);
+        Assert.True(p.CheckLoadTimeout(false, 55));
+        Assert.Equal(1, p.Failures);
+    }
+
+    [Fact]
+    public void RecoveryDoesNotInterruptAnActiveLoadOrNormalBackoff()
+    {
+        var p = new MinionPresence();
+        p.BeginLoading(0);
+        Assert.False(p.RecoverAfterCooldown(1));
+        Assert.True(p.Loading);
+        p.Failed(11);
+        Assert.False(p.RecoverAfterCooldown(12));
+        Assert.False(p.MayCreate(12));
+    }
+
 }

@@ -11,6 +11,10 @@
       "items": [
         {
           "status": "beta",
+          "text": "Keep the default Wind-up Cursor visible while its native model loads by showing the game’s flat glove beside the player until the native cursor is ready. A failed native cursor load now retries after a bounded burst and 30-second cooldown instead of disappearing permanently; zone and model changes reset the retry budget. Custom model failure limits and explicit pointer-off/hidden-UI behavior remain respected. The native cursor was restored and observed floating in Ul’dah after reloading the previously exhausted client; recovery timing is covered by host tests."
+        },
+        {
+          "status": "beta",
           "text": "Overhead trails preserve the verified route elevation uphill and downhill instead of flattening lower points to the player’s current floor. Known destinations above or below you are identified in the route detail. Arrival requires the destination’s known height to be within 2.5 yalms as well as the configured horizontal radius; map flags without height retain horizontal arrival. Host regression tests cover descending trails, both floor directions and route-unavailable cues; live multi-floor verification remains pending."
         },
         {
