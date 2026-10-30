@@ -95,14 +95,14 @@ public sealed class TrailSurfaceTests
     }
 
     [Fact]
-    public void OverheadUsesTheCorrectedFloorAndStaysAboveThePlayer()
+    public void OverheadUsesTheCorrectedFloorEvenBelowThePlayer()
     {
         var sampler = new TrailSurfaceSampler((origin, _, _) => Floor(new(origin.X, 1, origin.Z)));
         sampler.Begin(1);
         Assert.True(sampler.TryPlaceOverhead(Vector3.Zero, Vector3.Zero, 3, 0, out var aboveFloor));
         Assert.Equal(1 + TrailPlacement.GroundClearance + 3, aboveFloor.Y);
         Assert.True(sampler.TryPlaceOverhead(Vector3.Zero, new(0, 10, 0), -10, 0, out var abovePlayer));
-        Assert.Equal(12.5f, abovePlayer.Y);
+        Assert.Equal(1 + TrailPlacement.GroundClearance + 2.5f, abovePlayer.Y);
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public sealed class TrailSurfaceTests
             for (var i = 0; i < count; i++)
             {
                 var ok = sampler.TryPlaceOverhead(line[i].Position, player, 3, now, out var at);
-                if (ok) Assert.True(at.Y >= player.Y + 3);
+                if (ok) Assert.Equal(line[i].Position.Y + TrailPlacement.GroundClearance + 3, at.Y, 4);
                 if (ok && previousOk && sampler.CanConnect(previous, at, now)) connected++;
                 previous = at;
                 previousOk = ok;
@@ -252,7 +252,7 @@ public sealed class TrailSurfaceTests
             if (frame >= 30)
             {
                 Assert.Equal(count - 1, connected);
-                Assert.Equal(count - 1, segmentQueries); // No prior frame's different height was reused.
+                Assert.InRange(segmentQueries, 0, count - 1); // Fixed route heights may reuse exact checked segments.
             }
         }
     }

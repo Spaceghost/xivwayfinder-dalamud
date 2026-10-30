@@ -56,9 +56,9 @@ public sealed class GuideMeshTests
         Assert.Equal(Vector3.Zero, TrailPlacement.SurfaceNormal(Vector3.Zero, Vector3.Zero, Vector3.Zero, Vector3.Zero));
     }
     [Theory]
-    [InlineData(-5, 1, 3, 4)]
+    [InlineData(-5, 1, 3, -2)]
     [InlineData(10, 1, 3, 13)]
     [InlineData(1, 1, -20, 3.5f)]
-    public void OverheadStaysAbovePlayerAndRoute(float floor, float player, float height, float expected)
+    public void OverheadPreservesRouteElevationAndClampsClearance(float floor, float player, float height, float expected)
         => Assert.Equal(expected, TrailPlacement.Overhead(new(0, floor, 0), new(0, player, 0), height).Y);
 }

@@ -69,6 +69,27 @@ public sealed class TargetTests
         Assert.Equal(Vector2.Zero, g.Direction);
     }
 
+    [Theory]
+    [InlineData(8f)]
+    [InlineData(-8f)]
+    public void AnotherFloorIsNotArrivalEvenWithALargeHorizontalRadius(float height)
+    {
+        var target = Mine with { X = 0, Z = 0, Y = height };
+        var guide = TargetPicker.Plan(132, Vector3.Zero, target, 20, [], new Vector3(5, 0, 0));
+        Assert.Equal(GuideKind.Walk, guide.Kind);
+        Assert.Equal(height, guide.ElevationDelta);
+        Assert.Equal(Vector2.UnitX, guide.Direction);
+    }
+
+    [Theory]
+    [InlineData(2f)]
+    [InlineData(-2f)]
+    public void SmallFloorDifferencesStillAllowArrival(float height)
+    {
+        var target = Mine with { X = 0, Z = 0, Y = height };
+        Assert.Equal(GuideKind.Arrived, TargetPicker.Plan(132, Vector3.Zero, target, 4, []).Kind);
+    }
+
     [Fact]
     public void AnotherZoneNamesTheNearestAttunedAetheryte()
     {

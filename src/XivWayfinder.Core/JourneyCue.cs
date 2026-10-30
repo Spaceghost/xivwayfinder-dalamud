@@ -9,6 +9,8 @@ public sealed record JourneyCue(string Action, string Next, bool HasWalkablePath
         if (destination.Length == 0) destination = "your destination";
         zone = WayfinderIpc.CleanLabel(zone);
         if (zone.Length == 0) zone = "the destination zone";
+        var elevation = guide.ElevationDelta is { } delta && MathF.Abs(delta) > TargetPicker.ArrivalHeightTolerance
+            ? delta > 0 ? " · Destination above you" : " · Destination below you" : "";
         if (guide.TransitTerritory != 0)
             return new(guide.Kind == GuideKind.Arrived ? guide.TransitAction : $"Follow the guide: {guide.TransitAction}",
                 $"Continue through the zone connection; then I will guide the next leg to {WayfinderIpc.CleanLabel(guide.FinalTarget?.Label)}", hasPath);
@@ -20,9 +22,9 @@ public sealed record JourneyCue(string Action, string Next, bool HasWalkablePath
                 new($"Travel to {zone}", $"{WayfinderIpc.CleanLabel(a.Name)} is not attuned; a usable connection is not known", false),
             GuideKind.Elsewhere => new($"Travel to {zone}", "No usable teleport or connecting transport is known yet", false),
             GuideKind.Arrived => new($"Arrived at {destination}", "Complete the interaction here; arrival does not complete the objective", false),
-            GuideKind.Walk when hasPath => new($"Follow the path to {destination}", "The trail follows the current walkable route", true),
+            GuideKind.Walk when hasPath => new($"Follow the path to {destination}", "The trail follows the current walkable route" + elevation, true),
             GuideKind.Walk => new($"Destination: {destination}",
-                $"No walkable route yet: {WayfinderIpc.CleanLabel(string.IsNullOrWhiteSpace(routeNote) ? "route unavailable" : routeNote)}", false),
+                $"No walkable route yet: {WayfinderIpc.CleanLabel(string.IsNullOrWhiteSpace(routeNote) ? "route unavailable" : routeNote)}" + elevation, false),
             _ => new("Choose a destination", "Select a quest, map flag or saved place", false),
         };
     }

@@ -75,12 +75,14 @@ public sealed record Guide(GuideKind Kind, Target? Target, float Distance, Vecto
     public Target? FinalTarget { get; init; }
     public string TransitAction { get; init; } = "";
     public uint TransitTerritory { get; init; }
+    public float? ElevationDelta { get; init; }
 
     public static readonly Guide Nothing = new(GuideKind.None, null, 0f, Vector2.Zero, null);
 }
 
 public static class TargetPicker
 {
+    public const float ArrivalHeightTolerance = 2.5f;
     /// <summary>
     /// The target to follow. Auto takes the first available of explicit, flag, quest; a single-source mode takes
     /// only that source. A source switched off in the settings is never taken, even in its own mode.
@@ -114,10 +116,12 @@ public static class TargetPicker
 
         var goal = target.Position(player.Y);
         var distance = Heading.FlatDistance(player, goal);
-        if (distance <= MathF.Max(0f, arriveRadius))
-            return new Guide(GuideKind.Arrived, target, distance, Vector2.Zero, null);
+        float? elevation = target.Y.HasValue ? goal.Y - player.Y : null;
+        if (distance <= MathF.Max(0f, arriveRadius) &&
+            (elevation is null || MathF.Abs(elevation.Value) <= ArrivalHeightTolerance))
+            return new Guide(GuideKind.Arrived, target, distance, Vector2.Zero, null) { ElevationDelta = elevation };
         var toward = aim is { } a && Heading.FlatDistance(player, a) > 0.25f ? a : goal;
-        return new Guide(GuideKind.Walk, target, distance, Heading.DirectionTo(player, toward), null);
+        return new Guide(GuideKind.Walk, target, distance, Heading.DirectionTo(player, toward), null) { ElevationDelta = elevation };
     }
 
     /// <summary>

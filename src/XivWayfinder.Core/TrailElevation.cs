@@ -31,5 +31,6 @@ public static class TrailPlacement
         return IsFinite(at);
     }
 
-    public static Vector3 Overhead(Vector3 route, Vector3 player, float height) => route with { Y = MathF.Max(route.Y, player.Y) + Math.Clamp(float.IsFinite(height) ? height : 3f, 2.5f, 12f) };
+    // Preserve each verified route floor, including descents below the player's current floor.
+    public static Vector3 Overhead(Vector3 route, Vector3 player, float height) => route with { Y = route.Y + Math.Clamp(float.IsFinite(height) ? height : 3f, 2.5f, 12f) };
 }

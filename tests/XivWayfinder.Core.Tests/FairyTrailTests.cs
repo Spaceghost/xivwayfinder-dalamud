@@ -98,7 +98,7 @@ public sealed class FairyTrailTests
                 if (!ok) continue;
                 placed++;
                 var minimum = Terrain(at.X) + TrailPlacement.GroundClearance;
-                if (overhead) minimum = Math.Max(minimum, player.Y) + 3;
+                if (overhead) minimum += 3;
                 Assert.True(at.Y >= minimum - .0001f);
             }
             Assert.InRange(queries, 0, 4);

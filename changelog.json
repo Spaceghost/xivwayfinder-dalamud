@@ -11,6 +11,10 @@
       "items": [
         {
           "status": "beta",
+          "text": "Overhead trails preserve the verified route elevation uphill and downhill instead of flattening lower points to the player’s current floor. Known destinations above or below you are identified in the route detail. Arrival requires the destination’s known height to be within 2.5 yalms as well as the configured horizontal radius; map flags without height retain horizontal arrival. Host regression tests cover descending trails, both floor directions and route-unavailable cues; live multi-floor verification remains pending."
+        },
+        {
+          "status": "beta",
           "text": "One 3D Wind-up Cursor accompanies the player above and just ahead, independently of the trail or an active route. When the destination is on screen, has a known height and a clear camera sight line, that same cursor rushes over and hovers centred above it, pointing down with a slow 3.6-second bob. A quiet warm hum grows with approach and resolves into a decaying bell once on arrival. Sound can be muted, previewed and adjusted; Reduced motion removes travel and bobbing. Grounded and imported custom guides keep their existing behavior. Pure journey and audio-synthesis tests cover motion, sight loss, repeated arrivals, transitions, gain and decay."
         },
         {

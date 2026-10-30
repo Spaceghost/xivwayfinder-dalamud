@@ -398,3 +398,7 @@ Broader terrain and model coverage remain pending. With the plugin loaded as a d
     collection to check saved settings, and use `/wayfinder preview stop` to cancel a further preview.
 
 Please report what you see, with `/wayfinder status` and `/xllog` lines for anything that looks wrong.
+
+### Destination elevation
+
+Overhead trails keep their configured clearance above each verified route floor, rising and descending with the path. Route detail identifies known destinations above or below you. Arrival requires a known destination height to be within 2.5 yalms as well as the horizontal arrival radius. Targets without height keep horizontal arrival behavior. A height difference never substitutes an unverified straight line for a walkable route. Multi-floor live checks remain pending.

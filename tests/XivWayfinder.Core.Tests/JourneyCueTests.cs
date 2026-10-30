@@ -7,6 +7,19 @@ public class JourneyCueTests
 {
     private static readonly Target Target = new(TargetSource.Quest, 10, 1, 2, null, "Meet the guide");
 
+    [Theory]
+    [InlineData(10f, "above")]
+    [InlineData(-10f, "below")]
+    public void DifferentFloorIsExplainedWithOrWithoutAWalkablePath(float height, string direction)
+    {
+        var guide = TargetPicker.Plan(10, Vector3.Zero, Target with { Y = height }, 7, []);
+        Assert.Contains(direction, JourneyCue.From(guide, "Zone", true, "").Next);
+        var unavailable = JourneyCue.From(guide, "Zone", false, "waiting for mesh");
+        Assert.Contains(direction, unavailable.Next);
+        Assert.Contains("waiting for mesh", unavailable.Next);
+        Assert.False(unavailable.HasWalkablePath);
+    }
+
     [Fact]
     public void TeleportExplainsTheFollowingWalkingLeg()
     {
