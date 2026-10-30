@@ -6,24 +6,32 @@ public readonly record struct PointerJourneyFrame(MinionPose? Pose, bool AtDesti
 /// <summary>One cursor changes roles; arrival sounds once for each approach to a destination.</summary>
 public sealed class PointerJourney
 {
+    public const float DestinationRange = 20;
+    public const float DestinationReleaseRange = 24;
     private Target? target;
     private Vector3? position;
-    private bool approached, chimed;
-    public void Hide() { position = null; approached = false; }
+    private bool approached, chimed, markingDestination;
+    public void Hide() { position = null; approached = markingDestination = false; }
     public PointerJourneyFrame Update(MinionPose? companion, Target? destination, bool seesDestination,
         bool arrived, Vector3 player, double now, float dt, bool reducedMotion)
     {
         if (companion is null) { Hide(); return default; }
-        if (!SameDestination(target, destination)) { target = destination; approached = chimed = false; }
+        if (!SameDestination(target, destination)) { target = destination; approached = chimed = markingDestination = false; }
+        var distance = destination?.Y is not null && TrailPlacement.IsFinite(player)
+            ? Vector3.Distance(player, destination.Position(0)) : float.PositiveInfinity;
+        // Seeing a distant landmark is not permission to abandon the player.
+        // A small release band avoids repeated trips when hovering at the limit.
+        markingDestination = seesDestination && float.IsFinite(distance)
+            && distance <= (markingDestination ? DestinationReleaseRange : DestinationRange);
         var marker = PointerPresentation.Destination(destination?.Y is not null ? destination.Position(0) : null,
-            seesDestination, now, reducedMotion);
+            markingDestination, now, reducedMotion);
         var desired = marker ?? companion;
         if (marker is not null && !arrived) approached = true;
         var ring = arrived && approached && !chimed;
         if (ring) chimed = true;
         var pose = desired.Value;
         dt = float.IsFinite(dt) ? Math.Clamp(dt, 0, .1f) : 0;
-        // Rush over the last clear sight line, then remain centred on the spot.
+        // Rush over the last nearby clear sight line, then remain centred on the spot.
         // Reduced motion switches roles directly without travel or bouncing.
         if (position is { } previous && !reducedMotion)
         {
@@ -32,7 +40,6 @@ public sealed class PointerJourney
             position = distanceToPose > 1e-6f ? previous + delta * (step / distanceToPose) : pose.Position;
         }
         else position = pose.Position;
-        var distance = marker is not null && destination is not null ? Vector3.Distance(player, destination.Position(player.Y)) : float.PositiveInfinity;
         var hum = marker is not null && !arrived && !chimed && float.IsFinite(distance)
             ? .15f + .85f / (1 + distance / 8) : 0;
         return new(pose with { Position = position.Value }, marker is not null, hum, ring);

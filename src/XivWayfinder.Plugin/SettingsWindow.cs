@@ -234,12 +234,12 @@ internal sealed class SettingsWindow : Window
     {
         var changed = false;
         ImGui.Indent();
-        changed |= Check("Rush to visible destinations", config.DestinationPointer, v => config.DestinationPointer = v);
+        changed |= Check("Rush to nearby visible destinations", config.DestinationPointer, v => config.DestinationPointer = v);
         changed |= Check("Gentle approach hum and arrival bell", config.PointerSound, v => config.PointerSound = v);
         if (config.PointerSound && ImGui.Button("Preview hum and arrival bell")) PreviewPointerSound?.Invoke();
         var pointerVolume = config.PointerSoundVolume;
         if (ImGui.SliderFloat("Pointer sound volume", ref pointerVolume, 0, 1, "%.2f")) { config.PointerSoundVolume = pointerVolume; changed = true; }
-        ImGui.TextWrapped("One cursor floats above and ahead even without a route or line. When it sees the destination, it rushes over and hovers above it, pointing down. Reduced motion removes travel and bouncing.");
+        ImGui.TextWrapped("One cursor floats above and ahead even without a route or line. Within 20 yalms of a visible destination, it rushes over and hovers above it, pointing down. It returns beside you beyond 24 yalms. Reduced motion removes travel and bouncing.");
         if (ImGui.Button("Browse and preview models…", new Vector2(280, 34))) OpenModels?.Invoke();
         if (ImGui.Button("Your uploaded model collection…", new Vector2(280, 34))) OpenLocalModels?.Invoke();
         changed |= Check("Guide walks on the ground", config.GuideGrounded, v => config.GuideGrounded = v);

@@ -11,6 +11,10 @@
       "items": [
         {
           "status": "beta",
+          "text": "Keep the floating Wind-up Cursor beside the player when a visible destination is far away. It flies over to mark the spot only within 20 yalms (including height), and returns when the player moves beyond 24 yalms; the small release band prevents repeated trips at the boundary. Faraway destinations no longer draw the glove into the distance or start its arrival hum. Host regression tests cover the reported 232-yalm destination, reduced motion, height, approach, retreat and target/lifecycle changes; live visual verification remains pending."
+        },
+        {
+          "status": "beta",
           "text": "Keep the default Wind-up Cursor visible while its native model loads by showing the game’s flat glove beside the player until the native cursor is ready. A failed native cursor load now retries after a bounded burst and 30-second cooldown instead of disappearing permanently; zone and model changes reset the retry budget. Custom model failure limits and explicit pointer-off/hidden-UI behavior remain respected. The native cursor was restored and observed floating in Ul’dah after reloading the previously exhausted client; recovery timing is covered by host tests."
         },
         {

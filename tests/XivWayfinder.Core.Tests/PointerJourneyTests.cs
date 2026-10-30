@@ -43,7 +43,7 @@ public sealed class PointerJourneyTests
         var journey = new PointerJourney();
         journey.Update(Companion, target, true, false, Vector3.Zero, 0, .1f, true);
         Assert.True(journey.Update(Companion, target, true, true, Vector3.Zero, 1, .1f, true).Chime);
-        var next = target with { Z = 25 };
+        var next = target with { Z = 18 };
         journey.Update(Companion, next, true, false, Vector3.Zero, 2, .1f, true);
         Assert.True(journey.Update(Companion, next, true, true, Vector3.Zero, 3, .1f, true).Chime);
     }
@@ -52,6 +52,51 @@ public sealed class PointerJourneyTests
     {
         var frame = new PointerJourney().Update(Companion, target, true, false, Vector3.Zero, 0, .1f, true);
         Assert.Equal(new Vector3(0, 2.4f, 15), frame.Pose!.Value.Position);
+    }
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void VisibleDistantDestinationKeepsTheCursorWithThePlayer(bool reducedMotion)
+    {
+        var journey = new PointerJourney();
+        var far = target with { Z = 232 };
+        for (var i = 0; i < 600; i++)
+        {
+            var frame = journey.Update(Companion, far, true, false, Vector3.Zero, i / 60.0, 1f / 60, reducedMotion);
+            Assert.Equal(Companion, frame.Pose);
+            Assert.False(frame.AtDestination);
+            Assert.Equal(0, frame.Hum);
+            Assert.False(frame.Chime);
+        }
+    }
+    [Fact]
+    public void DestinationRangeUsesHeightAsWellAsHorizontalDistance()
+    {
+        var frame = new PointerJourney().Update(Companion, target with { Y = 100 }, true, false,
+            Vector3.Zero, 0, .1f, true);
+        Assert.Equal(Companion, frame.Pose);
+        Assert.False(frame.AtDestination);
+    }
+    [Fact]
+    public void NearbyApproachHasHysteresisAndReturnsWhenThePlayerWalksAway()
+    {
+        var journey = new PointerJourney();
+        var goal = target with { Z = 50 };
+        PointerJourneyFrame At(float distance) => journey.Update(Companion, goal, true, false,
+            new(0, 0, 50 - distance), 0, .1f, true);
+        Assert.False(At(21).AtDestination);
+        Assert.True(At(20).AtDestination);
+        Assert.True(At(23).AtDestination);
+        Assert.False(At(25).AtDestination);
+        Assert.Equal(Companion, At(25).Pose);
+        Assert.False(At(21).AtDestination);
+        Assert.True(At(19).AtDestination);
+        // Neither a new target nor a hide/show may inherit the release band.
+        Assert.False(journey.Update(Companion, goal with { Z = 52 }, true, false,
+            new(0, 0, 31), 0, .1f, true).AtDestination);
+        Assert.True(At(19).AtDestination);
+        journey.Hide();
+        Assert.False(At(21).AtDestination);
     }
     [Fact]
     public void SynthIsQuietBoundedAndBellDecays()
