@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "files": [
+    {
+      "source": "Fox.boarding-prototype.glb",
+      "path": "Fox.boarding-prototype.glb",
+      "sha256": "48625dfbdd2304ccd7fc6ef090220675d0cdb8c78634564765099c222d304f67"
+    },
+    {
+      "source": "Original/Fox.glb",
+      "path": "Original/Fox.glb",
+      "sha256": "d97044e701822bac5a62696459b27d7b375aada5de8574ed4362edbba94771f7"
+    },
+    {
+      "source": "ATTRIBUTION.txt",
+      "path": "ATTRIBUTION.txt",
+      "sha256": "5eb3a0b6215b2efcb29063209047b085292881a89fde9f18ba7a1ba44da6a2d2"
+    },
+    {
+      "source": "LICENSES.txt",
+      "path": "LICENSES.txt",
+      "sha256": "08d14c729462866a27583e5ca9b270e6e937b23b7beecaae313d233c6894d820"
+    },
+    {
+      "source": "README.txt",
+      "path": "README.txt",
+      "sha256": "5b1e4a1f9fee7b2dcb1762d458f68e37269b949df52999b2bbf9f45b28364b18"
+    }
+  ]
+}

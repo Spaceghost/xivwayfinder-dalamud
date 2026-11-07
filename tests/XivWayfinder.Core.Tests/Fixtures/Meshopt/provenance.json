@@ -1,0 +1,28 @@
+{
+  "model": "MeshoptCubeTest",
+  "revision": "edc7c9e67c639d230715049ee31f9a96a6babbbe",
+  "source": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/edc7c9e67c639d230715049ee31f9a96a6babbbe/Models/MeshoptCubeTest/",
+  "license": "CC0-1.0",
+  "author": "Arseny Kapoulkine",
+  "sha256": {
+    "MeshoptCubeTest.gltf": "b5947609f3d8aba58de3d43101df3b635ffaaab5849431f8518af6a98a040433",
+    "MeshoptCubeTest.bin": "6578c1d82c5cc2b228e9513e37f348ca89cdb24b5985aa0567efef8d3c014360",
+    "MeshoptCubeTestFallback.gltf": "8721150e3409425acf83aa21986e55880360ab084c17e96409c25fac53477f72",
+    "MeshoptCubeTestFallback.bin": "8d3d779653780e85a75eda988110ab235ea85cd3d174361ffb318c6b657dee07",
+    "row0.png": "a26715d56e91e83b19e336174494bd3e39cfc3a5f1b6f1166951a9ec38bf6baa",
+    "row1.png": "8b005615419b1efb98d3cce2fd9529fc53bd34337a317aece8cd4a7558053ec4",
+    "row2.png": "b4e1d53d2a5492adc2d148b19b421733fb23edf1a0aded6fea1ec11c710f11b0",
+    "row3.png": "ae96accde34a0a35ffe63a2fa4f777eaeacf6d3157e6ef69ba5da285949d7f77",
+    "row4.png": "689cf0ae16c22125a4a1ad44e0431aed1a92a101def096161d133ec56906bca3",
+    "col0.png": "250410286de74c532ee877b51b039228742a2e4d7fd611dce29230e841ab75f7",
+    "col1.png": "10a6db3432385dceaacb15a66f94ce79c6c2460d9b1ef1f25c3399bd2d0ee521",
+    "col2.png": "28f15b21a88b213315e13cdcb7914007934e69f3ed8b8dc9495f469d865d57e7",
+    "col3.png": "d518c528b85d9c2c5915c5822b152ac8c162da1bc11a9581e5486d53ebaeb11a",
+    "col4.png": "8f5659a0451392c567217b432a6c83f65a6c22eb3a225e853daa45ec847abdb3"
+  },
+  "vectors": {
+    "source": "https://github.com/zeux/meshoptimizer/blob/4c203430ca565cb59a468a91922c76c208169536/js/meshopt_decoder.test.js",
+    "license": "MIT",
+    "note": "Encoded and expected byte arrays preserved; uint16/uint32 expected values serialized little endian."
+  }
+}

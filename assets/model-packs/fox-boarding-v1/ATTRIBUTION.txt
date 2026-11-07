@@ -1,0 +1,32 @@
+FOX MODEL AND OPT-IN BOARDING DERIVATIVE — ATTRIBUTION
+
+Full upstream credit chain (Khronos Fox README):
+https://github.com/KhronosGroup/glTF-Sample-Assets/blob/main/Models/Fox/README.md
+
+Base model: PixelMannen, 2014, CC0 1.0 Universal.
+https://opengameart.org/content/fox-and-shiba
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Rigging and original animations: tomkranis, 2014, CC-BY 4.0 International.
+https://sketchfab.com/3d-models/low-poly-fox-by-pixelmannen-animated-371dea88d7e04a76af5763f2a36866bc
+https://creativecommons.org/licenses/by/4.0/
+
+Conversion to glTF: AsoboStudio and scurest, 2017, CC-BY 4.0 International.
+https://github.com/KhronosGroup/glTF-Sample-Models/pull/150#issuecomment-406300118
+https://creativecommons.org/licenses/by/4.0/
+
+Original/Fox.glb is the unmodified animated source asset used for this derivative.
+The CC0 base-model status does not make the rigged/animated conversion wholly CC0.
+The embedded original GLB copyright field is retained in both model files.
+
+MODIFICATION NOTICE
+The XivWayfinder project added rig-specific procedurally authored crouch/leap/
+settle, held, return/land and captured-pose recovery animation channels in 2026.
+Original geometry, skin, textures, materials and Survey/Walk/Run clips are retained.
+The added animation work is distributed under CC-BY 4.0 International.
+Project: https://github.com/Spaceghost/xivwayfinder-dalamud
+These changes are not original artist-supplied animations. No endorsement by the
+original creators, Khronos, Square Enix or the FFXIV team is implied.
+
+Original SHA256: d97044e701822bac5a62696459b27d7b375aada5de8574ed4362edbba94771f7
+Derived SHA256: 48625dfbdd2304ccd7fc6ef090220675d0cdb8c78634564765099c222d304f67

@@ -6,7 +6,13 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="TerraFX.Interop.Windows"><HintPath>$(DalamudLibPath)TerraFX.Interop.Windows.dll</HintPath><Private>false</Private></Reference>
+    <EmbeddedResource Include="Shaders/*.dxbc" LogicalName="XivWayfinder.%(Filename).dxbc" />
     <ProjectReference Include="..\XivWayfinder.Core\XivWayfinder.Core.csproj" />
     <Compile Include="..\Shared\IpcContract.cs" Link="Shared\IpcContract.cs" />
   </ItemGroup>
+  <Target Name="RequireGuideShaders" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(MSBuildProjectDirectory)/Shaders/GuideVertex.dxbc') Or !Exists('$(MSBuildProjectDirectory)/Shaders/GuidePixel.dxbc')"
+           Text="Compiled guide shaders are missing. Run tools/build-guide-shaders.sh before building XivWayfinder." />
+  </Target>
 </Project>
