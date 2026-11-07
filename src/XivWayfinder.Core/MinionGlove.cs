@@ -204,6 +204,7 @@ public sealed class MinionPresence
     public const double Linger = 1.0;
     public const int MaxAttempts = 3;
     public const double LoadTimeout = 10;
+    public const double RecoveryCooldown = 30;
 
     private double lastWanted = double.NegativeInfinity;
     private double nextTry = double.NegativeInfinity;
@@ -233,6 +234,14 @@ public sealed class MinionPresence
 
     /// <summary>Whether a missing object may be created now.</summary>
     public bool MayCreate(double now) => !GaveUp && now >= nextTry;
+
+    /// <summary>The default cursor retries a failed burst after a quiet cooldown; custom models retain their bounded attempts.</summary>
+    public bool RecoverAfterCooldown(double now)
+    {
+        if (!GaveUp || !double.IsFinite(now) || now < nextTry + RecoveryCooldown) return false;
+        Reset();
+        return true;
+    }
 
     public void Failed(double now)
     {

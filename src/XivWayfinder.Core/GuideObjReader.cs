@@ -75,7 +75,7 @@ internal sealed class GuideObjReader(string path)
         var materialLookup = new Dictionary<string, int>(StringComparer.Ordinal); var materials = new List<GuideMeshMaterial>();
         foreach (var name in corners.Select(c => c.Material).Distinct(StringComparer.Ordinal))
         {
-            var source = name.Length == 0 ? new Material(Vector4.One, Scale:Vector2.One)
+            var source = name.Length == 0 ? new Material(Vector4.One, Scale: Vector2.One)
                 : sourceMaterials.TryGetValue(name, out var found) ? found : throw Error($"OBJ material '{name}' was not found. Include its MTL file.");
             var image = -1;
             if (source.Image is { } filename && !imageLookup.TryGetValue(filename, out image))
@@ -117,7 +117,7 @@ internal sealed class GuideObjReader(string path)
                 vertex = vertices.Count; merged[key] = vertex; vertices.Add(positions[corner.Position]); vertexColors.Add(colors[corner.Position]);
                 vertexNormals.Add(corner.Normal >= 0 ? normals[corner.Normal] : corner.Smoothing.Length > 0
                     ? GuideNormals.Normalize(smoothNormals.GetValueOrDefault((corner.Position, corner.Smoothing))) : Vector3.Zero);
-                var source = corner.Material.Length == 0 ? new Material(Vector4.One, Scale:Vector2.One) : sourceMaterials[corner.Material];
+                var source = corner.Material.Length == 0 ? new Material(Vector4.One, Scale: Vector2.One) : sourceMaterials[corner.Material];
                 if (materials[mat].BaseColorImage >= 0 && corner.Uv < 0) throw Error("Textured OBJ faces need texture coordinates.");
                 var uv = corner.Uv >= 0 ? coordinates[corner.Uv] * source.Scale + source.Offset : Vector2.Zero;
                 if (!float.IsFinite(uv.X) || !float.IsFinite(uv.Y)) throw Error("The OBJ texture transform produces invalid coordinates.");
@@ -142,7 +142,7 @@ internal sealed class GuideObjReader(string path)
             {
                 name = string.Join(' ', t.Skip(1));
                 if (name.Length == 0 || sourceMaterials.Count >= 1024) throw Error("Invalid or excessive OBJ materials.");
-                sourceMaterials[name] = new(Vector4.One, Scale:Vector2.One); continue;
+                sourceMaterials[name] = new(Vector4.One, Scale: Vector2.One); continue;
             }
             if (name is null) continue;
             var material = sourceMaterials[name];

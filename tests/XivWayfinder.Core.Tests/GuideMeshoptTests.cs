@@ -183,9 +183,9 @@ public sealed class GuideMeshoptTests
         Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode(source, 3, 12, "ATTRIBUTES", "COLOR", false));
         var badVersion = (byte[])source.Clone(); badVersion[0] = 0xa2;
         Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode(badVersion, 3, 12, "ATTRIBUTES", "NONE", true));
-        Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode([0xd1,128,128,128,128,128,0,0,0,0], 1, 4, "INDICES", "NONE", true));
-        Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode([0xe1,0,..new byte[16]], 3, 4, "TRIANGLES", "NONE", true));
-        Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode([0xe1,0xf0,..new byte[15],1], 3, 4, "TRIANGLES", "NONE", true));
+        Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode([0xd1, 128, 128, 128, 128, 128, 0, 0, 0, 0], 1, 4, "INDICES", "NONE", true));
+        Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode([0xe1, 0, .. new byte[16]], 3, 4, "TRIANGLES", "NONE", true));
+        Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode([0xe1, 0xf0, .. new byte[15], 1], 3, 4, "TRIANGLES", "NONE", true));
         var v1 = new byte[26]; v1[0] = 0xa1; v1[1] = 0xaa; v1[^1] = 0x13;
         Assert.Throws<InvalidDataException>(() => GuideMeshoptDecoder.Decode(v1, 1, 4, "ATTRIBUTES", "NONE", true));
         v1[^1] = 0x10;
@@ -200,7 +200,7 @@ public sealed class GuideMeshoptTests
     // of the official quantized sample. This is a tiny test encoder, not production.
     private static byte[] TriangleSource(int count = 3)
     {
-        var positions = new float[] { 0,0,0, 1,0,0, 0,1,0 }; var raw = new byte[36];
+        var positions = new float[] { 0, 0, 0, 1, 0, 0, 0, 1, 0 }; var raw = new byte[36];
         Buffer.BlockCopy(positions, 0, raw, 0, raw.Length); var result = new List<byte> { 0xa0 };
         for (var first = 0; first < count; first += 256)
         {

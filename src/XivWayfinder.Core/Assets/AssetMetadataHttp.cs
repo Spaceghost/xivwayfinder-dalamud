@@ -16,7 +16,8 @@ internal sealed class AssetMetadataHttp : IDisposable
         AllowAutoRedirect = false,
         UseCookies = false,
         AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-    }) { }
+    })
+    { }
 
     internal AssetMetadataHttp(HttpMessageHandler handler)
     {

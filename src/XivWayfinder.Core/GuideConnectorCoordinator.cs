@@ -79,8 +79,11 @@ public sealed class GuideConnectorCoordinator(
                 Status = "Companion is rejoining the current route.";
                 // Preserve this exact occurrence on the main route, even when
                 // another segment passes through the same world position.
-                return ordinary with { RebaseArc = Math.Clamp(connected.JoinArc + motion.Arc - connected.ConnectorLength,
-                    0, PathTrail.Length(mainRoute)) };
+                return ordinary with
+                {
+                    RebaseArc = Math.Clamp(connected.JoinArc + motion.Arc - connected.ConnectorLength,
+                    0, PathTrail.Length(mainRoute))
+                };
             }
             // A virtual target on the connector's main-route suffix guarantees
             // reaching the join even if the real player is behind that join.

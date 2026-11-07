@@ -1,5 +1,6 @@
 using System.Numerics;
 namespace XivWayfinder.Core;
+
 public enum TrailElevation { Ground, Overhead }
 public static class TrailPlacement
 {
@@ -10,7 +11,7 @@ public static class TrailPlacement
 
     public static Vector3 SurfaceNormal(Vector3 supplied, Vector3 a, Vector3 b, Vector3 c)
     {
-        var n = IsFinite(supplied) && supplied.LengthSquared() > 1e-10f ? supplied : Vector3.Cross(b-a,c-a);
+        var n = IsFinite(supplied) && supplied.LengthSquared() > 1e-10f ? supplied : Vector3.Cross(b - a, c - a);
         if (!float.IsFinite(n.LengthSquared()) || n.LengthSquared() < 1e-10f) return Vector3.Zero;
         n = Vector3.Normalize(n);
         return n.Y < 0 ? -n : n;
@@ -30,5 +31,6 @@ public static class TrailPlacement
         return IsFinite(at);
     }
 
-    public static Vector3 Overhead(Vector3 route, Vector3 player, float height) => route with { Y = MathF.Max(route.Y, player.Y) + Math.Clamp(float.IsFinite(height) ? height : 3f, 2.5f, 12f) };
+    // Preserve each verified route floor, including descents below the player's current floor.
+    public static Vector3 Overhead(Vector3 route, Vector3 player, float height) => route with { Y = route.Y + Math.Clamp(float.IsFinite(height) ? height : 3f, 2.5f, 12f) };
 }

@@ -46,7 +46,7 @@ internal static class GuideMeshoptDecoder
         var input = new Cursor(source.Slice(1, source.Length - 1 - padding));
         Span<byte> previous = stackalloc byte[256];
         source.Slice(source.Length - tailSize, stride).CopyTo(previous);
-        var channels = version == 1 ? source[^ (stride / 4)..] : default;
+        var channels = version == 1 ? source[^(stride / 4)..] : default;
         foreach (var channel in channels)
             if ((channel & 15) > 2 || (channel & 15) != 2 && channel > 15) throw Error("Invalid attribute channel.");
         var blockMaximum = Math.Min((8192 / stride) & ~15, 256);

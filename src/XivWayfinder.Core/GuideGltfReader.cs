@@ -40,7 +40,7 @@ internal sealed class GuideGltfReader(JsonElement root, byte[]? embeddedBin, Gui
                 var offset = source.AsSpan().StartsWith(new byte[] { 239, 187, 191 }) ? 3 : 0;
                 using var gltf = JsonDocument.Parse(source.AsMemory(offset));
                 return new GuideGltfReader(gltf.RootElement, null, resources).Read() with
-                { SourceSha256=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(source)).ToLowerInvariant() };
+                { SourceSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(source)).ToLowerInvariant() };
             }
             using var stream = new MemoryStream(source, false); using var reader = new BinaryReader(stream);
             if (stream.Length < 20 || reader.ReadUInt32() != 0x46546C67 || reader.ReadUInt32() != 2 || reader.ReadUInt32() != stream.Length)
@@ -66,7 +66,7 @@ internal sealed class GuideGltfReader(JsonElement root, byte[]? embeddedBin, Gui
             if (json is null) throw Error("GLB needs a JSON chunk.");
             using var doc = JsonDocument.Parse(json);
             return new GuideGltfReader(doc.RootElement, bin, resources).Read() with
-            { SourceSha256=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(source)).ToLowerInvariant() };
+            { SourceSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(source)).ToLowerInvariant() };
         }
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or ArgumentException or IndexOutOfRangeException or OverflowException or EndOfStreamException or FormatException)
         { throw new InvalidDataException("The glTF model contains invalid or incompatible data.", ex); }
@@ -121,8 +121,14 @@ internal sealed class GuideGltfReader(JsonElement root, byte[]? embeddedBin, Gui
         animation.Sample(-1, 0, bindPose, normals: bindNormals);
         return new GuideMesh(bindPose, indices.ToArray(), faceColors.ToArray())
         {
-            animation = animation, Animations = clips, TextureCoordinates = uv.ToArray(), VertexColors = vertexColors.ToArray(),
-            FaceMaterials = faceMaterials.ToArray(), Materials = materials.ToArray(), Images = images.ToArray(), Normals = bindNormals
+            animation = animation,
+            Animations = clips,
+            TextureCoordinates = uv.ToArray(),
+            VertexColors = vertexColors.ToArray(),
+            FaceMaterials = faceMaterials.ToArray(),
+            Materials = materials.ToArray(),
+            Images = images.ToArray(),
+            Normals = bindNormals
         };
     }
 
@@ -435,7 +441,8 @@ internal sealed class GuideGltfReader(JsonElement root, byte[]? embeddedBin, Gui
         var binding = bindings[^1];
         bindings[^1] = binding with
         {
-            Positions = Select(binding.Positions), Normals = Select(binding.Normals),
+            Positions = Select(binding.Positions),
+            Normals = Select(binding.Normals),
             Joints = binding.Joints.Select(j => Select(j, 4)).ToArray(),
             Weights = binding.Weights.Select(w => Select(w)).ToArray(),
             MorphTargets = binding.MorphTargets.Select(t => Select(t)).ToArray(),
@@ -467,16 +474,21 @@ internal sealed class GuideGltfReader(JsonElement root, byte[]? embeddedBin, Gui
                 var node = Index(nodeId.GetInt32(), nodes.Length);
                 var path = target.GetProperty("path").GetString() switch
                 {
-                    "translation" => GuideAnimationPath.Translation, "rotation" => GuideAnimationPath.Rotation,
-                    "scale" => GuideAnimationPath.Scale, "weights" => GuideAnimationPath.Weights, _ => throw Error("Unsupported animation target.")
+                    "translation" => GuideAnimationPath.Translation,
+                    "rotation" => GuideAnimationPath.Rotation,
+                    "scale" => GuideAnimationPath.Scale,
+                    "weights" => GuideAnimationPath.Weights,
+                    _ => throw Error("Unsupported animation target.")
                 };
                 if (!targets.Add((node, path))) throw Error("An animation repeats the same node property.");
                 if (path != GuideAnimationPath.Weights && nodes[node].Matrix is not null) throw Error("An animated node must use TRS transforms.");
                 var sampler = samplers[Index(Number(channel, "sampler"), samplers.GetArrayLength())];
                 var interpolation = (sampler.TryGetProperty("interpolation", out var mode) ? mode.GetString() : "LINEAR") switch
                 {
-                    "LINEAR" => GuideInterpolation.Linear, "STEP" => GuideInterpolation.Step,
-                    "CUBICSPLINE" => GuideInterpolation.CubicSpline, _ => throw Error("Unsupported animation interpolation.")
+                    "LINEAR" => GuideInterpolation.Linear,
+                    "STEP" => GuideInterpolation.Step,
+                    "CUBICSPLINE" => GuideInterpolation.CubicSpline,
+                    _ => throw Error("Unsupported animation interpolation.")
                 };
                 var times = Access(Number(sampler, "input"), "SCALAR", out var timeComponent);
                 if (timeComponent != 5126 || times.Length == 0 || times[0] < 0 || (interpolation == GuideInterpolation.CubicSpline && times.Length < 2)) throw Error("Invalid animation timestamps.");
@@ -668,7 +680,9 @@ internal sealed class GuideGltfReader(JsonElement root, byte[]? embeddedBin, Gui
             5121 => normalized ? bin[offset] / 255f : bin[offset],
             5122 => normalized ? Math.Max(BitConverter.ToInt16(bin, offset) / 32767f, -1) : BitConverter.ToInt16(bin, offset),
             5123 => normalized ? BitConverter.ToUInt16(bin, offset) / 65535f : BitConverter.ToUInt16(bin, offset),
-            5125 => BitConverter.ToUInt32(bin, offset), 5126 => BitConverter.ToSingle(bin, offset), _ => throw Error("Unsupported model component.")
+            5125 => BitConverter.ToUInt32(bin, offset),
+            5126 => BitConverter.ToSingle(bin, offset),
+            _ => throw Error("Unsupported model component.")
         });
     private bool IsNormalized(int id) => At("accessors", id).TryGetProperty("normalized", out var n) && n.GetBoolean();
     private bool NormalComponent(int id, int component) => component == 5126
@@ -688,6 +702,6 @@ internal sealed class GuideGltfReader(JsonElement root, byte[]? embeddedBin, Gui
     private static Vector3 V3(float[] values, int at) => new(values[at], values[at + 1], values[at + 2]);
     private static Vector4 V4(float[] values, int at) => new(values[at], values[at + 1], values[at + 2], values[at + 3]);
     private static Quaternion Q(float[] values, int at) => new(values[at], values[at + 1], values[at + 2], values[at + 3]);
-    private static Matrix4x4 Matrix(ReadOnlySpan<float> m) => new(m[0],m[1],m[2],m[3],m[4],m[5],m[6],m[7],m[8],m[9],m[10],m[11],m[12],m[13],m[14],m[15]);
+    private static Matrix4x4 Matrix(ReadOnlySpan<float> m) => new(m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
     private static InvalidDataException Error(string message) => new(message);
 }

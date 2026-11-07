@@ -22,7 +22,9 @@ public sealed class GuideNativeBoundsTests
     }
 
     [Theory]
-    [InlineData(.2f)] [InlineData(1)] [InlineData(3)]
+    [InlineData(.2f)]
+    [InlineData(1)]
+    [InlineData(3)]
     public void ResourceOffsetsFollowRequestedScaleExactlyOnce(float scale)
     {
         Assert.True(GuideNativeBounds.TryMeasureRootEnvelope(new(-.2f, 0, -.15f), new(.2f, 1, .15f),
@@ -84,17 +86,21 @@ public sealed class GuideNativeBoundsTests
         {
             var yaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, step * MathF.Tau / 64);
             foreach (var x in new[] { -.1f, .4f })
-            foreach (var z in new[] { -.1f, .3f })
-            {
-                var point = Vector3.Transform(new(x, 1, z), yaw);
-                Assert.True(new Vector2(point.X, point.Z).Length() <= body.Radius + .000001f);
-            }
+                foreach (var z in new[] { -.1f, .3f })
+                {
+                    var point = Vector3.Transform(new(x, 1, z), yaw);
+                    Assert.True(new Vector2(point.X, point.Z).Length() <= body.Radius + .000001f);
+                }
         }
     }
 
     [Theory]
-    [InlineData(0, 1, 1)] [InlineData(-1, 1, 1)] [InlineData(float.NaN, 1, 1)]
-    [InlineData(1, 0, 1)] [InlineData(1, 1, -1)] [InlineData(1, float.PositiveInfinity, 1)]
+    [InlineData(0, 1, 1)]
+    [InlineData(-1, 1, 1)]
+    [InlineData(float.NaN, 1, 1)]
+    [InlineData(1, 0, 1)]
+    [InlineData(1, 1, -1)]
+    [InlineData(1, float.PositiveInfinity, 1)]
     [InlineData(1, float.MaxValue, float.MaxValue)]
     [InlineData(3, 1e-20f, float.MaxValue)] // native intermediate overflows despite a finite double final product
     [InlineData(.25f, float.MaxValue, float.Epsilon)] // native intermediate is zero despite a nonzero double product

@@ -14,7 +14,7 @@ public sealed class CompanionTeleportIntentTests
         var intent = new CompanionTeleportIntent();
         var frame = intent.Update(Input(), 0);
         Assert.Equal(CompanionTeleportMode.RequestStop, frame.Mode);
-        Assert.Equal(new Vector3(.35f,0,1.65f), frame.Rendezvous);
+        Assert.Equal(new Vector3(.35f, 0, 1.65f), frame.Rendezvous);
         Assert.False(frame.RequestRest); Assert.False(frame.RequestBeckon); Assert.False(frame.ReadyToJoin);
     }
 
@@ -40,7 +40,7 @@ public sealed class CompanionTeleportIntentTests
         Assert.True(frame.RequestBeckon); Assert.False(frame.RequestRest);
         for (var i = 2; i <= 30; i++) frame = intent.Update(Input(guide: target), i * .1);
         Assert.True(frame.RequestRest); Assert.False(frame.RequestBeckon);
-        frame = intent.Update(Input(guide: new Vector3(20,0,20)), 3.1);
+        frame = intent.Update(Input(guide: new Vector3(20, 0, 20)), 3.1);
         Assert.False(frame.RequestRest); Assert.False(frame.RequestBeckon);
     }
 
@@ -57,7 +57,7 @@ public sealed class CompanionTeleportIntentTests
         for (var i = 1; i <= fps * 8; i++)
         {
             var before = frame;
-            frame = intent.Update(Input(new(0,0,i / (float)fps * 3)), i / (double)fps);
+            frame = intent.Update(Input(new(0, 0, i / (float)fps * 3)), i / (double)fps);
             if (frame.Revision == before.Revision)
             { Assert.Equal(before.Rendezvous, frame.Rendezvous); heldFrames++; }
             else revisions.Add(frame.Revision);
@@ -76,7 +76,7 @@ public sealed class CompanionTeleportIntentTests
         var first = intent.Update(Input(), 0);
         for (var i = 1; i < 300; i++)
         {
-            var frame = intent.Update(Input(new(MathF.Sin(i)*.001f,0,0)), i / 60d);
+            var frame = intent.Update(Input(new(MathF.Sin(i) * .001f, 0, 0)), i / 60d);
             Assert.Equal(first.Revision, frame.Revision);
         }
     }
@@ -85,10 +85,10 @@ public sealed class CompanionTeleportIntentTests
     public void RealTeleportCastAsksForApproachAndDoesNotTeleportADistantGuide()
     {
         var intent = new CompanionTeleportIntent();
-        intent.Update(Input(guide: new(10,0,10)), 0);
-        var frame = intent.Update(Input(guide: new(10,0,10)) with { TeleportCasting = true, CastRemaining = 4 }, .1);
+        intent.Update(Input(guide: new(10, 0, 10)), 0);
+        var frame = intent.Update(Input(guide: new(10, 0, 10)) with { TeleportCasting = true, CastRemaining = 4 }, .1);
         Assert.Equal(CompanionTeleportMode.JoinCast, frame.Mode);
-        Assert.Equal(new Vector3(.45f,0,.1f), frame.Rendezvous); Assert.False(frame.ReadyToJoin);
+        Assert.Equal(new Vector3(.45f, 0, .1f), frame.Rendezvous); Assert.False(frame.ReadyToJoin);
         frame = intent.Update(Input(guide: frame.Rendezvous) with { TeleportCasting = true, CastRemaining = 3 }, .2);
         Assert.True(frame.ReadyToJoin); Assert.False(frame.RequestRest); Assert.False(frame.RequestBeckon);
         frame = intent.Update(Input(guide: frame.Rendezvous) with { TeleportCasting = true, CastRemaining = .1f }, .3);
@@ -120,7 +120,7 @@ public sealed class CompanionTeleportIntentTests
         var old = intent.Update(Input(), 0);
         var hidden = intent.Update(Input() with { Visible = false }, .1);
         Assert.False(hidden.Active); Assert.True(hidden.Revision > old.Revision);
-        var returned = intent.Update(Input(new(50,4,50)) with { Territory = 133 }, .2);
+        var returned = intent.Update(Input(new(50, 4, 50)) with { Territory = 133 }, .2);
         Assert.True(returned.Active); Assert.True(returned.Revision > hidden.Revision);
         Assert.Equal(4, returned.Rendezvous!.Value.Y); Assert.InRange(returned.Rendezvous.Value.X, 50, 51);
     }
@@ -131,16 +131,16 @@ public sealed class CompanionTeleportIntentTests
     public void InvalidClocksDoNotAdvanceOrRetarget(double clock)
     {
         var intent = new CompanionTeleportIntent(); var old = intent.Update(Input(), 0);
-        Assert.Equal(old, intent.Update(Input(new(1,0,0)), clock));
+        Assert.Equal(old, intent.Update(Input(new(1, 0, 0)), clock));
     }
 
     [Fact]
     public void LongPauseOrClockReversalDoesNotCountAsRunningAway()
     {
         var intent = new CompanionTeleportIntent(); intent.Update(Input(), 0);
-        var paused = intent.Update(Input(new(2,0,0)), 20);
+        var paused = intent.Update(Input(new(2, 0, 0)), 20);
         Assert.Equal(CompanionTeleportMode.RequestStop, paused.Mode);
-        var reversed = intent.Update(Input(new(2,0,0)), 10);
+        var reversed = intent.Update(Input(new(2, 0, 0)), 10);
         Assert.Equal(CompanionTeleportMode.RequestStop, reversed.Mode);
         Assert.Equal(paused.Revision, reversed.Revision);
     }

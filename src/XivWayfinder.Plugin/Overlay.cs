@@ -260,6 +260,16 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
         return config.UseGameGlove && gameGlove.TryGet(out wrap, out uvMin, out uvMax) && wrap is not null;
     }
 
+    public void DrawLoadingPointer(MinionPose pose)
+    {
+        if (!gameGui.WorldToScreen(pose.Position, out var at, out var visible) || !visible) return;
+        var direction = Vector3.Transform(Vector3.UnitZ, MinionGlove.Orientation(pose.Yaw, pose.Pitch));
+        var angle = -MathF.PI / 2;
+        if (gameGui.WorldToScreen(pose.Position + direction, out var tip, out _) && Vector2.DistanceSquared(at, tip) > .01f)
+            angle = MathF.Atan2(tip.Y - at.Y, tip.X - at.X);
+        DrawGlove(ImGui.GetForegroundDrawList(), at, Math.Clamp(config.GloveSize, 32, 64), angle, 1);
+    }
+
     private void DrawGlove(ImDrawListPtr dl, Vector2 anchor, float size, float angle, float alpha)
     {
         dl.AddCircleFilled(anchor, size * 0.42f, Colors.Pack(bead, 0.18f * alpha), 24);

@@ -103,8 +103,14 @@ public sealed class CompanionBoardingController(
             var clipTime = capability.HoldingPoseTime;
             if (before.Phase == GuideBoardingPhase.Holding && capability.HoldingMode == GuideBoardingHoldMode.Loop)
                 clipTime = (before.ClipTime + dt) % capability.HoldingDuration;
-            Propose(before with { Phase = GuideBoardingPhase.Holding, Clip = capability.HoldingClip,
-                Position = input.Anchor.Position, Rotation = input.Anchor.Rotation, ClipTime = clipTime }, before);
+            Propose(before with
+            {
+                Phase = GuideBoardingPhase.Holding,
+                Clip = capability.HoldingClip,
+                Position = input.Anchor.Position,
+                Rotation = input.Anchor.Rotation,
+                ClipTime = clipTime
+            }, before);
             return Result();
         }
         var sample = trajectory!.Sample(Math.Min(trajectory.Duration, before.TrajectoryTime + dt));

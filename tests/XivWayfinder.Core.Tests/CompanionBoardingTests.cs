@@ -52,30 +52,30 @@ public sealed class CompanionBoardingTests
     [Fact]
     public void AwaitingGpuSubmissionKeepsProposalAndConsumesTimeWithoutBankingMotion()
     {
-        var rig=new Rig();rig.Start();
-        var proposal=rig.Controller.Update(Input(.02),.02);
+        var rig = new Rig(); rig.Start();
+        var proposal = rig.Controller.Update(Input(.02), .02);
         Assert.True(proposal.PlacementPending);
         rig.Controller.HoldClock(5);
-        Assert.Equal(proposal.Frame,rig.Controller.Frame);
-        var submitted=rig.Controller.ResolvePlacement(true);
-        Assert.Equal(proposal.Frame,submitted.Frame);
-        var next=rig.Controller.Update(Input(5.01),5.01);
+        Assert.Equal(proposal.Frame, rig.Controller.Frame);
+        var submitted = rig.Controller.ResolvePlacement(true);
+        Assert.Equal(proposal.Frame, submitted.Frame);
+        var next = rig.Controller.Update(Input(5.01), 5.01);
         Assert.True(next.PlacementPending);
-        Assert.InRange(next.Frame!.Value.TrajectoryTime-proposal.Frame!.Value.TrajectoryTime,.0099f,.0101f);
+        Assert.InRange(next.Frame!.Value.TrajectoryTime - proposal.Frame!.Value.TrajectoryTime, .0099f, .0101f);
     }
 
     [Fact]
     public void CancelledUnsubmittedProposalRecoversFromLastGpuAcknowledgedPose()
     {
-        var rig=new Rig();rig.Start();var last=rig.Step(.02).Frame!.Value;
-        var unseen=rig.Controller.Update(Input(.08),.08);
-        Assert.True(unseen.Frame!.Value.TrajectoryTime>last.TrajectoryTime);
-        rig.Controller.HoldClock(.09);rig.Controller.ResolvePlacement(false);
-        var recovery=rig.Controller.Update(Input(.10) with { Casting=false },.10);
+        var rig = new Rig(); rig.Start(); var last = rig.Step(.02).Frame!.Value;
+        var unseen = rig.Controller.Update(Input(.08), .08);
+        Assert.True(unseen.Frame!.Value.TrajectoryTime > last.TrajectoryTime);
+        rig.Controller.HoldClock(.09); rig.Controller.ResolvePlacement(false);
+        var recovery = rig.Controller.Update(Input(.10) with { Casting = false }, .10);
         Assert.True(recovery.PlacementPending);
-        Assert.Equal(last.Position,rig.Requests[^1].Start);
-        Assert.Equal(last,rig.Requests[^1].From);
-        Assert.Equal(last.Position,recovery.Frame!.Value.Position);
+        Assert.Equal(last.Position, rig.Requests[^1].Start);
+        Assert.Equal(last, rig.Requests[^1].From);
+        Assert.Equal(last.Position, recovery.Frame!.Value.Position);
     }
 
     [Theory]
@@ -133,8 +133,16 @@ public sealed class CompanionBoardingTests
     public void AnActualEffectAnchorIsAnExplicitProofNotInferredFromTheCastOrPlayerRoot()
     {
         var rig = new Rig(); var input = Input(0);
-        input = input with { Anchor = input.Anchor with { Target = GuideBoardingTarget.TeleportEffect,
-            Source = GuideBoardingAnchorSource.ObservedCastEffect, Height = 2 }, Capability = Capability with { Height = 1.2f } };
+        input = input with
+        {
+            Anchor = input.Anchor with
+            {
+                Target = GuideBoardingTarget.TeleportEffect,
+                Source = GuideBoardingAnchorSource.ObservedCastEffect,
+                Height = 2
+            },
+            Capability = Capability with { Height = 1.2f }
+        };
         Assert.True(rig.Controller.Update(input, 0).PlacementPending);
         Assert.Equal(GuideBoardingTarget.TeleportEffect, Assert.Single(rig.Requests).Anchor.Target);
     }
@@ -171,13 +179,16 @@ public sealed class CompanionBoardingTests
     [InlineData(3)]
     public void StaleOrMismatchedApprovalNeverMovesTheGuide(int invalid)
     {
-        var rig = new Rig { PrepareOverride = (request, now) => invalid switch
+        var rig = new Rig
+        {
+            PrepareOverride = (request, now) => invalid switch
         {
             0 => new(GuideJumpEvidence.Approved, Path(request), now - .11),
             1 => new(GuideJumpEvidence.Approved, Path(request with { Start = request.Start + Vector3.UnitX }), now),
             2 => new(GuideJumpEvidence.Approved, Path(request with { End = request.End + Vector3.UnitX }), now),
             _ => new(GuideJumpEvidence.Approved, Path(request with { Returning = true }), now),
-        } };
+        }
+        };
         Assert.False(rig.Controller.Update(Input(1), 1).BlocksRoute);
     }
 
@@ -392,8 +403,15 @@ public sealed class CompanionBoardingTests
     public void MissingOrMalformedHoldMetadataCannotAuthorizeBoarding(float duration, GuideBoardingHoldMode mode, float at)
     {
         var rig = new Rig();
-        var result = rig.Controller.Update(Input(0) with { Capability = Capability with {
-            HoldingDuration = duration, HoldingMode = mode, HoldingPoseTime = at } }, 0);
+        var result = rig.Controller.Update(Input(0) with
+        {
+            Capability = Capability with
+            {
+                HoldingDuration = duration,
+                HoldingMode = mode,
+                HoldingPoseTime = at
+            }
+        }, 0);
         Assert.Empty(rig.Requests); Assert.False(result.BlocksRoute);
     }
 
@@ -470,8 +488,11 @@ public sealed class CompanionBoardingTests
     [InlineData(true)]
     public void UnavailableOrThrowingPreparationHasBoundedRetriesInsteadOfPerFrameHeavyWork(bool throws)
     {
-        var rig = new Rig { PrepareOverride = (_, now) => throws
-            ? throw new InvalidOperationException("no evidence") : new(GuideJumpEvidence.Unknown, null, now) };
+        var rig = new Rig
+        {
+            PrepareOverride = (_, now) => throws
+            ? throw new InvalidOperationException("no evidence") : new(GuideJumpEvidence.Unknown, null, now)
+        };
         for (var i = 0; i < 144; i++)
             Assert.False(rig.Controller.Update(Input(i / 144d), i / 144d).BlocksRoute);
         Assert.InRange(rig.Requests.Count, 3, 4);

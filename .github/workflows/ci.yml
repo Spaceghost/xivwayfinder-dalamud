@@ -38,6 +38,12 @@ jobs:
       - name: Check that CHANGELOG.md matches changelog.json
         run: tools/changelog.py --check
 
+      - name: Check model packs and compiled shader inputs
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          cd src/XivWayfinder.Plugin/Shaders
+          sha256sum -c GuideShaders.sha256
+
       - name: Fetch the Dalamud reference assemblies
         run: tools/fetch-dalamud.sh
 

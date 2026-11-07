@@ -229,26 +229,26 @@ public sealed class TrailGroundPatch(Func<Vector3, Vector3, float, TrailSurfaceH
             // order throughout their actual shared footprint. Intersecting decks
             // are ambiguous; postpone instead of projecting onto the lower face.
             for (var left = 0; left < candidates.Count; left++)
-            for (var right = left + 1; right < candidates.Count; right++)
-            {
-                var first = faces[candidates[left]]; var second = faces[candidates[right]];
-                footprint.CopyTo(overlap); var n = 3;
-                for (var faceIndex = 0; faceIndex < 2 && n >= 3; faceIndex++)
+                for (var right = left + 1; right < candidates.Count; right++)
                 {
-                    var comparisonFace = faceIndex == 0 ? first : second;
-                    facePoints[0] = Xz(comparisonFace.A) - origin; facePoints[1] = Xz(comparisonFace.B) - origin; facePoints[2] = Xz(comparisonFace.C) - origin;
-                    var sign = MathF.Sign(Area(facePoints));
-                    for (var edge = 0; edge < 3 && n >= 3; edge++)
+                    var first = faces[candidates[left]]; var second = faces[candidates[right]];
+                    footprint.CopyTo(overlap); var n = 3;
+                    for (var faceIndex = 0; faceIndex < 2 && n >= 3; faceIndex++)
                     {
-                        n = Clip(overlap[..n], facePoints[edge], facePoints[(edge + 1) % 3], sign, scratch);
-                        if (n < 0) return Reject("polygon capacity");
-                        scratch[..n].CopyTo(overlap);
+                        var comparisonFace = faceIndex == 0 ? first : second;
+                        facePoints[0] = Xz(comparisonFace.A) - origin; facePoints[1] = Xz(comparisonFace.B) - origin; facePoints[2] = Xz(comparisonFace.C) - origin;
+                        var sign = MathF.Sign(Area(facePoints));
+                        for (var edge = 0; edge < 3 && n >= 3; edge++)
+                        {
+                            n = Clip(overlap[..n], facePoints[edge], facePoints[(edge + 1) % 3], sign, scratch);
+                            if (n < 0) return Reject("polygon capacity");
+                            scratch[..n].CopyTo(overlap);
+                        }
                     }
+                    if (n < 3 || Math.Abs(Area(overlap[..n])) <= 1e-8f) continue;
+                    foreach (var point in overlap[..n])
+                        if (first.Height(point, origin) < second.Height(point, origin) - .00001f) return Reject("ambiguous overlapping floors");
                 }
-                if (n < 3 || Math.Abs(Area(overlap[..n])) <= 1e-8f) continue;
-                foreach (var point in overlap[..n])
-                    if (first.Height(point, origin) < second.Height(point, origin) - .00001f) return Reject("ambiguous overlapping floors");
-            }
             if (Partition(footprint, a, b, c, origin, output, out written, out var missing))
             {
                 var at = oldestWitness;

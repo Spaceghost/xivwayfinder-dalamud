@@ -11,7 +11,7 @@ public sealed class GuideGltfBundleTests
     {
         using var file = new Fixture();
         file.Attributes["JOINTS_0"] = file.Accessor(new byte[12], "VEC4", 5121, 3);
-        file.Attributes["WEIGHTS_0"] = file.Floats([1,0,0,0, 1,0,0,0, 1,0,0,0], "VEC4");
+        file.Attributes["WEIGHTS_0"] = file.Floats([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], "VEC4");
         file.Root["nodes"] = JsonNode.Parse("""[{"mesh":0,"skin":0},{}]""");
         file.Root["skins"] = JsonNode.Parse("""[{"joints":[1]}]""");
         file.Root["scenes"] = JsonNode.Parse("""[{"nodes":[0,1]}]""");
@@ -24,7 +24,7 @@ public sealed class GuideGltfBundleTests
         Assert.Equal(mesh.Vertices[0] + Vector3.UnitZ, pose[0]);
         Assert.Equal("image/png", Assert.Single(mesh.Images).MimeType);
         Assert.Equal(0, mesh.Materials[0].BaseColorImage);
-        Assert.Equal(new Vector2(1,0), mesh.TextureCoordinates[1]);
+        Assert.Equal(new Vector2(1, 0), mesh.TextureCoordinates[1]);
     }
 
     [Theory]
@@ -66,10 +66,13 @@ public sealed class GuideGltfBundleTests
     {
         using var file = new Fixture();
         var indices = file.Accessor([1], "SCALAR", 5121, 1);
-        var values = file.Floats([2,0,0], "VEC3");
-        file.Root["accessors"]![0]!["sparse"] = new JsonObject { ["count"] = 1,
+        var values = file.Floats([2, 0, 0], "VEC3");
+        file.Root["accessors"]![0]!["sparse"] = new JsonObject
+        {
+            ["count"] = 1,
             ["indices"] = new JsonObject { ["bufferView"] = indices, ["componentType"] = 5121 },
-            ["values"] = new JsonObject { ["bufferView"] = values } };
+            ["values"] = new JsonObject { ["bufferView"] = values }
+        };
         Assert.Equal(new Vector3(.5f, -.25f, 0), file.Load().Vertices[1]);
     }
 
@@ -169,9 +172,9 @@ public sealed class GuideGltfBundleTests
     public void TriangleStripsAndFansKeepCounterClockwiseWinding(int mode, bool indexed)
     {
         using var file = new Fixture();
-        file.Attributes["POSITION"] = file.Floats(mode == 5 ? [0,0,0, 1,0,0, 0,1,0, 1,1,0] : [0,0,0, 1,0,0, 1,1,0, 0,1,0], "VEC3");
+        file.Attributes["POSITION"] = file.Floats(mode == 5 ? [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0] : [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0], "VEC3");
         file.Primitive["mode"] = mode;
-        if (indexed) file.Primitive["indices"] = file.Accessor([0,1,2,3], "SCALAR", 5121, 4);
+        if (indexed) file.Primitive["indices"] = file.Accessor([0, 1, 2, 3], "SCALAR", 5121, 4);
         var mesh = file.Load();
         Assert.Equal(6, mesh.Indices.Length);
         Assert.Equal(2, mesh.FaceColors.Length);
@@ -187,7 +190,7 @@ public sealed class GuideGltfBundleTests
     {
         using var file = new Fixture();
         file.Primitive["mode"] = 5;
-        file.Primitive["indices"] = file.Accessor([0,1,2,2,1,1,0,2], "SCALAR", 5121, 8);
+        file.Primitive["indices"] = file.Accessor([0, 1, 2, 2, 1, 1, 0, 2], "SCALAR", 5121, 8);
         Assert.Equal(6, file.Load().Indices.Length);
     }
 
@@ -209,7 +212,7 @@ public sealed class GuideGltfBundleTests
         public JsonObject Root { get; } = JsonNode.Parse("""{"asset":{"version":"2.0"},"buffers":[],"bufferViews":[],"accessors":[],"meshes":[{"primitives":[{"attributes":{}}]}],"nodes":[{"mesh":0}],"scenes":[{"nodes":[0]}]}""")!.AsObject();
         public JsonObject Primitive => Root["meshes"]![0]!["primitives"]![0]!.AsObject();
         public JsonObject Attributes => Primitive["attributes"]!.AsObject();
-        public Fixture() { Directory.CreateDirectory(DirectoryPath); Attributes["POSITION"] = Floats([0,0,0, 1,0,0, 0,1,0], "VEC3"); }
+        public Fixture() { Directory.CreateDirectory(DirectoryPath); Attributes["POSITION"] = Floats([0, 0, 0, 1, 0, 0, 0, 1, 0], "VEC3"); }
         public int Accessor(byte[] bytes, string type, int component, int count)
         {
             var buffers = Root["buffers"]!.AsArray(); var id = buffers.Count;
@@ -223,15 +226,19 @@ public sealed class GuideGltfBundleTests
         public int Floats(float[] values, string type) => Accessor(values.SelectMany(BitConverter.GetBytes).ToArray(), type, 5126, values.Length / (type == "VEC4" ? 4 : type == "VEC3" ? 3 : type == "VEC2" ? 2 : 1));
         public void Animate(int node)
         {
-            var input = Floats([0,1], "SCALAR"); var output = Floats([0,0,0, 0,0,2], "VEC3");
-            Root["animations"] = new JsonArray(new JsonObject { ["name"] = "Walk", ["samplers"] = new JsonArray(new JsonObject { ["input"] = input, ["output"] = output }),
-                ["channels"] = new JsonArray(new JsonObject { ["sampler"] = 0, ["target"] = new JsonObject { ["node"] = node, ["path"] = "translation" } }) });
+            var input = Floats([0, 1], "SCALAR"); var output = Floats([0, 0, 0, 0, 0, 2], "VEC3");
+            Root["animations"] = new JsonArray(new JsonObject
+            {
+                ["name"] = "Walk",
+                ["samplers"] = new JsonArray(new JsonObject { ["input"] = input, ["output"] = output }),
+                ["channels"] = new JsonArray(new JsonObject { ["sampler"] = 0, ["target"] = new JsonObject { ["node"] = node, ["path"] = "translation" } })
+            });
         }
         public void Texture(string uri)
         {
             var path = Path.Combine(DirectoryPath, Uri.UnescapeDataString(uri));
             Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllBytes(path, Png);
-            Attributes["TEXCOORD_0"] = Floats([0,0, 1,0, 0,1], "VEC2");
+            Attributes["TEXCOORD_0"] = Floats([0, 0, 1, 0, 0, 1], "VEC2");
             Root["images"] = new JsonArray(new JsonObject { ["uri"] = uri });
             Root["textures"] = JsonNode.Parse("""[{"source":0}]""");
             Root["materials"] = JsonNode.Parse("""[{"pbrMetallicRoughness":{"baseColorTexture":{"index":0}}}]""");

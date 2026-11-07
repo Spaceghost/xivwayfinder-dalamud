@@ -18,7 +18,7 @@ public static class TerrainCheckGrid
         {
             var coarse = x % 2 == 0 && z % 2 == 0;
             if (coarse == refinement) continue;
-            var distance = (x * x + z * z) * Spacing * Spacing;
+            var distance = ((float)x * x + (float)z * z) * Spacing * Spacing;
             if (distance >= MinimumRadius * MinimumRadius && distance <= MaximumRadius * MaximumRadius)
                 cells.Add((x, z));
         }

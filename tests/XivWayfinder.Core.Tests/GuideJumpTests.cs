@@ -26,7 +26,8 @@ public sealed class GuideJumpTests
         return Assert.IsType<GuideJumpPlan>(GuideJumpPolicy.Evaluate(request, Floors(request)).Plan);
     }
 
-    [Fact] public void MissingAuthoredCapabilityCannotCreateAJump()
+    [Fact]
+    public void MissingAuthoredCapabilityCannotCreateAJump()
     {
         Assert.False(GuideJumpPolicy.TryRequest(Route, 2, 1, default, out _));
         Assert.False(GuideJumpPolicy.TryRequest(Route, 2, 1, Cap with { Kind = GuideJumpAnimationKind.None }, out _));
@@ -34,7 +35,8 @@ public sealed class GuideJumpTests
         Assert.False(GuideJumpPolicy.TryRequest(Route, 2, 1, Cap with { Radius = 2 }, out _));
     }
 
-    [Fact] public void ExistingCornerAndRouteEndpointCannotBeShortcutted()
+    [Fact]
+    public void ExistingCornerAndRouteEndpointCannotBeShortcutted()
     {
         Assert.False(GuideJumpPolicy.TryRequest(Route, 9.5f, 1, Cap, out _));
         Assert.False(GuideJumpPolicy.TryRequest(Route, 10.5f, -1, Cap, out _));
@@ -43,7 +45,8 @@ public sealed class GuideJumpTests
         Assert.True(GuideJumpPolicy.TryRequest(Route, 10, 1, Cap, out _));
     }
 
-    [Fact] public void JumpRequiresAnActualLowObstacleAndSeparateBodyProof()
+    [Fact]
+    public void JumpRequiresAnActualLowObstacleAndSeparateBodyProof()
     {
         var request = Request();
         var empty = GuideJumpPolicy.Evaluate(request, Floors(request, 0));
@@ -74,7 +77,8 @@ public sealed class GuideJumpTests
         Assert.Equal(GuideJumpEvidence.Blocked, result.Evidence); Assert.Null(result.Plan);
     }
 
-    [Fact] public void TakeoffLandingMarginsAndMatchingFloorAreRequired()
+    [Fact]
+    public void TakeoffLandingMarginsAndMatchingFloorAreRequired()
     {
         var request = Request(); var floors = Floors(request);
         floors[1] = floors[1] with { Position = floors[1].Position + Vector3.UnitY * .2f };
@@ -106,7 +110,8 @@ public sealed class GuideJumpTests
         Assert.Equal(plan.Landing.Y + GuideJumpPolicy.FootClearance, plan.Sample(1).FeetPosition.Y);
     }
 
-    [Fact] public void RouteMutationInvalidatesPreparedEvidence()
+    [Fact]
+    public void RouteMutationInvalidatesPreparedEvidence()
     {
         Vector3[] mutable = [Vector3.Zero, new(10, 0, 0)];
         Assert.True(GuideJumpPolicy.TryRequest(mutable, 2, 1, Cap, out var request));
@@ -135,7 +140,8 @@ public sealed class GuideJumpTests
         Assert.False(motion.TryApplyJumpFrame(plan.Sample(.5f), 1.01));
     }
 
-    [Fact] public void FailedJumpPlacementRollsBackArcAndProgressWithoutCatchup()
+    [Fact]
+    public void FailedJumpPlacementRollsBackArcAndProgressWithoutCatchup()
     {
         var plan = Plan(); var motion = new CompanionRouteMotion();
         motion.Update(Route, plan.Request.StartArc, Lead, 0, true); motion.ResolvePlacement(true);
@@ -148,7 +154,8 @@ public sealed class GuideJumpTests
         motion.ResolvePlacement(true);
     }
 
-    [Fact] public void InitialJumpCannotSnapToAnotherArcOrForgedFootPose()
+    [Fact]
+    public void InitialJumpCannotSnapToAnotherArcOrForgedFootPose()
     {
         var plan = Plan(); var motion = new CompanionRouteMotion();
         motion.Update(Route, 0, Lead, 0, true);
@@ -158,7 +165,8 @@ public sealed class GuideJumpTests
         Assert.False(motion.TryApplyJumpFrame(plan.Sample(0) with { FeetPosition = new(900) }, 0));
     }
 
-    [Fact] public void MalformedOrMutatedPlansCannotBeSampledOrAdopted()
+    [Fact]
+    public void MalformedOrMutatedPlansCannotBeSampledOrAdopted()
     {
         var valid = Plan();
         foreach (var plan in new[] { valid with { Apex = float.NaN }, valid with { Apex = 100 },
@@ -171,10 +179,18 @@ public sealed class GuideJumpTests
         }
     }
 
-    [Fact] public void NativeLandingFinishesItsAuthoredPhaseOnTheConfirmedGroundWithoutAdvancingPastTheObstacle()
+    [Fact]
+    public void NativeLandingFinishesItsAuthoredPhaseOnTheConfirmedGroundWithoutAdvancingPastTheObstacle()
     {
-        var request = Request() with { Capability = Cap with { Kind = GuideJumpAnimationKind.NativeTimeline,
-            AnimationId = 31, Duration = GuideNativeJumpSet.LowHopSeconds } };
+        var request = Request() with
+        {
+            Capability = Cap with
+            {
+                Kind = GuideJumpAnimationKind.NativeTimeline,
+                AnimationId = 31,
+                Duration = GuideNativeJumpSet.LowHopSeconds
+            }
+        };
         var plan = GuideJumpPolicy.Evaluate(request, Floors(request)).Plan!;
         Assert.Equal(GuideJumpPhase.Takeoff, plan.Sample(.05f / plan.Duration).Phase);
         Assert.Equal(GuideJumpPhase.Airborne, plan.Sample(.3f / plan.Duration).Phase);

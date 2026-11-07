@@ -81,8 +81,14 @@ public class RouteVisualTests
     [Fact]
     public void SnapshotAddsOptionalVisualMetadataWithoutBreakingVersionOne()
     {
-        var state = new WayfinderState { Enabled = true, Visible = true, Navmesh = true, PlayerTerritoryId = 10,
-            Guide = new(GuideKind.Walk, new(TargetSource.Quest, 10, 10, 10, 4, "Task"), 20, Vector2.UnitX, null) };
+        var state = new WayfinderState
+        {
+            Enabled = true,
+            Visible = true,
+            Navmesh = true,
+            PlayerTerritoryId = 10,
+            Guide = new(GuideKind.Walk, new(TargetSource.Quest, 10, 10, 10, 4, "Task"), 20, Vector2.UnitX, null)
+        };
         var visual = RouteVisual.Create(Path, new(6, 0, 0), 5.5f, 8, Colors.Quest)!;
         using var doc = JsonDocument.Parse(RouteSnapshot.Encode(state, Path, 1000, visual));
         Assert.Equal(1, doc.RootElement.GetProperty("version").GetInt32());

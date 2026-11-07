@@ -9,7 +9,8 @@ public class AutoTeleportTests
     {
         var state = new WayfinderState
         {
-            AutoTeleportEnabled = true, AutoTeleportMaxGil = 1500,
+            AutoTeleportEnabled = true,
+            AutoTeleportMaxGil = 1500,
             AutoTeleportStatus = "Waiting:\ncasting\u0000",
         };
         using var json = System.Text.Json.JsonDocument.Parse(WayfinderIpc.StateJson(state));

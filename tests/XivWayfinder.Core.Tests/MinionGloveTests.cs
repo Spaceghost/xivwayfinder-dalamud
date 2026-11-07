@@ -124,9 +124,9 @@ public sealed class MinionGloveTests
         Assert.Equal(2, MinionLayout.CompanionSide(float.PositiveInfinity));
         Assert.Equal(-2, MinionLayout.CompanionSide(-100));
         var at = MinionGlove.PlaceBeside(Player, 0, new(float.NaN, float.NaN, float.NaN, 0, 0), double.NaN)!.Value;
-        Assert.Equal(Player + new Vector3(-2,.5f,0), at);
+        Assert.Equal(Player + new Vector3(-2, .5f, 0), at);
         Assert.Null(MinionGlove.PlaceBeside(Player, float.NaN, MinionLayout.BesideDefault, 0));
-        Assert.Null(MinionGlove.PlaceBeside(new(float.PositiveInfinity,0,0), 0, MinionLayout.BesideDefault, 0));
+        Assert.Null(MinionGlove.PlaceBeside(new(float.PositiveInfinity, 0, 0), 0, MinionLayout.BesideDefault, 0));
     }
 
     [Theory]
@@ -341,4 +341,33 @@ public sealed class MinionPresenceTests
         Assert.Equal(1, p.Failures);
         p.Reset(); Assert.False(p.Loading); Assert.True(p.MayCreate(31));
     }
+    [Fact]
+    public void DefaultCursorRecoversOnlyAfterTheExhaustedBurstCooldown()
+    {
+        var p = new MinionPresence();
+        p.Failed(0); p.Failed(2); p.Failed(6);
+        Assert.True(p.GaveUp);
+        Assert.False(p.RecoverAfterCooldown(43.99));
+        Assert.False(p.RecoverAfterCooldown(double.NaN));
+        Assert.False(p.RecoverAfterCooldown(double.PositiveInfinity));
+        Assert.True(p.RecoverAfterCooldown(44));
+        Assert.False(p.GaveUp);
+        Assert.True(p.MayCreate(44));
+        p.BeginLoading(44);
+        Assert.True(p.CheckLoadTimeout(false, 55));
+        Assert.Equal(1, p.Failures);
+    }
+
+    [Fact]
+    public void RecoveryDoesNotInterruptAnActiveLoadOrNormalBackoff()
+    {
+        var p = new MinionPresence();
+        p.BeginLoading(0);
+        Assert.False(p.RecoverAfterCooldown(1));
+        Assert.True(p.Loading);
+        p.Failed(11);
+        Assert.False(p.RecoverAfterCooldown(12));
+        Assert.False(p.MayCreate(12));
+    }
+
 }

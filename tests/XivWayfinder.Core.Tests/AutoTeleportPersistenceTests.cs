@@ -213,8 +213,12 @@ public sealed class AutoTeleportPersistenceTests
     [Fact]
     public void CapacityNeverEvictsAConsumedOfferToMakeAnotherAutomaticAttempt()
     {
-        var state = new AutoTeleportState { OriginTerritory = 100, LastAttemptUtcSeconds = 1,
-            Attempts = Enumerable.Range(1, AutoTeleportPolicy.MaximumAttempts).Select(x => new TeleportAttempt((uint)x, 0)).ToArray() };
+        var state = new AutoTeleportState
+        {
+            OriginTerritory = 100,
+            LastAttemptUtcSeconds = 1,
+            Attempts = Enumerable.Range(1, AutoTeleportPolicy.MaximumAttempts).Select(x => new TeleportAttempt((uint)x, 0)).ToArray()
+        };
         var policy = new AutoTeleportPolicy(state);
         Assert.Equal(AutoTeleportDecision.HistoryFull, Step(policy, 0, Town with { AetheryteId = 1000 }));
         Assert.Equal(AutoTeleportDecision.AlreadyAttempted, Step(policy, 1));

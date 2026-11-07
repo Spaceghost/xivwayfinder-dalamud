@@ -51,7 +51,7 @@ public sealed class CompanionGestureCueTests
         var frame = cue.Propose(GuideGestureKind.Wait, now)!.Value;
         Assert.Equal(0, frame.ElapsedSeconds); Assert.True(frame.Paused);
         cue.Resolve(true);
-        var resumed = cue.Propose(GuideGestureKind.Wait, double.IsFinite(now) ? now+.05 : .05)!.Value;
+        var resumed = cue.Propose(GuideGestureKind.Wait, double.IsFinite(now) ? now + .05 : .05)!.Value;
         Assert.Equal(.05f, resumed.ElapsedSeconds, 5);
     }
 
@@ -60,7 +60,7 @@ public sealed class CompanionGestureCueTests
     {
         var cue = new CompanionGestureCue();
         cue.Propose(GuideGestureKind.SitGround, 0); cue.Resolve(true);
-        Assert.Equal(0, cue.Propose(GuideGestureKind.SitGround, .1, paused:true)!.Value.ElapsedSeconds);
+        Assert.Equal(0, cue.Propose(GuideGestureKind.SitGround, .1, paused: true)!.Value.ElapsedSeconds);
         cue.Resolve(true);
         Assert.Null(cue.Propose(null, .2));
         Assert.Null(cue.Resolve(true));

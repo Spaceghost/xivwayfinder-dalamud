@@ -85,7 +85,9 @@ public sealed class GuideSitControllerTests
     }
 
     [Theory]
-    [InlineData(30)] [InlineData(60)] [InlineData(144)]
+    [InlineData(30)]
+    [InlineData(60)]
+    [InlineData(144)]
     public void PlaybackDurationsRemainBoundedAcrossFrameRates(int fps)
     {
         var controller = new GuideSitController(); var dt = 1f / fps;
@@ -113,11 +115,11 @@ public sealed class GuideSitControllerTests
     [Fact]
     public void ImportedEndpointProofRejectsDifferentRootOrPoseAndMalformedGeometry()
     {
-        Vector3[] pose = [new(0,0,0), new(0,1,0), new(.3f,.5f,0)];
+        Vector3[] pose = [new(0, 0, 0), new(0, 1, 0), new(.3f, .5f, 0)];
         Assert.True(GuideSitAnimation.EndpointsMatch(pose, pose));
-        Assert.True(GuideSitAnimation.EndpointsMatch(pose, pose.Select(p => p + new Vector3(.01f,0,0)).ToArray()));
-        Assert.False(GuideSitAnimation.EndpointsMatch(pose, pose.Select(p => p + new Vector3(.1f,0,0)).ToArray()));
-        Assert.False(GuideSitAnimation.EndpointsMatch(pose, [pose[0],new(float.NaN),pose[2]]));
+        Assert.True(GuideSitAnimation.EndpointsMatch(pose, pose.Select(p => p + new Vector3(.01f, 0, 0)).ToArray()));
+        Assert.False(GuideSitAnimation.EndpointsMatch(pose, pose.Select(p => p + new Vector3(.1f, 0, 0)).ToArray()));
+        Assert.False(GuideSitAnimation.EndpointsMatch(pose, [pose[0], new(float.NaN), pose[2]]));
         Assert.False(GuideSitAnimation.EndpointsMatch(pose, pose[..2]));
         Assert.False(GuideSitAnimation.EndpointsMatch([], []));
     }
@@ -153,7 +155,7 @@ public sealed partial class GuideMeshAnimationTests
     private static void AppendSitClip(GlbFixture file, string name, float from, float to)
     {
         var clips = file.Root["animations"]?.DeepClone().AsArray() ?? new JsonArray();
-        file.Clip(name, 0, "scale", [0, 1], [1,from,1, 1,to,1]);
+        file.Clip(name, 0, "scale", [0, 1], [1, from, 1, 1, to, 1]);
         clips.Add(file.Root["animations"]![0]!.DeepClone());
         file.Root["animations"] = clips;
     }

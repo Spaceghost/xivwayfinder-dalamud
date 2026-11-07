@@ -18,7 +18,7 @@ public sealed class GuideModelSupportTests
     {
         var support = Plane(.5f);
         if (reverse) support = support with { B = support.C, C = support.B };
-        Vector3[] body = [new(-1,.03f,0), new(1,.03f,0), new(0,1,1)];
+        Vector3[] body = [new(-1, .03f, 0), new(1, .03f, 0), new(0, 1, 1)];
         Assert.True(GuideModelSupport.TryGetLift(body, Triangle, support, .03f, out var lift));
         Assert.Equal(.5f, lift, 6);
         foreach (var vertex in body) Assert.True(vertex.Y + lift >= vertex.X * .5f + .03f - .000001f);
@@ -31,7 +31,7 @@ public sealed class GuideModelSupportTests
     [InlineData(1.5f)]
     public void FlatFloorNeverCancelsExistingAnimatedLift(float bounce)
     {
-        Vector3[] body = [new(-1,.03f + bounce,0), new(1,.03f + bounce,0), new(0,1 + bounce,1)];
+        Vector3[] body = [new(-1, .03f + bounce, 0), new(1, .03f + bounce, 0), new(0, 1 + bounce, 1)];
         Assert.True(GuideModelSupport.TryGetLift(body, Triangle, Plane(), .03f, out var lift));
         Assert.Equal(0, lift);
     }
@@ -39,7 +39,7 @@ public sealed class GuideModelSupportTests
     [Fact]
     public void UphillAlreadyAirbornePoseIsNotLoweredOntoThePlane()
     {
-        Vector3[] body = [new(-1,1,0), new(1,1,0), new(0,2,1)];
+        Vector3[] body = [new(-1, 1, 0), new(1, 1, 0), new(0, 2, 1)];
         Assert.True(GuideModelSupport.TryGetLift(body, Triangle, Plane(.5f), .03f, out var lift));
         Assert.Equal(0, lift);
     }
@@ -47,7 +47,7 @@ public sealed class GuideModelSupportTests
     [Fact]
     public void PartialCoverageCannotExtrapolateAConfirmedPlane()
     {
-        Vector3[] body = [new(-1,.03f,0), new(1,.03f,0), new(6,.03f,0)];
+        Vector3[] body = [new(-1, .03f, 0), new(1, .03f, 0), new(6, .03f, 0)];
         Assert.False(GuideModelSupport.TryGetLift(body, Triangle, Plane(.5f), .03f, out var lift));
         Assert.Equal(0, lift); // Earlier uphill vertices must not leak a partial correction.
     }
@@ -55,7 +55,7 @@ public sealed class GuideModelSupportTests
     [Fact]
     public void UnreferencedVerticesCannotChangeVisibleSupport()
     {
-        Vector3[] body = [new(-1,.03f,0), new(1,.03f,0), new(0,1,1), new(100,-100,100)];
+        Vector3[] body = [new(-1, .03f, 0), new(1, .03f, 0), new(0, 1, 1), new(100, -100, 100)];
         Assert.True(GuideModelSupport.TryGetLift(body, Triangle, Plane(.5f), .03f, out var lift));
         Assert.Equal(.5f, lift, 6);
     }
@@ -86,12 +86,12 @@ public sealed class GuideModelSupportTests
         {
             0 => support with { A = support.B, C = support.B },
             1 => Plane(4),
-            2 => support with { Point = new(0,.5f,0) },
-            3 => support with { Point = new(20,0,0) },
+            2 => support with { Point = new(0, .5f, 0) },
+            3 => support with { Point = new(20, 0, 0) },
             4 => support with { A = new(float.NaN) },
             _ => support with { C = new(float.PositiveInfinity) }
         };
-        Vector3[] body = [new(-1,.03f,0), new(1,.03f,0), new(0,1,1)];
+        Vector3[] body = [new(-1, .03f, 0), new(1, .03f, 0), new(0, 1, 1)];
         Assert.False(GuideModelSupport.TryGetLift(body, Triangle, support, .03f, out var lift));
         Assert.Equal(0, lift);
     }
@@ -99,9 +99,9 @@ public sealed class GuideModelSupportTests
     [Fact]
     public void ActualRotatedAndScaledAnimatedVerticesDetermineUphillClearance()
     {
-        Vector3[] posed = [new(0,0,-.5f), new(0,.1f,.5f), new(0,.8f,0)];
+        Vector3[] posed = [new(0, 0, -.5f), new(0, .1f, .5f), new(0, .8f, 0)];
         var rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2);
-        var world = posed.Select(p => Vector3.Transform(p * 2, rotation) + new Vector3(0,.03f,0)).ToArray();
+        var world = posed.Select(p => Vector3.Transform(p * 2, rotation) + new Vector3(0, .03f, 0)).ToArray();
         Assert.True(GuideModelSupport.TryGetLift(world, Triangle, Plane(.5f), .03f, out var lift));
         Assert.Equal(.3f, lift, 5);
     }

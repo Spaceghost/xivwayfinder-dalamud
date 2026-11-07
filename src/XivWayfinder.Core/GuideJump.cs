@@ -62,8 +62,11 @@ public sealed record GuideJumpPlan(GuideJumpRequest Request, Vector3 Takeoff, Ve
         var arc = Request.StartArc + (Request.EndArc - Request.StartArc) * flight;
         var ground = PathTrail.At(Route, arc);
         // XZ comes from the same route occurrence, never a player/goal chord.
-        var feet = ground with { Y = Takeoff.Y + (Landing.Y - Takeoff.Y) * flight
-            + 4 * Apex * flight * (1 - flight) + GuideJumpPolicy.FootClearance };
+        var feet = ground with
+        {
+            Y = Takeoff.Y + (Landing.Y - Takeoff.Y) * flight
+            + 4 * Apex * flight * (1 - flight) + GuideJumpPolicy.FootClearance
+        };
         var phase = progress >= 1 ? GuideJumpPhase.Complete
             : Request.Capability.Kind == GuideJumpAnimationKind.NativeTimeline
                 ? progress * Duration < GuideNativeJumpSet.TakeoffSeconds ? GuideJumpPhase.Takeoff

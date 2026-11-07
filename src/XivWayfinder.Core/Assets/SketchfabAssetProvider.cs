@@ -46,7 +46,7 @@ internal sealed class SketchfabAssetProvider(AssetMetadataHttp http) : IVisualAs
                 new(label, AssetJson.Https(AssetJson.Text(license, "url", 2048), "creativecommons.org", "sketchfab.com")),
                 AssetJson.True(item, "isDownloadable") ? VisualAssetDownloadAccess.ProviderSignIn : VisualAssetDownloadAccess.Unavailable,
                 clips.HasValue ? (int)Math.Min(clips.Value, int.MaxValue) : null, AssetJson.Number(item, "faceCount"))
-                { Archives = Archives(item) });
+            { Archives = Archives(item) });
         }
         // Never follow the response's arbitrary next URL. A bounded opaque cursor is escaped into our own URL.
         var next = AssetJson.Text(AssetJson.Field(root, "cursors"), "next", 257);

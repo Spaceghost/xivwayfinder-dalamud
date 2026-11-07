@@ -92,7 +92,7 @@ public sealed class GuideModelArchiveTests
     public async Task NestedGltfPackKeepsRelativeBufferSidecars()
     {
         using var files = new PackFiles();
-        var positions = new float[] { 0,0,0, 1,0,0, 0,1,0 };
+        var positions = new float[] { 0, 0, 0, 1, 0, 0, 0, 1, 0 };
         var data = new byte[positions.Length * 4]; Buffer.BlockCopy(positions, 0, data, 0, data.Length);
         using (var zip = ZipFile.Open(files.Zip, ZipArchiveMode.Create))
         {
@@ -108,11 +108,20 @@ public sealed class GuideModelArchiveTests
     }
 
     [Theory]
-    [InlineData("../escape.obj")] [InlineData("nested/../../escape.obj")]
-    [InlineData("/absolute.obj")] [InlineData("C:/drive.obj")] [InlineData("C:drive.obj")]
-    [InlineData("\\\\server\\share\\guide.obj")] [InlineData("nested\\..\\escape.obj")]
-    [InlineData("name.obj:stream")] [InlineData("NUL.obj")] [InlineData("directory./guide.obj")]
-    [InlineData("CONIN$.obj")] [InlineData("conout$.obj")] [InlineData("COM¹.obj")] [InlineData("lpt².obj")]
+    [InlineData("../escape.obj")]
+    [InlineData("nested/../../escape.obj")]
+    [InlineData("/absolute.obj")]
+    [InlineData("C:/drive.obj")]
+    [InlineData("C:drive.obj")]
+    [InlineData("\\\\server\\share\\guide.obj")]
+    [InlineData("nested\\..\\escape.obj")]
+    [InlineData("name.obj:stream")]
+    [InlineData("NUL.obj")]
+    [InlineData("directory./guide.obj")]
+    [InlineData("CONIN$.obj")]
+    [InlineData("conout$.obj")]
+    [InlineData("COM¹.obj")]
+    [InlineData("lpt².obj")]
     [InlineData("nested//guide.obj")]
     public async Task UnsafeOrAmbiguousEntryPathsAreRejectedBeforeWriting(string path)
     {

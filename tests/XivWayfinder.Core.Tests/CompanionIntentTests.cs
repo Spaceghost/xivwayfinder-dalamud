@@ -132,12 +132,12 @@ public sealed class CompanionIntentTests
     {
         var walk = new Walk(); walk.For(2, 2);
         var before = walk.Intent.Current.EffectiveLead;
-        var gap = walk.Intent.Update(new(walk.X,0,0), walk.Arc, Vector2.UnitX, walk.Time + 5, 4, true);
+        var gap = walk.Intent.Update(new(walk.X, 0, 0), walk.Arc, Vector2.UnitX, walk.Time + 5, 4, true);
         Assert.NotEqual(CompanionIntentMode.Lead, gap.Mode);
         Assert.InRange(before - gap.EffectiveLead, 0, .40001f);
-        var reversal = walk.Intent.Update(new(walk.X,0,0), walk.Arc, Vector2.UnitX, walk.Time, 4, true);
+        var reversal = walk.Intent.Update(new(walk.X, 0, 0), walk.Arc, Vector2.UnitX, walk.Time, 4, true);
         Assert.Equal(gap.EffectiveLead, reversal.EffectiveLead);
-        var rebase = walk.Intent.Update(new(walk.X,0,0), walk.Arc + 100, Vector2.UnitX, walk.Time + .05, 4, true);
+        var rebase = walk.Intent.Update(new(walk.X, 0, 0), walk.Arc + 100, Vector2.UnitX, walk.Time + .05, 4, true);
         Assert.NotEqual(CompanionIntentMode.Lead, rebase.Mode);
     }
 

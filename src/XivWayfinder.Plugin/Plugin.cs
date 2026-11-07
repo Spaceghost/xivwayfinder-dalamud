@@ -58,6 +58,9 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private readonly AutomaticTeleport automaticTeleport = null!;
     private readonly GloveTexture glove = null!;
     private readonly GloveMinion minion = null!;
+    private readonly PointerJourney pointerJourney = new();
+    private PointerJourneyFrame pointerFrame;
+    private readonly PointerAudio pointerAudio = null!;
     private readonly GuideWorldDepth worldDepth = null!;
     private readonly ImportedGuide imported = null!;
     private readonly GuideTeleportBoarding teleportBoarding = null!;
@@ -173,6 +176,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 pluginInterface.GetPluginConfigDirectory(), playerState);
             glove = new GloveTexture(textures, data, log);
             minion = new GloveMinion(data, objects, log);
+            pointerAudio = new PointerAudio(log);
             worldDepth = new GuideWorldDepth(pluginInterface, log);
             imported = new ImportedGuide(pluginInterface, interop, textures, log, worldDepth);
             teleportBoarding = new GuideTeleportBoarding(clientState, objects, condition, imported);
@@ -183,6 +187,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             terrainCheck = new TrailTerrainCheck(pluginInterface, gameGui, log);
             overlay.TerrainCheck = terrainCheck;
             window = new SettingsWindow(config, Save, () => state, () => glove.Status, () => config.GuideModelPath.Length > 0 ? imported.Status : minion.Status, () => navmesh.Status, () => Test(TestDistanceDefault), ClearFromUi, () => minion.Choices, () => automaticTeleport.Status, automaticTeleport.Retry);
+            window.PreviewPointerSound = pointerAudio.Preview;
             modelLibrary = new ModelLibrary(config, Save, new GuideCatalog(data), () => minion.Status);
             modelLibrary.CanUsePreview = model => minion.IsReadyFor(model.Id, model.NpcId, model.BNpcId);
             visualAssets = new VisualAssetLibrary(textures);
@@ -321,6 +326,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
             imported.Pose = null;
             importedPreview.Pose = null;
             minion.Update(MinionWant.Hard, null, config.MinionSize, config.MinionTilt, now, dt);
+            pointerJourney.Hide(); pointerFrame = default;
+            pointerAudio.Update(0, false, 0);
             navmesh.Idle();
             scene = default;
             PublishState(new WayfinderState
@@ -509,14 +516,35 @@ public sealed unsafe class Plugin : IDalamudPlugin
         }
     }
 
+    private unsafe bool CanSeeDestination(Guide guide)
+    {
+        if (!config.DestinationPointer || guide.Kind is not (GuideKind.Walk or GuideKind.Arrived)
+            || guide.Target is not { Y: not null } target || target.TerritoryId != clientState.TerritoryType) return false;
+        var at = target.Position(0);
+        if (!TrailPlacement.IsFinite(at) || !gameGui.WorldToScreen(at + Vector3.UnitY * .1f, out _, out var inside) || !inside) return false;
+        var manager = FFXIVClientStructs.FFXIV.Client.Game.Control.CameraManager.Instance();
+        var camera = manager == null ? null : manager->GetActiveCamera();
+        if (camera == null) return false;
+        Vector3 eye = camera->SceneCamera.Position;
+        var toward = at + Vector3.UnitY * .2f - eye;
+        var distance = toward.Length();
+        if (!float.IsFinite(distance)) return false;
+        var hit = distance > .05f ? TrailGround.Raycast(eye, toward / distance, distance) : null;
+        return hit is null || Vector3.Distance(eye, hit.Value.Point) >= distance - .25f;
+    }
+
     /// <summary>The minion glove: where it floats and which way it points, or why it should not be there.</summary>
     private void UpdateMinion(bool visible, Guide guide, Vector3 player, Vector3? aim, double now, float dt)
     {
+        pointerFrame = default;
         companionRoutePose = null; // Never publish a previous route or hidden guide.
         companionWaitingAside = false;
         imported.RouteConstrained = false;
         importedPreview.Pose = null;
         minion.GestureFrame = imported.GestureFrame = importedPreview.GestureFrame = null;
+        if (!visible || config.Style != PointerStyle.Minion || config.GuideGrounded || config.GuideModelPath.Length > 0
+            || config.GuideNpcId != 0 || config.GuideBNpcId != 0 || localModels.Previewing || modelLibrary.IsOpen)
+        { pointerJourney.Hide(); pointerAudio.Update(0, false, 0); }
         var identity = new CompanionVisualIdentity(config.GuideModelPath, config.GuideModelChara, config.GuideNpcId,
             config.MinionSize, config.GuideGrounded, config.GuideAnimate, config.GuideAnimation, config.GuideInPlace,
             visible && (localModels.Previewing || modelLibrary.IsOpen && modelLibrary.Preview is not null), config.GuideBNpcId);
@@ -525,6 +553,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             companionTerritory = clientState.TerritoryType;
             companionVisualIdentity = identity;
             ResetCompanionRoute(removeVisual: true);
+            minion.Retry();
         }
         if (localModels.Previewing && visible)
         {
@@ -570,6 +599,24 @@ public sealed unsafe class Plugin : IDalamudPlugin
         imported.Update(config.GuideModelPath);
         minion.Select(config.GuideModelChara, config.GuideNpcId, config.GuideBNpcId);
         var useImported = config.GuideModelPath.Length > 0;
+        // The floating cursor is a companion even with no route, no destination,
+        // or the trail switched off. Other models retain their route/ground ownership.
+        if (!useImported && minion.IsCursor && config.GuideNpcId == 0 && config.GuideBNpcId == 0 && !config.GuideGrounded)
+        {
+            imported.Pose = null;
+            minion.JumpFrame = null;
+            var show = visible && config.Style == PointerStyle.Minion;
+            var companion = show ? PointerPresentation.Companion(player, objects.LocalPlayer?.Rotation ?? 0,
+                guide.Direction, config.MinionPlacement(), now, config.ReducedMotion) : null;
+            var pointer = pointerJourney.Update(companion, guide.Target, show && CanSeeDestination(guide),
+                guide.Kind == GuideKind.Arrived, player, now, dt, config.ReducedMotion);
+            pointerFrame = pointer;
+            minion.Update(pointer.Pose is not null ? MinionWant.Show : MinionWant.Hard,
+                pointer.Pose, config.MinionSize, true, now, dt, animate: false, directPlacement: true);
+            pointerAudio.Update(pointer.Hum, pointer.Chime, show && config.PointerSound ? config.PointerSoundVolume : 0);
+            return;
+        }
+        pointerJourney.Hide(); pointerAudio.Update(0, false, 0);
         var gestureCanMove = useImported ? imported.GestureCanMove : minion.GestureCanMove;
         var teleportNeeded = guide.Kind == GuideKind.Teleport && guide.Target is { } teleportTarget
             && guide.Aetheryte is { Unlocked: true, Id: > 0 } teleportSpot
@@ -918,6 +965,12 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 frame = frame with { Player = player.Position, Rotation = player.Rotation };
             var modelPreview = frame.Visible && (localModels.Previewing || modelLibrary.IsOpen && modelLibrary.Preview is not null);
             overlay.Draw(frame, modelPreview);
+            if (frame.Visible && !modelPreview && pointerFrame.Pose is not null && minion.CursorNeedsLoadingFallback)
+            {
+                var fallback = PointerPresentation.Companion(frame.Player, frame.Rotation, frame.Guide.Direction,
+                    config.MinionPlacement(), Now, config.ReducedMotion);
+                if (fallback is { } pose) overlay.DrawLoadingPointer(pose);
+            }
             imported.Queue(config.MinionSize, config.GuideAnimate, config.GuideAnimation, config.GuideInPlace);
         }
         importedPreview.Queue(localModels.PreviewScale, localModels.PreviewAnimate,
@@ -1000,6 +1053,15 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 config.GuideModelPath = file; imported.Reload();
                 config.Style = PointerStyle.Minion; Save(); Print("Loading guide model: " + config.GuideModelPath); return;
             }
+            if (arguments.Equals("pointerstatus", StringComparison.OrdinalIgnoreCase))
+            {
+                log.Information("Pointer status: {Status}", System.Text.Json.JsonSerializer.Serialize(new {
+                    singlePointer = true, pointerFrame.AtDestination, pointerFrame.Hum,
+                    position = pointerFrame.Pose is { } p ? new[] { p.Position.X, p.Position.Y, p.Position.Z } : null,
+                    native = minion.Status, placed = minion.PlacementAccepted, trail = config.Trail,
+                    sound = config.PointerSound, volume = config.PointerSoundVolume })); return;
+            }
+            if (arguments.Equals("soundtest", StringComparison.OrdinalIgnoreCase)) { pointerAudio.Preview(); Print("Previewing the approach hum and arrival bell at your pointer sound volume."); return; }
             if (arguments.StartsWith("model ", StringComparison.OrdinalIgnoreCase))
             {
                 var name = arguments[6..].Trim();
@@ -1015,6 +1077,11 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 config.MinionHeight = 2f;
                 config.MinionTilt = false;
                 config.MinionSize = name.Contains("cursor", StringComparison.OrdinalIgnoreCase) ? 2f : 1.5f;
+                if (MinionGlove.IsWindUpCursor(choice.Name))
+                {
+                    config.MinionAhead = 1.6f; config.MinionSide = 0; config.MinionHeight = 2.4f;
+                    config.MinionTilt = true; config.MinionTurn = 0; config.DestinationPointer = true;
+                }
                 Save(); Print($"Guide: {choice.Name}."); return;
             }
             var request = WayfinderCommands.Parse(arguments);
@@ -1415,8 +1482,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
         try
         {
             if (framework.IsInFrameworkUpdateThread)
-                minion.Remove();
-            else if (!framework.RunOnFrameworkThread(minion.Remove).Wait(TimeSpan.FromSeconds(2)))
+            { minion.Remove(); }
+            else if (!framework.RunOnFrameworkThread(() => { minion.Remove(); }).Wait(TimeSpan.FromSeconds(2)))
                 log.Warning("XivWayfinder: removing the minion glove timed out");
         }
         catch (Exception ex)
@@ -1449,6 +1516,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
         controlJourney?.UnregisterFunc();
         framework.Update -= OnUpdate;
         openMapHook?.Dispose();
+        pointerAudio?.Dispose();
         RemoveMinion();
         pluginInterface.UiBuilder.Draw -= DrawUi;
         pluginInterface.UiBuilder.OpenMainUi -= OpenUi;

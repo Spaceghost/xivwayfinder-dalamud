@@ -52,7 +52,7 @@ public sealed class VisualAssetThumbnailTests
     public async Task RedirectResponseCannotBecomeAnImage()
     {
         using var loader = new VisualAssetThumbnailLoader(new Handler(_ => new(HttpStatusCode.Redirect)
-            { Headers = { Location = new Uri("http://127.0.0.1/private") } }));
+        { Headers = { Location = new Uri("http://127.0.0.1/private") } }));
         await Assert.ThrowsAsync<HttpRequestException>(() => loader.LoadAsync(Allowed));
     }
 
@@ -80,7 +80,7 @@ public sealed class VisualAssetThumbnailTests
         using var loader = new VisualAssetThumbnailLoader(new Handler(_ =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK)
-                { Content = new StreamContent(new Unseekable(new byte[VisualAssetThumbnailLoader.MaximumBytes + 1])) };
+            { Content = new StreamContent(new Unseekable(new byte[VisualAssetThumbnailLoader.MaximumBytes + 1])) };
             response.Content.Headers.ContentType = new("image/png");
             return response;
         }));

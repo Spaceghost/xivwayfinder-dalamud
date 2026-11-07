@@ -42,6 +42,9 @@ internal sealed unsafe class GloveMinion(IDataManager data, IObjectTable objects
         .OrderBy(row => MinionGlove.IsWindUpCursor(row.Name) ? 0 : row.Name.Contains("moogle", StringComparison.OrdinalIgnoreCase) ? 1 : row.Name.Contains("chocobo", StringComparison.OrdinalIgnoreCase) ? 2 : 3)
         .ThenBy(row => row.Name).ToArray();
 
+    public bool IsCursor => selection == 0 || Choices.Any(c => c.Model == selection && MinionGlove.IsWindUpCursor(c.Name));
+    public bool CursorNeedsLoadingFallback => IsCursor && (index == NoIndex || presence.Loading || presence.GaveUp);
+
     public void Select(uint id,uint npcId=0,uint bnpcId=0)
     {
         if (selection == id && npcSelection==npcId && bnpcSelection==bnpcId) return;
@@ -240,6 +243,7 @@ internal sealed unsafe class GloveMinion(IDataManager data, IObjectTable objects
     private void UpdateCore(MinionWant want, MinionPose? pose, float scale, bool tilt, double now, float dt, bool grounded, bool animate, float turnDegrees,
         bool routeConstrained, bool directPlacement)
     {
+        if (want == MinionWant.Show && IsCursor) presence.RecoverAfterCooldown(now);
         var model = ModelCharaId();
         if (model < 0)
         {

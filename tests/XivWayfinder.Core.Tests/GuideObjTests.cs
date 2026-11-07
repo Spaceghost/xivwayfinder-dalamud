@@ -10,11 +10,11 @@ public sealed class GuideObjTests
         using var fixture = new Fixture();
         fixture.Write("guide.obj", "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nvn 0 0 2\nvn 0 3 0\nf 1//1 2//1 3//1\nf 1//-1 4//-1 2//-1\n");
         var mesh = fixture.Load();
-        Assert.Equal(6,mesh.Vertices.Length);
-        Assert.Equal(mesh.Vertices[0],mesh.Vertices[3]);
-        Assert.Equal(Vector3.UnitZ,mesh.Normals[0]); Assert.Equal(Vector3.UnitY,mesh.Normals[3]);
-        var normals = new Vector3[6]; mesh.SamplePose(-1,0,new Vector3[6],normals:normals);
-        Assert.Equal(mesh.Normals,normals);
+        Assert.Equal(6, mesh.Vertices.Length);
+        Assert.Equal(mesh.Vertices[0], mesh.Vertices[3]);
+        Assert.Equal(Vector3.UnitZ, mesh.Normals[0]); Assert.Equal(Vector3.UnitY, mesh.Normals[3]);
+        var normals = new Vector3[6]; mesh.SamplePose(-1, 0, new Vector3[6], normals: normals);
+        Assert.Equal(mesh.Normals, normals);
     }
 
     [Fact]
@@ -23,11 +23,11 @@ public sealed class GuideObjTests
         using var fixture = new Fixture();
         fixture.Write("guide.obj", "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nvt 0 0\nvt 1 1\ns 1\nf 1/1 2/1 3/1\nf 1/2 4/2 2/2\ns 2\nf 1 2 3\ns off\nf 1 4 2\n");
         var mesh = fixture.Load();
-        var expected = Vector3.Normalize(new Vector3(0,1,1));
-        Assert.Equal(expected,mesh.Normals[mesh.Indices[0]]);
-        Assert.Equal(expected,mesh.Normals[mesh.Indices[3]]);
-        Assert.Equal(Vector3.UnitZ,mesh.Normals[mesh.Indices[6]]);
-        Assert.Equal(Vector3.Zero,mesh.Normals[mesh.Indices[9]]);
+        var expected = Vector3.Normalize(new Vector3(0, 1, 1));
+        Assert.Equal(expected, mesh.Normals[mesh.Indices[0]]);
+        Assert.Equal(expected, mesh.Normals[mesh.Indices[3]]);
+        Assert.Equal(Vector3.UnitZ, mesh.Normals[mesh.Indices[6]]);
+        Assert.Equal(Vector3.Zero, mesh.Normals[mesh.Indices[9]]);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public sealed class GuideObjTests
     {
         using var fixture = new Fixture();
         fixture.Write("guide.obj", "v 0 0 0\nv 1 0 0\nv 0 1 0\nvn 0 1 0\ns 1\nf 1//1 2//1 3//1\n");
-        Assert.All(fixture.Load().Normals,n=>Assert.Equal(Vector3.UnitY,n));
+        Assert.All(fixture.Load().Normals, n => Assert.Equal(Vector3.UnitY, n));
     }
 
     [Fact]
@@ -44,10 +44,10 @@ public sealed class GuideObjTests
         using var fixture = new Fixture();
         fixture.Write("guide.obj", "v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nvn 0 0 1\ns 1\nf 1//1 2//1 3//1\nf 1 4 2\n");
         var mesh = fixture.Load();
-        Assert.Equal(Vector3.UnitZ,mesh.Normals[mesh.Indices[0]]);
-        Assert.Equal(Vector3.Normalize(new Vector3(0,1,1)),mesh.Normals[mesh.Indices[3]]);
-        Assert.Equal(Vector3.Normalize(new Vector3(0,1,1)),mesh.Normals[mesh.Indices[5]]);
-        Assert.Equal(Vector3.UnitY,mesh.Normals[mesh.Indices[4]]);
+        Assert.Equal(Vector3.UnitZ, mesh.Normals[mesh.Indices[0]]);
+        Assert.Equal(Vector3.Normalize(new Vector3(0, 1, 1)), mesh.Normals[mesh.Indices[3]]);
+        Assert.Equal(Vector3.Normalize(new Vector3(0, 1, 1)), mesh.Normals[mesh.Indices[5]]);
+        Assert.Equal(Vector3.UnitY, mesh.Normals[mesh.Indices[4]]);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public sealed class GuideObjTests
     {
         using var fixture = new Fixture();
         fixture.Write("guide.obj", "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1//1 2//1 3//1\n");
-        Assert.Throws<InvalidDataException>(()=>fixture.Load());
+        Assert.Throws<InvalidDataException>(() => fixture.Load());
     }
 
     [Fact]
@@ -66,13 +66,13 @@ public sealed class GuideObjTests
         fixture.Png("guide image.png");
         fixture.Write("guide.obj", "mtllib guide.mtl\nv 0 0 0 1 0 0\nv 1 0 0 0 1 0\nv 0 1 0 0 0 1\nvt 0 0\nvt 1 0\nvt 0 1\nusemtl blue material\nf 1/1 2/2 3/3\n");
         var mesh = fixture.Load(); var material = Assert.Single(mesh.Materials);
-        Assert.Equal(new Vector4(.2f,.4f,.8f,.6f), Assert.Single(mesh.FaceColors));
-        Assert.Equal(new Vector4(1,0,0,1), mesh.VertexColors[0]);
-        Assert.Equal(new Vector2(.1f,.8f), mesh.TextureCoordinates[0]);
+        Assert.Equal(new Vector4(.2f, .4f, .8f, .6f), Assert.Single(mesh.FaceColors));
+        Assert.Equal(new Vector4(1, 0, 0, 1), mesh.VertexColors[0]);
+        Assert.Equal(new Vector2(.1f, .8f), mesh.TextureCoordinates[0]);
         Assert.InRange(mesh.TextureCoordinates[2].Y, -2.2001f, -2.1999f);
         Assert.Equal(0, material.BaseColorImage); Assert.Equal("BLEND", material.AlphaMode);
         Assert.True(material.Unlit); Assert.Equal(33071, material.WrapU); Assert.Equal(33071, material.WrapV);
-        var image = Assert.Single(mesh.Images); Assert.Equal((1,1), (image.Width,image.Height));
+        var image = Assert.Single(mesh.Images); Assert.Equal((1, 1), (image.Width, image.Height));
     }
 
     [Fact]
@@ -84,8 +84,8 @@ public sealed class GuideObjTests
         var mesh = fixture.Load();
         Assert.Equal(6, mesh.Vertices.Length); Assert.Equal(mesh.Vertices[0], mesh.Vertices[3]);
         Assert.NotEqual(mesh.TextureCoordinates[0], mesh.TextureCoordinates[3]);
-        Assert.Equal(new Vector4(1,0,0,1), mesh.FaceColors[0]);
-        Assert.Equal(new Vector4(0,1,0,.8f), mesh.FaceColors[1]);
+        Assert.Equal(new Vector4(1, 0, 0, 1), mesh.FaceColors[0]);
+        Assert.Equal(new Vector4(0, 1, 0, .8f), mesh.FaceColors[1]);
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public sealed class GuideObjTests
         fixture.Write("guide.obj", "mtllib guide.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nusemtl first\nf 1/1 2/1 3/1\n");
         fixture.Write("guide.mtl", "newmtl first\nmap_Kd ../outside.png\n");
         Assert.Throws<InvalidDataException>(() => fixture.Load());
-        File.CreateSymbolicLink(Path.Combine(fixture.Directory,"linked.png"), Path.Combine(other.Directory,"outside.png"));
+        File.CreateSymbolicLink(Path.Combine(fixture.Directory, "linked.png"), Path.Combine(other.Directory, "outside.png"));
         fixture.Write("guide.mtl", "newmtl first\nmap_Kd linked.png\n");
         Assert.Throws<InvalidDataException>(() => fixture.Load());
     }
@@ -123,11 +123,11 @@ public sealed class GuideObjTests
     public void ObjAllowsInternalSymlinksAndCountsTotalSidecarBytesBeforeReadingImages()
     {
         using var fixture = new Fixture(); fixture.Png("image.png");
-        File.CreateSymbolicLink(Path.Combine(fixture.Directory,"linked.png"), Path.Combine(fixture.Directory,"image.png"));
+        File.CreateSymbolicLink(Path.Combine(fixture.Directory, "linked.png"), Path.Combine(fixture.Directory, "image.png"));
         fixture.Write("guide.obj", "mtllib guide.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nusemtl first\nf 1/1 2/1 3/1\n");
         fixture.Write("guide.mtl", "newmtl first\nmap_Kd linked.png\n");
         Assert.Single(fixture.Load().Images);
-        using (var stream = File.OpenWrite(Path.Combine(fixture.Directory,"image.png"))) stream.SetLength(33 * 1024 * 1024);
+        using (var stream = File.OpenWrite(Path.Combine(fixture.Directory, "image.png"))) stream.SetLength(33 * 1024 * 1024);
         Assert.Contains("32 MB", Assert.Throws<InvalidDataException>(() => fixture.Load()).Message);
     }
 
@@ -147,14 +147,14 @@ public sealed class GuideObjTests
         public Fixture() { System.IO.Directory.CreateDirectory(Directory); }
         public void Write(string file, string text)
         {
-            var path = Path.Combine(Directory,file); System.IO.Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path,text);
+            var path = Path.Combine(Directory, file); System.IO.Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path, text);
         }
         public void Png(string file)
         {
-            var path = Path.Combine(Directory,file); System.IO.Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            var path = Path.Combine(Directory, file); System.IO.Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllBytes(path, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="));
         }
-        public GuideMesh Load() => GuideMesh.Load(Path.Combine(Directory,"guide.obj"));
+        public GuideMesh Load() => GuideMesh.Load(Path.Combine(Directory, "guide.obj"));
         public void Dispose() => System.IO.Directory.Delete(Directory, true);
     }
 }
