@@ -53,8 +53,9 @@ be confirmed. Cross-zone travel is described in the [journey guide](docs/JOURNEY
 - **Your own models**: import GLB/glTF, OBJ and ZIP model packs, preview animation clips, and save models to your
   collection. Search external repositories from the library and open a model's source page. See
   [supported formats and limits](docs/WAYFINDER.md#imported-models) before downloading a model.
-- **Path highlighting**: fairy lights or classic beads and a pulsing line follow vnavmesh's confirmed walkable
-  route. Choose ground placement or a floating trail overhead. Ground marks, including their glow and the arrival
+- **Path highlighting**: bright fairy lights shimmer toward your destination and remain visible between pulses,
+  including while a companion loads or rests. Classic beads and a pulsing line are also available. Both follow
+  vnavmesh's confirmed walkable route. Choose ground placement or a floating trail overhead. Ground marks, including their glow and the arrival
   ring, split across measured collision faces; native scene depth lets the world occlude them. Missing route or
   floor coverage waits for confirmation. See [trail rendering and checks](docs/WAYFINDER.md#trail-terrain-and-checks).
 - For a target in another zone: *Teleport to (aetheryte)* instead of an arrow, attuned aetherytes first.

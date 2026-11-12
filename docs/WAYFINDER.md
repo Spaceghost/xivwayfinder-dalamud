@@ -201,11 +201,15 @@ keeps aetheryte guidance enabled even if the standalone hint checkbox is off.
 * **The native model guide** (see [below](#the-minion-glove)): the game's own 3D Wind-up Cursor or another
   model chosen in the library, following its own walkable route. **Show the bead too** adds the simple bead.
   Model mode does not add the old flat cursor.
-* **Trail** (on by default): fairy glow and falling, fading dust travel ahead of the companion along the
-  confirmed walkable route. Native scene depth hides the particles behind game geometry. **Classic line**
+* **Trail** (on by default): bright fairy lights keep a soft glow between twinkles, with a crest of light
+  travelling toward the destination along the confirmed walkable route. Sparse sparks float above ground
+  trails and fade before repeating their drift. The trail starts near you when
+  the companion is loading, missing or resting, and ahead of an active route companion. Native scene
+  depth hides the particles behind game geometry. **Classic line**
   keeps the line/bead controls as an alternative. Neither mode draws a fallback through walls or unknown
   terrain when vnavmesh is unavailable, pending, disabled or unable to return a route. The settings and
-  `/wayfinder status` explain why guidance is waiting.
+  `/wayfinder status` explain why guidance is waiting. `/wayfinder trailstatus` also reports the route
+  and renderer state for troubleshooting. Reduced motion freezes both the twinkle and travelling crest.
 * **Distance**: `42 y` under the bead (or the glove) on hover (default), always, or never.
 * **Arrived**: within 4 yalms (the arrival radius) the pointer gives way to a breathing ring on the spot and a
   small bead with *here* above it.
@@ -217,6 +221,16 @@ of the camera even when the target is behind it, so the glove never flips the wr
 ImGui state and catches every exception: a failed frame is logged (once a minute at most) and skipped.
 
 ### Trail terrain and checks
+
+Zone-exit markers describe trigger volumes, whose centers can be far above the road. Walking legs
+use their map position and ask the navigation mesh for the floor, rather than trying to path to the
+volume's airborne center. The final quest or explicit destination retains its own altitude.
+
+**Fairy-trail restoration — 2026-11-12:** the Middle La Noscea route toward Limsa Lominsa Lower Decks
+previously failed because its exit marker was above the mesh. Resolving the floor restored a 24-corner
+walking route. The ground glow and floating sparks were then observed in game with no active route
+companion. All 1,316 host tests pass, including stable terrain anchors, dust fading, reduced motion and
+the exit-height regression. This check does not cover every zone transition or terrain combination.
 
 Ground lights and ribbons are split at measured collision-triangle boundaries and placed 0.16 yalms above those
 faces. Stable samples across their footprint also look for overlapping raised treads, which a lower floor triangle

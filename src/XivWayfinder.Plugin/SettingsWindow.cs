@@ -160,7 +160,7 @@ internal sealed class SettingsWindow : Window
             ImGui.SameLine();
             if (ImGui.RadioButton("Classic line", !config.FairyTrail)) { config.FairyTrail = false; changed = true; }
             ImGui.TextWrapped(config.FairyTrail
-                ? "Soft lights drift along the walkable route, occluded by the world and composed behind game UI. Reduced motion keeps a steady glow."
+                ? "Bright fairy lights shimmer toward your destination along the walkable route, even while your companion loads or rests. Reduced motion keeps a steady glow."
                 : "The original line and guiding sparks remain available below.");
             changed |= Radio("On the ground##trail", TrailElevation.Ground, config.TrailElevation, v => config.TrailElevation = v);
             ImGui.SameLine();

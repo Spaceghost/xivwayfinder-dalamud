@@ -1,7 +1,14 @@
 using System.Numerics;
 namespace XivWayfinder.Core;
 
-public sealed record ZoneConnection(uint From, uint To, Vector3 Entrance, string Action);
+public sealed record ZoneConnection(uint From, uint To, Vector3 Entrance, string Action)
+{
+    // ExitRange translations locate a trigger volume, not its walkable floor.
+    // Preserve its map position but let the navigation mesh resolve altitude,
+    // just as it does for a map flag. Keep the final objective's known Y intact.
+    public Target WalkingTarget(Target destination) => new(destination.Source, From,
+        Entrance.X, Entrance.Z, null, Action, destination.MainScenario);
+}
 
 /// <summary>Walkable zone transitions. Replan from the actual zone after every crossing.</summary>
 public static class ZoneRoute

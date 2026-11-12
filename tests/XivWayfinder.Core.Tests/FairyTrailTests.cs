@@ -19,7 +19,8 @@ public sealed class FairyTrailTests
             Assert.InRange(mote.GroundPosition.X, 4, 10);
             Assert.InRange(mote.Lift, .025f, .155f);
             Assert.InRange(mote.Opacity, 0, 1);
-            Assert.InRange(mote.Radius, .045f, .08f);
+            Assert.InRange(mote.Radius, .16f, .24f);
+            Assert.InRange(mote.DustOpacity, 0, 1);
         }
     }
 
@@ -63,6 +64,60 @@ public sealed class FairyTrailTests
         foreach (var mote in output.Take(count))
             Assert.True(PathTrail.Project(Corner, mote.GroundPosition, out _) > 6.45f);
         Assert.Equal(0, FairyTrail.Sample(Corner, 0, 20, 1, 2, false, output, float.NaN));
+    }
+
+    [Fact]
+    public void MissingOrRestingCompanionStillLeavesAVisibleRoute()
+    {
+        var output = new FairyMote[96];
+        var start = FairyTrail.StartAhead(5, null);
+        var n = FairyTrail.Sample(Corner, 5, 20, 1, 2, false, output, start);
+        Assert.True(n > 10);
+        Assert.InRange(PathTrail.Project(Corner, output[0].GroundPosition, out _) - 5, .12f, 1.1f);
+        Assert.Equal(.12f, FairyTrail.StartAhead(5, 2)); // a guide waiting behind
+        Assert.Equal(.12f, FairyTrail.StartAhead(5, float.NaN));
+        Assert.Equal(4.45f, FairyTrail.StartAhead(5, 9));
+    }
+
+    [Fact]
+    public void InteriorLightsNeverBlinkOutAndKeepTheirTerrainAnchors()
+    {
+        Vector3[] path = [Vector3.Zero, new(40, 0, 0)];
+        var output = new FairyMote[96];
+        Vector3[]? anchors = null;
+        float? firstOpacity = null;
+        var changed = false;
+        for (var frame = 0; frame < 180; frame++)
+        {
+            var count = FairyTrail.Sample(path, 0, 20, frame / 60d, 2.4f, false, output);
+            var interior = output.Take(count).Where(m => m.GroundPosition.X is > 2 and < 12).ToArray();
+            Assert.True(interior.Length > 12);
+            Assert.All(interior, mote => Assert.InRange(mote.Opacity, .30f, 1));
+            var positions = interior.Select(m => m.GroundPosition).ToArray();
+            if (anchors is not null) Assert.Equal(anchors, positions);
+            else anchors = positions;
+            if (firstOpacity is { } previous && Math.Abs(previous - interior[0].Opacity) > .05f) changed = true;
+            firstOpacity ??= interior[0].Opacity;
+        }
+        Assert.True(changed); // a steady route still has a visible shimmer
+    }
+
+    [Fact]
+    public void FloatingDustFadesOutBeforeItsLiftWraps()
+    {
+        Vector3[] path = [Vector3.Zero, new(40, 0, 0)];
+        var output = new FairyMote[96];
+        var lowFades = 0; var highFades = 0;
+        for (var frame = 0; frame < 180; frame++)
+        {
+            var count = FairyTrail.Sample(path, 0, 20, frame / 60d, 2.4f, false, output);
+            foreach (var mote in output.Take(count))
+            {
+                if (mote.Lift < .028f) { Assert.InRange(mote.DustOpacity, 0, .01f); lowFades++; }
+                if (mote.Lift > .152f) { Assert.InRange(mote.DustOpacity, 0, .01f); highFades++; }
+            }
+        }
+        Assert.True(lowFades > 0 && highFades > 0);
     }
 
     [Theory]

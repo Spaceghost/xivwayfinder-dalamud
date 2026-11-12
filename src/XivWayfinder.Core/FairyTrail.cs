@@ -2,13 +2,22 @@ using System.Numerics;
 
 namespace XivWayfinder.Core;
 
-public readonly record struct FairyMote(Vector3 GroundPosition, float Lift, float Radius, float Opacity);
+public readonly record struct FairyMote(Vector3 GroundPosition, float Lift, float Radius, float Opacity,
+    float DustOpacity = 0);
 
 /// <summary>Small deterministic lights flowing along the confirmed route, never a shortcut between corners.</summary>
 public static class FairyTrail
 {
     public const int MaxMotes = 96;
     private const float Spacing = .55f;
+
+    /// <summary>Only a companion actually on the route can move the start of
+    /// the lights forward. A loading, missing or resting guide must not hide them.</summary>
+    public static float StartAhead(float progress, float? companionArc)
+        => float.IsFinite(progress) && companionArc is { } arc && float.IsFinite(arc)
+            ? Math.Clamp(arc - progress + GuideChaseLayout.LightGap, .12f,
+                GuideChaseLayout.MaximumLead + GuideChaseLayout.LightGap)
+            : .12f;
 
     public static int Sample(ReadOnlySpan<Vector3> path, float progress, float length, double time,
         float period, bool reducedMotion, Span<FairyMote> into, float startAhead = .12f)
@@ -40,15 +49,19 @@ public static class FairyTrail
             if (ahead <= startAhead) continue;
             var near = Pulse.SmoothStep(startAhead, startAhead + .9f, ahead);
             var far = 1 - Pulse.SmoothStep(length * .7f, length, ahead);
-            var life = reducedMotion ? .65f : MathF.Pow(MathF.Sin((float)age * MathF.PI), 2);
-            var breath = reducedMotion ? .8f : .62f + .38f * Pulse.TrailAt(ahead / length, time, period);
-            var alpha = near * far * life * breath;
+            var life = MathF.Pow(MathF.Sin((float)age * MathF.PI), 2);
+            var wave = Pulse.TrailAt(ahead / length, time, period);
+            // Keep an unbroken constellation between the travelling crests.
+            // Twinkle changes brightness, never the fixed collision anchors.
+            var alpha = near * far * (reducedMotion ? .78f : .30f + .35f * life + .35f * wave);
             if (alpha < .005f) continue;
             // Tiny vertical wisps decorate a verified floor point; the caller
             // resolves terrain and native scene depth before drawing them.
             var lift = reducedMotion ? .04f : .025f + .13f * (1 - (float)age);
-            var radius = .045f + .035f * (float)Fraction(cell * .754877666);
-            into[count++] = new(PathTrail.At(path, arc), lift, radius, alpha);
+            // The native radial mesh's bright core is only 16% of this radius.
+            // Give it enough world size to remain readable at normal camera zoom.
+            var radius = .16f + .08f * (float)Fraction(cell * .754877666);
+            into[count++] = new(PathTrail.At(path, arc), lift, radius, alpha, reducedMotion ? .6f : life);
         }
         return count;
     }

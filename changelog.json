@@ -10,6 +10,10 @@
       "blurb": "Development work; not a stable release. Individual entries identify verification status.",
       "items": [
         {
+          "status": "fix",
+          "text": "Restore fairy trails on cross-zone walking legs by resolving exit trigger volumes onto the navigation mesh instead of pathfinding to their airborne centers. Fairy lights no longer depend on a loaded companion, have larger luminous cores, and keep a soft glow between directional pulses with floating sparks above ground trails. Reduced motion keeps them steady. Add /wayfinder trailstatus for route and renderer diagnostics. All 1,316 host tests pass; a live Middle La Noscea check on 2026-11-12 restored the Limsa route to 24 valid corners and visibly rendered the ground glow and floating sparks with the companion absent. Other zone transitions and terrain combinations still need individual checks."
+        },
+        {
           "status": "beta",
           "text": "Keep the floating Wind-up Cursor beside the player when a visible destination is far away. It flies over to mark the spot only within 20 yalms (including height), and returns when the player moves beyond 24 yalms; the small release band prevents repeated trips at the boundary. Faraway destinations no longer draw the glove into the distance or start its arrival hum. Host regression tests cover the reported 232-yalm destination, reduced motion, height, approach, retreat and target/lifecycle changes; live visual verification remains pending."
         },

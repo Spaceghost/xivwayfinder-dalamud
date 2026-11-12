@@ -359,7 +359,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
         var finalTarget = target;
         var connection = target is not null && target.TerritoryId != zone ? connections.Next(zone, target.TerritoryId, position) : null;
         if (connection is not null && target is not null)
-            target = new Target(target.Source, zone, connection.Entrance.X, connection.Entrance.Z, connection.Entrance.Y, connection.Action, target.MainScenario);
+            target = connection.WalkingTarget(target);
         Vector3? aim = null;
         if (target is not null && target.TerritoryId == zone && config.UseNavmesh)
             aim = navmesh.Aim(zone, position, target.Position(position.Y), target.Y.HasValue, now);
@@ -1052,6 +1052,15 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 }
                 config.GuideModelPath = file; imported.Reload();
                 config.Style = PointerStyle.Minion; Save(); Print("Loading guide model: " + config.GuideModelPath); return;
+            }
+            if (arguments.Equals("trailstatus", StringComparison.OrdinalIgnoreCase))
+            {
+                log.Information("Trail status: {Status}", System.Text.Json.JsonSerializer.Serialize(new {
+                    enabled = config.Enabled, trail = config.Trail, fairy = config.FairyTrail,
+                    elevation = config.TrailElevation.ToString(), scene.Visible,
+                    route = navmesh.Status, corners = navmesh.Path.Length, progress = navmesh.ProgressArc,
+                    companion = scene.Companion is not null, renderer = fairyTrail.Status, rendering = fairyTrail.Available }));
+                Print($"Trail: {navmesh.Status}. {fairyTrail.Status}"); return;
             }
             if (arguments.Equals("pointerstatus", StringComparison.OrdinalIgnoreCase))
             {
