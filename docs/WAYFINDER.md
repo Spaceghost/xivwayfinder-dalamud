@@ -201,9 +201,9 @@ keeps aetheryte guidance enabled even if the standalone hint checkbox is off.
 * **The native model guide** (see [below](#the-minion-glove)): the game's own 3D Wind-up Cursor or another
   model chosen in the library, following its own walkable route. **Show the bead too** adds the simple bead.
   Model mode does not add the old flat cursor.
-* **Trail** (on by default): bright fairy lights keep a soft glow between twinkles, with a crest of light
-  travelling toward the destination along the confirmed walkable route. Sparse sparks float above ground
-  trails and fade before repeating their drift. The trail starts near you when
+* **Trail** (on by default): the original small fairy lights fall and fade along the confirmed walkable
+  route. Choose **Fairy glow and dust**, then **Floating overhead**, for the original fairy trail.
+  The trail starts near you when
   the companion is loading, missing or resting, and ahead of an active route companion. Native scene
   depth hides the particles behind game geometry. **Classic line**
   keeps the line/bead controls as an alternative. Neither mode draws a fallback through walls or unknown
@@ -226,11 +226,19 @@ Zone-exit markers describe trigger volumes, whose centers can be far above the r
 use their map position and ask the navigation mesh for the floor, rather than trying to path to the
 volume's airborne center. The final quest or explicit destination retains its own altitude.
 
-**Fairy-trail restoration — 2026-11-12:** the Middle La Noscea route toward Limsa Lominsa Lower Decks
+**Route recovery — 2026-11-12:** the Middle La Noscea route toward Limsa Lominsa Lower Decks
 previously failed because its exit marker was above the mesh. Resolving the floor restored a 24-corner
 walking route. The ground glow and floating sparks were then observed in game with no active route
-companion. All 1,316 host tests pass, including stable terrain anchors, dust fading, reduced motion and
+companion in testing build 0.1.1.6. Its 1,316 host tests passed, including stable terrain anchors, dust fading, reduced motion and
 the exit-height regression. This check does not cover every zone transition or terrain combination.
+
+**Original fairy appearance — testing build 0.1.1.7:** restores the particle sampler from commit
+`0adec82`: the original 0.045–0.08-yalm radius, falling lift, fade and pulse. It also restores the original
+single particle layer. The native renderer is unchanged from that revision. The zone-exit floor fix
+and independent trail visibility remain. An archived October configuration used overhead placement at
+2.5 yalms; the placement control remains available for choosing either overhead or ground. All 1,314 host
+tests pass. A live Middle La Noscea check showed the original overhead motes following a 21-corner
+route with the native renderer active and no companion required.
 
 Ground lights and ribbons are split at measured collision-triangle boundaries and placed 0.16 yalms above those
 faces. Stable samples across their footprint also look for overlapping raised treads, which a lower floor triangle

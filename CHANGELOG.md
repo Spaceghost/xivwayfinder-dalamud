@@ -17,6 +17,7 @@ Development work; not a stable release. Individual entries identify verification
 
 ### Fixed
 
+* Restore the original fairy trail from the preserved October implementation: small falling, fading motes with the original radius, pulse and single particle layer. The overhead option reproduces its floating placement. Keep the zone-exit pathfinding fix and the ability to render without a loaded companion. The sampler and native renderer were checked against commit 0adec82, all 1,314 host tests pass, and the overhead fairy trail was observed in Middle La Noscea on a 21-corner route with scene rendering active.
 * Restore fairy trails on cross-zone walking legs by resolving exit trigger volumes onto the navigation mesh instead of pathfinding to their airborne centers. Fairy lights no longer depend on a loaded companion, have larger luminous cores, and keep a soft glow between directional pulses with floating sparks above ground trails. Reduced motion keeps them steady. Add /wayfinder trailstatus for route and renderer diagnostics. All 1,316 host tests pass; a live Middle La Noscea check on 2026-11-12 restored the Limsa route to 24 valid corners and visibly rendered the ground glow and floating sparks with the companion absent. Other zone transitions and terrain combinations still need individual checks.
 
 ### Merged, not yet verified in game

@@ -326,7 +326,7 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
             var lightStart = FairyTrail.StartAhead(progressArc, terrain is null ? scene.Companion?.GuideArc : null);
             var count = FairyTrail.Sample(path, progressArc, length, t,
                 config.TrailPulseSeconds, config.ReducedMotion, motes, lightStart);
-            Span<FairyTrailParticle> particles = stackalloc FairyTrailParticle[FairyTrail.MaxMotes * 2];
+            Span<FairyTrailParticle> particles = stackalloc FairyTrailParticle[FairyTrail.MaxMotes];
             var placed = 0;
             for (var i = 0; i < count; i++)
             {
@@ -337,13 +337,6 @@ internal sealed class Overlay(IGameGui gameGui, Configuration config, GloveTextu
                 if (normal == Vector3.Zero) at += Vector3.UnitY * mote.Lift;
                 particles[placed++] = new(at, mote.Radius * (1 + .5f * config.TrailGlow),
                     mote.Opacity * trailAppearance * config.TrailOpacity, normal);
-                // Sparse dust hangs above the already verified floor. Only its
-                // vertical lift animates; it adds no moving terrain queries.
-                // Scene depth still occludes these billboards behind the world.
-                if (normal != Vector3.Zero && i % 3 == 1 && mote.DustOpacity > .01f)
-                    particles[placed++] = new(at + Vector3.UnitY * (.18f + mote.Lift * 3),
-                        mote.Radius * .45f * (1 + .5f * config.TrailGlow),
-                        mote.Opacity * mote.DustOpacity * .8f * trailAppearance * config.TrailOpacity);
             }
             fairyTrail.Queue(particles[..placed], trailColor, territory: scene.TerritoryId, time: t);
             return;
